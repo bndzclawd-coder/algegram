@@ -1,8 +1,10 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+
+export const dynamic = 'force-dynamic'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Mode = 'math' | 'graph' | 'explain' | 'check'
@@ -119,7 +121,15 @@ function MessageBubble({ msg }: { msg: Message }) {
   )
 }
 
-export default function Chat() {
+function UpgradeWatcher({ onUpgraded }: { onUpgraded: () => void }) {
+  const params = useSearchParams()
+  useEffect(() => {
+    if (params.get('upgraded') === '1') onUpgraded()
+  }, [params, onUpgraded])
+  return null
+}
+
+function ChatInner() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<Mode>('math')
@@ -130,7 +140,6 @@ export default function Chat() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const params = useSearchParams()
   const supabase = createClient()
   useMathRenderer()
 
@@ -141,10 +150,6 @@ export default function Chat() {
     })
     fetchUsage()
   }, [])
-
-  useEffect(() => {
-    if (params.get('upgraded') === '1') fetchUsage()
-  }, [params])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -231,6 +236,7 @@ export default function Chat() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden' }}>
+      <Suspense fallback={null}><UpgradeWatcher onUpgraded={fetchUsage} /></Suspense>
       {/* Sidebar */}
       <aside style={{ width: 240, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--border)' }}>
@@ -364,4 +370,8 @@ export default function Chat() {
       `}</style>
     </div>
   )
+}
+
+export default function Chat() {
+  return <ChatInner />
 }

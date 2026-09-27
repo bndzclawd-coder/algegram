@@ -1,10 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-export default function Signup() {
+export const dynamic = 'force-dynamic'
+
+function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -97,4 +99,8 @@ export default function Signup() {
       </div>
     </div>
   )
+}
+
+export default function Signup() {
+  return <Suspense fallback={null}><SignupForm /></Suspense>
 }
