@@ -3,17 +3,53 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/stripe'
 
-const FREE_LIMIT = PLANS.free.messagesPerDay  // 20
-const FREE_MODEL = 'qwen/qwen3.8-27b:free'
+const FREE_LIMIT = PLANS.free.messagesPerDay
+// Multiple free models as fallback — OpenRouter picks first available
+const FREE_MODELS = [
+  'qwen/qwen3.8-27b:free',
+  'google/gemma-4-31b-it:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+]
 const PRO_DEFAULT_MODEL = 'qwen/qwen3-14b'
 const GUEST_LIMIT = 5
 
+const SYSTEM_PROMPTS: Record<string, string> = {
+  math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.`,
+  graph: `You are Algegram. Describe and render functions with LaTeX. Wrap math in $...$ and $$...$$.`,
+  explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$...$$.`,
+  check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$.`,
+}
+
+async function callOpenRouter(models: string[], model: string | undefined, messages: object[], mode: string) {
+  const body: Record<string, unknown> = {
+    messages: [{ role: 'system', content: SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.math }, ...messages],
+    stream: true,
+    temperature: 0.3,
+    max_tokens: 2048,
+  }
+  if (model) {
+    body.model = model
+  } else {
+    body.models = models
+  }
+
+  return fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://algegram.xyz',
+      'X-Title': 'Algegram',
+    },
+    body: JSON.stringify(body),
+  })
+}
+
 export async function POST(req: NextRequest) {
-  // 1. Auth check — guests allowed for first 5 questions
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Guest path: trust client-reported count (header), block at limit
   if (!user) {
     const guestCount = parseInt(req.headers.get('x-guest-count') || '0', 10)
     if (guestCount >= GUEST_LIMIT) {
@@ -23,33 +59,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Allow guest — skip DB tracking, use free model
     const body = await req.json()
     const { messages, mode } = body
 
-    const systemPrompts: Record<string, string> = {
-      math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.`,
-      graph: `You are Algegram. Describe and render functions with LaTeX. Wrap math in $...$ and $$...$$. `,
-      explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$...$$. `,
-      check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$. `,
-    }
-
-    const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://algegram.xyz',
-        'X-Title': 'Algegram',
-      },
-      body: JSON.stringify({
-        model: FREE_MODEL,
-        messages: [{ role: 'system', content: systemPrompts[mode] || systemPrompts.math }, ...messages],
-        stream: true,
-        temperature: 0.3,
-        max_tokens: 2048,
-      }),
-    })
+    const orRes = await callOpenRouter(FREE_MODELS, undefined, messages, mode)
 
     if (!orRes.ok) {
       const errText = await orRes.text()
@@ -71,7 +84,6 @@ export async function POST(req: NextRequest) {
 
   const db = createServiceClient()
 
-  // 2. Get subscription
   const { data: sub } = await db
     .from('subscriptions')
     .select('plan, status')
@@ -80,7 +92,6 @@ export async function POST(req: NextRequest) {
 
   const isPro = sub?.plan === 'pro' && sub?.status === 'active'
 
-  // 3. Rate limit free users
   if (!isPro) {
     const today = new Date().toISOString().split('T')[0]
     const { data: usage } = await db
@@ -98,54 +109,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Upsert usage
     await db.from('usage').upsert(
       { user_id: user.id, day: today, count: count + 1 },
       { onConflict: 'user_id,day' }
     )
   }
 
-  // 4. Parse request
   const body = await req.json()
   const { messages, model: requestedModel, mode } = body
 
-  // Model selection — free users locked to free models
-  let model = FREE_MODEL
-  if (isPro) {
-    model = requestedModel || PRO_DEFAULT_MODEL
-  }
+  const model = isPro ? (requestedModel || PRO_DEFAULT_MODEL) : undefined
+  const models = isPro ? undefined : FREE_MODELS
 
-  // Build system prompt based on mode
-  const systemPrompts: Record<string, string> = {
-    math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations.
-Wrap all LaTeX math in $...$ for inline and $$...$$ for display. Show your working clearly.`,
-    graph: `You are Algegram. When asked to graph or plot functions, describe the function and provide the equation clearly.
-Then render LaTeX. Wrap math in $...$ for inline and $$...$$ for display.`,
-    explain: `You are Algegram. Explain mathematical concepts clearly for students.
-Use analogies, examples, and visuals where helpful. Wrap math in $...$ for inline, $$...$$ for display.`,
-    check: `You are Algegram. Check the user's math work. Identify any errors with precise explanations.
-Wrap math in $...$ for inline, $$...$$ for display.`,
-  }
-
-  const systemPrompt = systemPrompts[mode] || systemPrompts.math
-
-  // 5. Stream from OpenRouter
-  const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://algegram.xyz',
-      'X-Title': 'Algegram',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'system', content: systemPrompt }, ...messages],
-      stream: true,
-      temperature: 0.3,
-      max_tokens: 2048,
-    }),
-  })
+  const orRes = await callOpenRouter(models || FREE_MODELS, model, messages, mode)
 
   if (!orRes.ok) {
     const err = await orRes.text()
@@ -153,7 +129,6 @@ Wrap math in $...$ for inline, $$...$$ for display.`,
     return NextResponse.json({ error: `AI error: ${err}` }, { status: 502 })
   }
 
-  // Pass through the stream with usage headers
   const headers = new Headers()
   headers.set('Content-Type', 'text/event-stream')
   headers.set('Cache-Control', 'no-cache')
