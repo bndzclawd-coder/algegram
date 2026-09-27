@@ -14,11 +14,12 @@ function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const next = params.get('next') || '/chat'
-  const supabase = createClient()
+  const [supabase] = useState(() => typeof window === 'undefined' ? null : createClient())
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
+    if (!supabase) return
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError(error.message); setLoading(false) }
     else router.push(next)

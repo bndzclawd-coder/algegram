@@ -15,11 +15,12 @@ function SignupForm() {
   const router = useRouter()
   const params = useSearchParams()
   const plan = params.get('plan')
-  const supabase = createClient()
+  const [supabase] = useState(() => typeof window === 'undefined' ? null : createClient())
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
+    if (!supabase) return
     const { error } = await supabase.auth.signUp({
       email, password,
       options: { emailRedirectTo: `${location.origin}/chat` }

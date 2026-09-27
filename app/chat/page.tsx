@@ -140,16 +140,18 @@ function ChatInner() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const supabase = createClient()
+  // Guard: only create client in browser (env vars aren't available during build SSR)
+  const [supabase] = useState(() => typeof window === 'undefined' ? null : createClient())
   useMathRenderer()
 
   useEffect(() => {
+    if (!supabase) return
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) router.push('/auth/login')
       else setUser(data.user)
     })
     fetchUsage()
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -227,7 +229,7 @@ function ChatInner() {
   }
 
   async function signOut() {
-    await supabase.auth.signOut()
+    if (supabase) await supabase.auth.signOut()
     router.push('/')
   }
 
