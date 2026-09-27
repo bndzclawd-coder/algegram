@@ -2,11 +2,11 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Algegram — Get the gram on any math problem 📐',
-  description: 'Get the gram on any math problem! Step-by-step AI help with fractions, algebra, geometry, calculus & more.
+  title: 'Algegram - AI Math Tutor for Kids & Students',
+  description: 'Get the gram on any math problem! Step-by-step AI help with fractions, algebra, geometry, calculus and more.',
   openGraph: {
-    title: 'Algegram — Get the gram on any math problem 📐',
-    description: 'Solve any math problem instantly with AI.',
+    title: 'Algegram - AI Math Tutor for Kids & Students',
+    description: 'Solve any math problem instantly with AI. Step-by-step solutions for students of all ages.',
     type: 'website',
   },
 }
