@@ -46,7 +46,15 @@ function MessageBubble({ msg }: { msg: Message }) {
   while ((m = dRe.exec(remaining)) !== null)
     allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: true })
   const iRe = /\$(?!\$)((?:[^$\\]|\\.)*?)\$/g
+  const bracketRe = /\\\[([\s\S]*?)\\\]/g
+  while ((m = bracketRe.exec(remaining)) !== null)
+    allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: true })
   while ((m = iRe.exec(remaining)) !== null) {
+    const overlap = allMatches.some(d => m!.index >= d.idx && m!.index < d.end)
+    if (!overlap) allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: false })
+  }
+  const parenRe = /\\\([\s\S]*?\\\)/g
+  while ((m = parenRe.exec(remaining)) !== null) {
     const overlap = allMatches.some(d => m!.index >= d.idx && m!.index < d.end)
     if (!overlap) allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: false })
   }
