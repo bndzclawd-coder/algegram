@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0f0f13;
+  --surface: #17171f;
+  --border: #2a2a38;
+  --text: #e8e8f0;
+  --text-dim: #6b6b80;
+  --accent: #6c63ff;
+  --accent2: #a78bfa;
+  --green: #34d399;
+  --red: #f87171;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+}
+
+/* KaTeX overrides */
+.katex { font-size: 1.05em !important; }
+.katex-display { overflow-x: auto; padding: 0.5rem 0; }
+
+/* Code blocks */
+pre, code { font-family: 'JetBrains Mono', monospace; }
