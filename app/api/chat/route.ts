@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/stripe'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay  // 20
-const FREE_MODEL = 'google/gemma-2-9b-it:free'
+const FREE_MODEL = 'google/gemma-4-31b-it:free'
 const PRO_DEFAULT_MODEL = 'qwen/qwen3-14b'
 const GUEST_LIMIT = 5
 
