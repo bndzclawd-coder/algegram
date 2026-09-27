@@ -4,9 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/stripe'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay  // 20
-const FREE_MODEL = 'qwen/qwen3-8b:free'
+const FREE_MODEL = 'meta-llama/llama-3.1-8b-instruct:free'
 const PRO_DEFAULT_MODEL = 'qwen/qwen3-14b'
-
 const GUEST_LIMIT = 5
 
 export async function POST(req: NextRequest) {
@@ -23,15 +22,18 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       )
     }
+
     // Allow guest — skip DB tracking, use free model
     const body = await req.json()
     const { messages, mode } = body
+
     const systemPrompts: Record<string, string> = {
       math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.`,
       graph: `You are Algegram. Describe and render functions with LaTeX. Wrap math in $...$ and $$...$$. `,
-      explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$$...$$$.`,
+      explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$...$$. `,
       check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$. `,
     }
+
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -43,11 +45,28 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: FREE_MODEL,
         messages: [{ role: 'system', content: systemPrompts[mode] || systemPrompts.math }, ...messages],
-        stream: true, temperature: 0.3, max_tokens: 2048,
+        stream: true,
+        temperature: 0.3,
+        max_tokens: 2048,
       }),
     })
-    if (!orRes.ok) return NextResponse.json({ error: 'AI error' }, { status: 502 })
-    return new NextResponse(orRes.body, { status: 200, headers: { 'X-Plan': 'guest', 'X-Guest-Used': String(guestCount + 1), 'X-Guest-Limit': String(GUEST_LIMIT) } })
+
+    if (!orRes.ok) {
+      const errText = await orRes.text()
+      console.error('OpenRouter guest error:', orRes.status, errText)
+      return NextResponse.json({ error: 'AI error', detail: errText }, { status: 502 })
+    }
+
+    return new NextResponse(orRes.body, {
+      status: 200,
+      headers: {
+        'X-Plan': 'guest',
+        'X-Guest-Used': String(guestCount + 1),
+        'X-Guest-Limit': String(GUEST_LIMIT),
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+      }
+    })
   }
 
   const db = createServiceClient()
@@ -116,7 +135,7 @@ Wrap math in $...$ for inline, $$...$$ for display.`,
     headers: {
       'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://algegram.app',
+      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://algegram.xyz',
       'X-Title': 'Algegram',
     },
     body: JSON.stringify({
@@ -130,22 +149,21 @@ Wrap math in $...$ for inline, $$...$$ for display.`,
 
   if (!orRes.ok) {
     const err = await orRes.text()
+    console.error('OpenRouter error:', orRes.status, err)
     return NextResponse.json({ error: `AI error: ${err}` }, { status: 502 })
   }
 
   // Pass through the stream with usage headers
-  const headers = new Headers(orRes.headers)
+  const headers = new Headers()
+  headers.set('Content-Type', 'text/event-stream')
+  headers.set('Cache-Control', 'no-cache')
   headers.set('X-Plan', isPro ? 'pro' : 'free')
   if (!isPro) {
-    // Re-fetch count for accurate remaining display
     const today = new Date().toISOString().split('T')[0]
     const { data: usage } = await db.from('usage').select('count').eq('user_id', user.id).eq('day', today).single()
     headers.set('X-Messages-Used', String(usage?.count ?? 1))
     headers.set('X-Messages-Limit', String(FREE_LIMIT))
   }
 
-  return new NextResponse(orRes.body, {
-    status: 200,
-    headers,
-  })
+  return new NextResponse(orRes.body, { status: 200, headers })
 }
