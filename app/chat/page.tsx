@@ -129,6 +129,34 @@ function UpgradeWatcher({ onUpgraded }: { onUpgraded: () => void }) {
   return null
 }
 
+const GUEST_LIMIT = 5
+const GUEST_KEY = 'algegram_guest_count'
+
+function SignupWall({ onClose }: { onClose: () => void }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '20px', padding: '2.5rem', maxWidth: 420, width: '100%', textAlign: 'center' }}>
+        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎉</div>
+        <h2 style={{ fontWeight: 800, fontSize: '1.4rem', marginBottom: '0.5rem' }}>You've used your 5 free questions!</h2>
+        <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '1.75rem', fontSize: '0.9rem' }}>
+          Sign up free to get <strong style={{ color: 'var(--text)' }}>20 questions/day</strong>, or go Pro for unlimited math tutoring.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <a href="/auth/signup" style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>
+            Create free account →
+          </a>
+          <a href="/auth/login" style={{ display: 'block', background: 'rgba(255,255,255,.05)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.75rem', borderRadius: '12px', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
+            Sign in
+          </a>
+        </div>
+        <button onClick={onClose} style={{ marginTop: '1rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.8rem', cursor: 'pointer' }}>
+          Maybe later
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ChatInner() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -137,6 +165,8 @@ function ChatInner() {
   const [streaming, setStreaming] = useState(false)
   const [usage, setUsage] = useState<Usage | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [guestCount, setGuestCount] = useState(0)
+  const [showSignupWall, setShowSignupWall] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -147,10 +177,16 @@ function ChatInner() {
   useEffect(() => {
     if (!supabase) return
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push('/auth/login')
-      else setUser(data.user)
+      if (data.user) {
+        setUser(data.user)
+        fetchUsage()
+      } else {
+        // Guest mode — load count from localStorage
+        const stored = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
+        setGuestCount(stored)
+        if (stored >= GUEST_LIMIT) setShowSignupWall(true)
+      }
     })
-    fetchUsage()
   }, [supabase])
 
   useEffect(() => {
@@ -167,23 +203,51 @@ function ChatInner() {
   const send = useCallback(async () => {
     const text = input.trim()
     if (!text || streaming) return
+
+    // Guest gate
+    if (!user) {
+      const currentCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
+      if (currentCount >= GUEST_LIMIT) {
+        setShowSignupWall(true)
+        return
+      }
+    }
+
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
     setStreaming(true)
 
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (!user) {
+      const currentCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
+      headers['x-guest-count'] = String(currentCount)
+    }
+
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ messages: newMessages, model, mode }),
     })
 
     if (!res.ok) {
       const err = await res.json()
+      if (err.signup) {
+        setShowSignupWall(true)
+        setStreaming(false)
+        return
+      }
       setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}${err.upgrade ? '\n\n[Upgrade to Pro →](/pricing)' : ''}` }])
       setStreaming(false)
       fetchUsage()
       return
+    }
+
+    // Increment guest counter after successful request
+    if (!user) {
+      const newCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10) + 1
+      localStorage.setItem(GUEST_KEY, String(newCount))
+      setGuestCount(newCount)
     }
 
     // Read stream
@@ -238,6 +302,7 @@ function ChatInner() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden' }}>
+      {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} />}
       <Suspense fallback={null}><UpgradeWatcher onUpgraded={fetchUsage} /></Suspense>
       {/* Sidebar */}
       <aside style={{ width: 240, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
@@ -274,7 +339,17 @@ function ChatInner() {
 
         {/* Usage / upgrade */}
         <div style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
-          {isPro ? (
+          {!user ? (
+            <div style={{ marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.35rem' }}>
+                <span>Free questions</span>
+                <span>{guestCount}/{GUEST_LIMIT}</span>
+              </div>
+              <div style={{ height: 4, background: 'var(--border)', borderRadius: 99 }}>
+                <div style={{ height: '100%', width: `${Math.min(100, (guestCount / GUEST_LIMIT) * 100)}%`, background: guestCount >= GUEST_LIMIT ? 'var(--red)' : 'var(--accent)', borderRadius: 99, transition: 'width .3s' }} />
+              </div>
+            </div>
+          ) : isPro ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro Plan</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '2px' }}>Unlimited messages</div>
@@ -294,8 +369,16 @@ function ChatInner() {
               </button>
             </div>
           )}
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
-          <button onClick={signOut} style={{ marginTop: '0.4rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}>Sign out</button>
+          {user ? (
+            <>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
+              <button onClick={signOut} style={{ marginTop: '0.4rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}>Sign out</button>
+            </>
+          ) : (
+            <a href="/auth/signup" style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.55rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', textDecoration: 'none' }}>
+              Sign up free →
+            </a>
+          )}
         </div>
       </aside>
 

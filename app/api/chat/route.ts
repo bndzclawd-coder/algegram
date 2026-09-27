@@ -7,11 +7,48 @@ const FREE_LIMIT = PLANS.free.messagesPerDay  // 20
 const FREE_MODEL = 'qwen/qwen3-8b:free'
 const PRO_DEFAULT_MODEL = 'qwen/qwen3-14b'
 
+const GUEST_LIMIT = 5
+
 export async function POST(req: NextRequest) {
-  // 1. Auth check
+  // 1. Auth check — guests allowed for first 5 questions
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Guest path: trust client-reported count (header), block at limit
+  if (!user) {
+    const guestCount = parseInt(req.headers.get('x-guest-count') || '0', 10)
+    if (guestCount >= GUEST_LIMIT) {
+      return NextResponse.json(
+        { error: 'Sign up free to keep solving — no credit card needed.', signup: true },
+        { status: 401 }
+      )
+    }
+    // Allow guest — skip DB tracking, use free model
+    const body = await req.json()
+    const { messages, mode } = body
+    const systemPrompts: Record<string, string> = {
+      math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.`,
+      graph: `You are Algegram. Describe and render functions with LaTeX. Wrap math in $...$ and $$...$$. `,
+      explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$$...$$$.`,
+      check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$. `,
+    }
+    const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://algegram.xyz',
+        'X-Title': 'Algegram',
+      },
+      body: JSON.stringify({
+        model: FREE_MODEL,
+        messages: [{ role: 'system', content: systemPrompts[mode] || systemPrompts.math }, ...messages],
+        stream: true, temperature: 0.3, max_tokens: 2048,
+      }),
+    })
+    if (!orRes.ok) return NextResponse.json({ error: 'AI error' }, { status: 502 })
+    return new NextResponse(orRes.body, { status: 200, headers: { 'X-Plan': 'guest', 'X-Guest-Used': String(guestCount + 1), 'X-Guest-Limit': String(GUEST_LIMIT) } })
+  }
 
   const db = createServiceClient()
 
