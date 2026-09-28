@@ -25,14 +25,6 @@ const PRO_MODELS = [
   { id: 'deepseek/deepseek-r1', label: 'DeepSeek R1' },
 ]
 
-function renderMath(text: string): string {
-  // Simple safe renderer — KaTeX rendering happens client-side via useEffect
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-}
-
 // KaTeX renderer hook
 function useMathRenderer() {
   useEffect(() => {
@@ -57,17 +49,9 @@ function useMathRenderer() {
 
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user'
-
-  // Parse math segments
   const parts: { type: 'text' | 'math-inline' | 'math-display'; content: string }[] = []
   let remaining = msg.content
-  const displayRe = /\$\$([\s\S]*?)\$\$/g
-  const inlineRe = /\$((?:[^$\\]|\\.)*?)\$/g
-
-  // Simple split by $$ first, then $
-  let lastIdx = 0
   const allMatches: { idx: number; end: number; raw: string; display: boolean }[] = []
-
   let m
   const dRe = /\$\$([\s\S]*?)\$\$/g
   while ((m = dRe.exec(remaining)) !== null) {
@@ -75,12 +59,10 @@ function MessageBubble({ msg }: { msg: Message }) {
   }
   const iRe = /\$(?!\$)((?:[^$\\]|\\.)*?)\$/g
   while ((m = iRe.exec(remaining)) !== null) {
-    // Skip if overlaps with display match
     const overlap = allMatches.some(d => m!.index >= d.idx && m!.index < d.end)
     if (!overlap) allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: false })
   }
   allMatches.sort((a, b) => a.idx - b.idx)
-
   let cursor = 0
   for (const match of allMatches) {
     if (match.idx > cursor) parts.push({ type: 'text', content: remaining.slice(cursor, match.idx) })
@@ -167,11 +149,13 @@ function ChatInner() {
   const [user, setUser] = useState<any>(null)
   const [guestCount, setGuestCount] = useState(0)
   const [showSignupWall, setShowSignupWall] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  // Guard: only create client in browser (env vars aren't available during build SSR)
+
   const [supabase] = useState(() => typeof window === 'undefined' ? null : createClient())
+
   useMathRenderer()
 
   useEffect(() => {
@@ -181,7 +165,6 @@ function ChatInner() {
         setUser(data.user)
         fetchUsage()
       } else {
-        // Guest mode — load count from localStorage
         const stored = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
         setGuestCount(stored)
         if (stored >= GUEST_LIMIT) setShowSignupWall(true)
@@ -203,8 +186,6 @@ function ChatInner() {
   const send = useCallback(async () => {
     const text = input.trim()
     if (!text || streaming) return
-
-    // Guest gate
     if (!user) {
       const currentCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
       if (currentCount >= GUEST_LIMIT) {
@@ -212,7 +193,6 @@ function ChatInner() {
         return
       }
     }
-
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
@@ -243,21 +223,17 @@ function ChatInner() {
       return
     }
 
-    // Increment guest counter after successful request
     if (!user) {
       const newCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10) + 1
       localStorage.setItem(GUEST_KEY, String(newCount))
       setGuestCount(newCount)
     }
 
-    // Read stream
     const reader = res.body!.getReader()
     const dec = new TextDecoder()
     let buf = ''
     let assistantMsg = ''
-
     setMessages(m => [...m, { role: 'assistant', content: '' }])
-
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
@@ -281,7 +257,6 @@ function ChatInner() {
         } catch {}
       }
     }
-
     setStreaming(false)
     fetchUsage()
   }, [input, streaming, messages, model, mode])
@@ -301,22 +276,41 @@ function ChatInner() {
   const usagePercent = usage?.limit ? Math.min(100, ((usage.used / usage.limit) * 100)) : 0
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden', position: 'relative' }}>
       {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} />}
       <Suspense fallback={null}><UpgradeWatcher onUpgraded={fetchUsage} /></Suspense>
+
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 40 }}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside style={{ width: 240, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--border)' }}>
+      <aside className={`chat-sidebar${sidebarOpen ? ' open' : ''}`} style={{ width: 240, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" style={{ fontWeight: 800, fontSize: '1.1rem', background: 'linear-gradient(135deg,#6c63ff,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
             Algegram
           </Link>
+          {/* Close button — only visible on mobile */}
+          <button
+            className="sidebar-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '1.2rem', cursor: 'pointer', lineHeight: 1, padding: '0.25rem' }}
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
         </div>
 
         {/* Mode selector */}
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.6rem' }}>Mode</div>
           {MODES.map(m => (
-            <button key={m.id} onClick={() => setMode(m.id)}
+            <button key={m.id} onClick={() => { setMode(m.id); setSidebarOpen(false) }}
               style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: 'none', cursor: 'pointer', marginBottom: '2px', textAlign: 'left', fontSize: '0.875rem', fontWeight: mode === m.id ? 600 : 400, background: mode === m.id ? 'rgba(108,99,255,.2)' : 'transparent', color: mode === m.id ? 'var(--accent2)' : 'var(--text-dim)' }}>
               <span style={{ fontSize: '1rem' }}>{m.icon}</span> {m.label}
             </button>
@@ -383,17 +377,26 @@ function ChatInner() {
       </aside>
 
       {/* Chat area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
         {/* Top bar */}
-        <div style={{ height: 52, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 1.5rem', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div style={{ fontSize: '0.875rem', color: 'var(--text-dim)' }}>
+        <div style={{ height: 52, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', padding: '0 1rem', justifyContent: 'space-between', flexShrink: 0 }}>
+          {/* Hamburger button — visible on mobile */}
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => setSidebarOpen(true)}
+            style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: '1.25rem', cursor: 'pointer', padding: '0.25rem 0.5rem 0.25rem 0', lineHeight: 1, flexShrink: 0 }}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+          <div style={{ fontSize: '0.875rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
             {MODES.find(m => m.id === mode)?.hint}
           </div>
-          {isPro && <span style={{ fontSize: '0.75rem', background: 'rgba(108,99,255,.15)', border: '1px solid rgba(108,99,255,.3)', color: 'var(--accent2)', padding: '0.2rem 0.6rem', borderRadius: '999px' }}>Pro</span>}
+          {isPro && <span style={{ fontSize: '0.75rem', background: 'rgba(108,99,255,.15)', border: '1px solid rgba(108,99,255,.3)', color: 'var(--accent2)', padding: '0.2rem 0.6rem', borderRadius: '999px', flexShrink: 0 }}>Pro</span>}
         </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1rem 0.5rem' }}>
           {messages.length === 0 && (
             <div style={{ textAlign: 'center', paddingTop: '4rem', color: 'var(--text-dim)' }}>
               <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>∫</div>
@@ -421,14 +424,14 @@ function ChatInner() {
         </div>
 
         {/* Input */}
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border)' }}>
+        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: '14px', padding: '0.75rem 1rem' }}>
             <textarea
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-              placeholder="Type any math problem… Algegram's got it 📐 (Shift+Enter for new line)"
+              placeholder="Type any math problem… 📐 (Shift+Enter for new line)"
               rows={1}
               style={{ flex: 1, background: 'none', border: 'none', outline: 'none', resize: 'none', color: 'var(--text)', fontSize: '0.925rem', lineHeight: 1.6, maxHeight: 160, overflowY: 'auto', fontFamily: 'inherit' }}
             />
@@ -452,6 +455,45 @@ function ChatInner() {
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+        /* Sidebar: hidden on mobile, visible on desktop */
+        .chat-sidebar {
+          position: static;
+          z-index: auto;
+        }
+        .sidebar-toggle-btn {
+          display: none;
+        }
+        .sidebar-close-btn {
+          display: none;
+        }
+        .sidebar-backdrop {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          .chat-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 50;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+          }
+          .chat-sidebar.open {
+            transform: translateX(0);
+          }
+          .sidebar-toggle-btn {
+            display: block;
+          }
+          .sidebar-close-btn {
+            display: block;
+          }
+          .sidebar-backdrop {
+            display: block;
+          }
+        }
       `}</style>
     </div>
   )
