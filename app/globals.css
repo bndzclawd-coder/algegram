@@ -28,3 +28,38 @@ body {
 
 /* Code blocks */
 pre, code { font-family: 'JetBrains Mono', monospace; }
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  /* Reduce hero top padding on mobile */
+  .hero-section {
+    padding-top: 2rem !important;
+  }
+
+  /* Input bottom row: stack on very small screens */
+  .input-bottom-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+
+  .input-bottom-row .send-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Prevent horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Message bubbles — slightly more width on mobile */
+  .msg-bubble {
+    max-width: 92% !important;
+  }
+
+  /* Pricing h1 */
+  .pricing-h1 {
+    font-size: clamp(1.6rem, 6vw, 2.5rem) !important;
+  }
+}
