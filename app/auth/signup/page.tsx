@@ -23,7 +23,7 @@ function SignupForm() {
     if (!supabase) return
     const { error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: `${location.origin}/chat` }
+      options: { emailRedirectTo: `${location.origin}/auth/callback?next=/chat` }
     })
     if (error) { setError(error.message); setLoading(false) }
     else {
