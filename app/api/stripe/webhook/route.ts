@@ -17,16 +17,36 @@ export async function POST(req: NextRequest) {
   const db = createServiceClient()
 
   switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      if (session.mode !== 'subscription') break
+      const subId = session.subscription as string
+      const custId = session.customer as string
+      if (!subId) break
+      // Fetch the subscription to get metadata + status
+      const sub = await stripe.subscriptions.retrieve(subId)
+      const userId = sub.metadata.supabase_user_id
+      if (!userId) break
+      await db.from('subscriptions').upsert({
+        user_id: userId,
+        stripe_customer_id: custId,
+        stripe_subscription_id: subId,
+        plan: sub.status === 'active' || sub.status === 'trialing' ? 'pro' : 'free',
+        status: sub.status,
+        current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+      }, { onConflict: 'user_id' })
+      break
+    }
+
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription
       const userId = sub.metadata.supabase_user_id
       if (!userId) break
-
       await db.from('subscriptions').upsert({
         user_id: userId,
         stripe_subscription_id: sub.id,
-        plan: sub.status === 'active' ? 'pro' : 'free',
+        plan: sub.status === 'active' || sub.status === 'trialing' ? 'pro' : 'free',
         status: sub.status,
         current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
       }, { onConflict: 'user_id' })
@@ -37,7 +57,6 @@ export async function POST(req: NextRequest) {
       const sub = event.data.object as Stripe.Subscription
       const userId = sub.metadata.supabase_user_id
       if (!userId) break
-
       await db.from('subscriptions').update({
         plan: 'free',
         status: 'canceled',

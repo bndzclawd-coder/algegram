@@ -4,13 +4,11 @@ import { createClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/stripe'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
-// Multiple free models as fallback — OpenRouter picks first available
-const FREE_MODELS = [
-  'qwen/qwen3.8-27b:free',
-  'google/gemma-4-31b-it:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  
-]
+
+// Guest questions are not stored or logged
+// Low-cost, accurate math model for guests and free users
+const FREE_MODEL = 'google/gemini-flash-1.5'
+
 const PRO_DEFAULT_MODEL = 'qwen/qwen3-14b'
 const GUEST_LIMIT = 5
 
@@ -21,17 +19,15 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$.`,
 }
 
-async function callOpenRouter(models: string[], model: string | undefined, messages: object[], mode: string) {
+async function callOpenRouter(model: string, messages: object[], mode: string) {
   const body: Record<string, unknown> = {
+    model,
     messages: [{ role: 'system', content: SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.math }, ...messages],
     stream: true,
     temperature: 0.3,
     max_tokens: 2048,
-  }
-  if (model) {
-    body.model = model
-  } else {
-    body.models = models
+    // Prevent AI provider from using queries for training
+    provider: { data_collection: 'deny' },
   }
 
   return fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -51,31 +47,25 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    const guestCount = parseInt(req.headers.get('x-guest-count') || '0', 10)
-    if (guestCount >= GUEST_LIMIT) {
-      return NextResponse.json(
-        { error: 'Sign up free to keep solving — no credit card needed.', signup: true },
-        { status: 401 }
-      )
-    }
-
+    // Guest questions are not stored or logged
+    // Guest: use server-side counter (checked by /api/guest-limit before reaching here)
     const body = await req.json()
     const { messages, mode } = body
 
-    const orRes = await callOpenRouter(FREE_MODELS, undefined, messages, mode)
+    // For guests: do NOT include conversation history — send only the latest user message
+    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')
+    const guestMessages = lastUserMsg ? [lastUserMsg] : messages.slice(-1)
 
+    const orRes = await callOpenRouter(FREE_MODEL, guestMessages, mode || 'math')
     if (!orRes.ok) {
       const errText = await orRes.text()
       console.error('OpenRouter guest error:', orRes.status, errText)
       return NextResponse.json({ error: 'AI error', detail: errText }, { status: 502 })
     }
-
     return new NextResponse(orRes.body, {
       status: 200,
       headers: {
         'X-Plan': 'guest',
-        'X-Guest-Used': String(guestCount + 1),
-        'X-Guest-Limit': String(GUEST_LIMIT),
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
       }
@@ -83,14 +73,13 @@ export async function POST(req: NextRequest) {
   }
 
   const db = createServiceClient()
-
   const { data: sub } = await db
     .from('subscriptions')
     .select('plan, status')
     .eq('user_id', user.id)
     .single()
 
-  const isPro = sub?.plan === 'pro' && sub?.status === 'active'
+  const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing')
 
   if (!isPro) {
     const today = new Date().toISOString().split('T')[0]
@@ -100,7 +89,6 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .eq('day', today)
       .single()
-
     const count = usage?.count ?? 0
     if (count >= FREE_LIMIT) {
       return NextResponse.json(
@@ -108,7 +96,6 @@ export async function POST(req: NextRequest) {
         { status: 429 }
       )
     }
-
     await db.from('usage').upsert(
       { user_id: user.id, day: today, count: count + 1 },
       { onConflict: 'user_id,day' }
@@ -117,12 +104,9 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const { messages, model: requestedModel, mode } = body
+  const model = isPro ? (requestedModel || PRO_DEFAULT_MODEL) : FREE_MODEL
 
-  const model = isPro ? (requestedModel || PRO_DEFAULT_MODEL) : undefined
-  const models = isPro ? undefined : FREE_MODELS
-
-  const orRes = await callOpenRouter(models || FREE_MODELS, model, messages, mode)
-
+  const orRes = await callOpenRouter(model, messages, mode || 'math')
   if (!orRes.ok) {
     const err = await orRes.text()
     console.error('OpenRouter error:', orRes.status, err)
@@ -133,6 +117,7 @@ export async function POST(req: NextRequest) {
   headers.set('Content-Type', 'text/event-stream')
   headers.set('Cache-Control', 'no-cache')
   headers.set('X-Plan', isPro ? 'pro' : 'free')
+
   if (!isPro) {
     const today = new Date().toISOString().split('T')[0]
     const { data: usage } = await db.from('usage').select('count').eq('user_id', user.id).eq('day', today).single()

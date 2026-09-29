@@ -7,7 +7,7 @@ export const PLANS = {
     name: 'Free',
     price: 0,
     messagesPerDay: 20,
-    models: ['qwen/qwen3-8b:free', 'meta-llama/llama-3.1-8b-instruct:free'],
+    models: ['google/gemini-flash-1.5'],
     features: [
       '20 messages per day',
       'Algebra & calculus help',
