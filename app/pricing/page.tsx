@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { PLANS } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/client'
-import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Pricing — Algegram',
