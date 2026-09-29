@@ -25,18 +25,36 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  if (!user) {
+    const pathname = request.nextUrl.pathname
+    const isApiRoute = pathname.startsWith('/api/')
 
-  // Protect /chat route — redirect unauthenticated users to login
-  if (!user && request.nextUrl.pathname.startsWith('/chat')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    url.searchParams.set('next', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
+    if (
+      pathname.startsWith('/chat') ||
+      pathname.startsWith('/settings') ||
+      pathname === '/api/stripe/portal' ||
+      pathname === '/api/account/delete'
+    ) {
+      if (isApiRoute) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      url.searchParams.set('next', pathname)
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/chat/:path*'],
+  matcher: [
+    '/chat',
+    '/chat/:path*',
+    '/settings',
+    '/settings/:path*',
+    '/api/stripe/portal',
+    '/api/account/delete',
+  ],
 }

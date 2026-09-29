@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import 'katex/dist/katex.min.css'
+import KaTeXRenderer from '@/app/components/KaTeXRenderer'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.algegram.xyz'),
@@ -32,7 +33,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <KaTeXRenderer />
+        {children}
+      </body>
     </html>
   )
 }

@@ -111,8 +111,6 @@ function UpgradeWatcher({ onUpgraded }: { onUpgraded: () => void }) {
   return null
 }
 
-const GUEST_LIMIT = 5
-const GUEST_KEY = 'algegram_guest_count'
 
 function SignupWall({ onClose }: { onClose: () => void }) {
   return (
@@ -147,7 +145,6 @@ function ChatInner() {
   const [streaming, setStreaming] = useState(false)
   const [usage, setUsage] = useState<Usage | null>(null)
   const [user, setUser] = useState<any>(null)
-  const [guestCount, setGuestCount] = useState(0)
   const [showSignupWall, setShowSignupWall] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -164,10 +161,6 @@ function ChatInner() {
       if (data.user) {
         setUser(data.user)
         fetchUsage()
-      } else {
-        const stored = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
-        setGuestCount(stored)
-        if (stored >= GUEST_LIMIT) setShowSignupWall(true)
       }
     })
   }, [supabase])
@@ -186,23 +179,12 @@ function ChatInner() {
   const send = useCallback(async () => {
     const text = input.trim()
     if (!text || streaming) return
-    if (!user) {
-      const currentCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
-      if (currentCount >= GUEST_LIMIT) {
-        setShowSignupWall(true)
-        return
-      }
-    }
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
     setStreaming(true)
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (!user) {
-      const currentCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10)
-      headers['x-guest-count'] = String(currentCount)
-    }
 
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -223,11 +205,6 @@ function ChatInner() {
       return
     }
 
-    if (!user) {
-      const newCount = parseInt(localStorage.getItem(GUEST_KEY) || '0', 10) + 1
-      localStorage.setItem(GUEST_KEY, String(newCount))
-      setGuestCount(newCount)
-    }
 
     const reader = res.body!.getReader()
     const dec = new TextDecoder()
@@ -333,22 +310,7 @@ function ChatInner() {
 
         {/* Usage / upgrade */}
         <div style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
-          {!user ? (
-            <div style={{ marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.35rem' }}>
-                <span>Free questions</span>
-                <span>{guestCount}/{GUEST_LIMIT}</span>
-              </div>
-              <div style={{ height: 4, background: 'var(--border)', borderRadius: 99 }}>
-                <div style={{ height: '100%', width: `${Math.min(100, (guestCount / GUEST_LIMIT) * 100)}%`, background: guestCount >= GUEST_LIMIT ? 'var(--red)' : 'var(--accent)', borderRadius: 99, transition: 'width .3s' }} />
-              </div>
-            </div>
-          ) : isPro ? (
-            <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro Plan</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '2px' }}>Unlimited messages</div>
-            </div>
-          ) : (
+          {isPro ? (
             <div style={{ marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.35rem' }}>
                 <span>Daily messages</span>
