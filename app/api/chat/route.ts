@@ -6,8 +6,8 @@ import { createHmac } from 'crypto'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
 
-const FREE_MODEL = 'qwen/qwen3-8b:free'
-const PRO_DEFAULT_MODEL = 'qwen/qwen3-14b'
+const FREE_MODEL = 'qwen/qwen3.7-plus'
+const PRO_DEFAULT_MODEL = 'qwen/qwen3.7-plus'
 const GUEST_LIMIT = 5
 
 const SYSTEM_PROMPTS: Record<string, string> = {

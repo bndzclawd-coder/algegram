@@ -18,10 +18,10 @@ const MODES: { id: Mode; label: string; icon: string; hint: string }[] = [
 ]
 
 const PRO_MODELS = [
-  { id: 'qwen/qwen3-14b', label: 'Qwen3-14B' },
+  { id: 'qwen/qwen3.7-plus', label: 'Qwen3-14B' },
   { id: 'openai/gpt-4o', label: 'GPT-4o' },
   { id: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet' },
-  { id: 'google/gemini-2.0-flash-001', label: 'Gemini Flash' },
+  { id: 'google/gemini-2.5-flash', label: 'Gemini Flash' },
   { id: 'deepseek/deepseek-r1', label: 'DeepSeek R1' },
 ]
 
@@ -141,7 +141,7 @@ function ChatInner() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<Mode>('math')
-  const [model, setModel] = useState('qwen/qwen3-14b')
+  const [model, setModel] = useState('qwen/qwen3.7-plus')
   const [streaming, setStreaming] = useState(false)
   const [usage, setUsage] = useState<Usage | null>(null)
   const [user, setUser] = useState<any>(null)
