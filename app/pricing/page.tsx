@@ -5,11 +5,6 @@ import { useRouter } from 'next/navigation'
 import { PLANS } from '@/lib/stripe'
 import { createClient } from '@/lib/supabase/client'
 
-export const metadata: Metadata = {
-  title: 'Pricing — Algegram',
-  description: 'Start free, upgrade to Pro for unlimited AI math tutoring. 7-day free trial. Cancel anytime.',
-  alternates: { canonical: 'https://www.algegram.xyz/pricing' },
-}
 
 export default function Pricing() {
   const [loading, setLoading] = useState(false)
