@@ -311,6 +311,11 @@ function ChatInner() {
         {/* Usage / upgrade */}
         <div style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
           {isPro ? (
+            <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro Plan</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '2px' }}>Unlimited messages</div>
+            </div>
+          ) : (
             <div style={{ marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.35rem' }}>
                 <span>Daily messages</span>
@@ -319,10 +324,12 @@ function ChatInner() {
               <div style={{ height: 4, background: 'var(--border)', borderRadius: 99 }}>
                 <div style={{ height: '100%', width: `${usagePercent}%`, background: usagePercent > 80 ? 'var(--red)' : 'var(--accent)', borderRadius: 99, transition: 'width .3s' }} />
               </div>
-              <button onClick={upgradeToPro}
-                style={{ marginTop: '0.75rem', width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
-                Upgrade to Pro →
-              </button>
+              {user && (
+                <button onClick={upgradeToPro}
+                  style={{ marginTop: '0.75rem', width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+                  Upgrade to Pro →
+                </button>
+              )}
             </div>
           )}
           {user ? (
