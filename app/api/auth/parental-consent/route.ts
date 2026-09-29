@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
   const deleteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/consent?token=${token}&action=delete`
 
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY)
     await resend.emails.send({
       from: 'Algegram <noreply@algegram.xyz>',
       to: parentEmail,
@@ -44,11 +45,11 @@ export async function POST(req: NextRequest) {
           </p>
           <div style="margin: 2rem 0; display: flex; flex-direction: column; gap: 1rem;">
             <a href="${consentUrl}" style="display: inline-block; background: #6c63ff; color: #fff; padding: 0.9rem 2rem; border-radius: 10px; text-decoration: none; font-weight: 700;">
-              ✅ Approve and create account
+              Approve and create account
             </a>
             <br/>
             <a href="${deleteUrl}" style="display: inline-block; color: #aaa; font-size: 0.85rem;">
-              ❌ Decline — delete this request
+              Decline - delete this request
             </a>
           </div>
           <p style="color: #888; font-size: 0.8rem;">
