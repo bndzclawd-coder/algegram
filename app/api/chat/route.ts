@@ -6,7 +6,7 @@ import { createHmac } from 'crypto'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
 
-const FREE_MODEL = 'google/gemini-2.0-flash-001'
+const FREE_MODEL = 'qwen/qwen3-8b:free'
 const PRO_DEFAULT_MODEL = 'qwen/qwen3-14b'
 const GUEST_LIMIT = 5
 
