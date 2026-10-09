@@ -31,7 +31,14 @@ const TOPICS = [
   { icon: '🔢', title: 'Number Theory', desc: 'Primes, modular arithmetic, combinatorics.' },
 ]
 
-export default function Home() {
+export default function Home({ searchParams }: { searchParams: { code?: string; type?: string } }) {
+  // Supabase falls back to site root when redirectTo isn't in allowlist
+  // Forward the code to the proper callback handler
+  if (searchParams?.code) {
+    const next = searchParams?.type === 'recovery' ? '/auth/update-password' : '/chat'
+    redirect(`/auth/callback?code=${searchParams.code}&next=${next}`)
+  }
+
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', overflowX: 'hidden' }}>
       <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
