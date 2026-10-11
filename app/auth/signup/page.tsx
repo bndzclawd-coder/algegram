@@ -24,7 +24,7 @@ function SignupForm() {
   const [supabase] = useState(() => typeof window === 'undefined' ? null : createClient())
 
   const currentYear = new Date().getFullYear()
-  const age = birthYear ? currentYear - parseInt(birthYear, 10) : null
+  const age = birthYear ? currentYear - parseInt(birthYear, 10) - 1 : null // youngest possible age, matches server
   const isUnder13 = age !== null && age < 13
 
   async function handleSignup(e: React.FormEvent) {
@@ -44,7 +44,7 @@ function SignupForm() {
     // Under-13: parental consent flow
     if (isUnder13) {
       if (!parentEmail) {
-        setError('Please enter your parent or guardian\'s email.')
+        setError('Grown-up: please enter your email so we can ask for your permission.')
         setLoading(false)
         return
       }
@@ -63,15 +63,15 @@ function SignupForm() {
       return
     }
 
-    // 13+: normal signup
-    const { error: signupErr } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${location.origin}/auth/callback?next=/chat` },
+    // 13+: server-side signup (age is re-checked on the server)
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, birthYear: yearNum }),
     })
-
-    if (signupErr) {
-      setError(signupErr.message)
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      setError(d.error || 'Sign-up failed. Please try again.')
       setLoading(false)
     } else {
       setDone(true)
@@ -166,9 +166,9 @@ function SignupForm() {
             {isUnder13 && (
               <div style={{ background: 'rgba(167,139,250,.08)', border: '1px solid rgba(167,139,250,.3)', borderRadius: '10px', padding: '1rem' }}>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '0.75rem' }}>
-                  We need a parent or guardian's permission for users under 13. Enter their email and we'll send a consent link.
+                  Kids under 13 need a grown-up's permission. Grown-up: enter your email so we can ask for your permission. We'll send you one email with a link to approve or decline.
                 </p>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.4rem' }}>Parent or guardian's email</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.4rem' }}>Grown-up's email (parent or guardian)</label>
                 <input type="email" required={isUnder13} value={parentEmail} onChange={e => setParentEmail(e.target.value)}
                   style={inputStyle} placeholder="parent@example.com" />
               </div>

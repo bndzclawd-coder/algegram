@@ -9,7 +9,6 @@ export const PLANS = {
       '20 messages per day',
       'Algebra & calculus help',
       'LaTeX math rendering',
-      'Basic graphing',
     ],
   },
   pro: {
@@ -17,7 +16,7 @@ export const PLANS = {
     price: 1299, // cents — $12.99/mo
     messagesPerDay: Infinity,
     models: [
-      'qwen/qwen3-14b',
+      'qwen/qwen3.7-plus',
       'anthropic/claude-sonnet-4-5',
       'openai/gpt-4o',
       'google/gemini-2.0-flash-001',
@@ -26,9 +25,7 @@ export const PLANS = {
     features: [
       'Unlimited messages',
       'Access to GPT-4o, Claude & more',
-      'Full graphing & step-by-step',
-      'Conversation history',
-      'Priority support',
+      'Step-by-step solutions',
     ],
   },
 } as const

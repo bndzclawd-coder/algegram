@@ -128,7 +128,7 @@ export default function Home({ searchParams }: { searchParams: { code?: string; 
               <ul style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: 1.8, marginTop: '0.5rem' }}>
                 <li>✓ Unlimited questions</li>
                 <li>✓ Stronger AI models</li>
-                <li>✓ Saved question history</li>
+                <li>✓ Step-by-step solutions</li>
               </ul>
               {PRO_OFFER_TEXT && <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{PRO_OFFER_TEXT}</p>}
             </div>

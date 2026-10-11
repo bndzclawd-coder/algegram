@@ -3,7 +3,7 @@
 import { SITE_URL, PRO_PRICE_TEXT, PRO_OFFER_TEXT, PRO_CTA_TEXT, FREE_DAILY_QUESTIONS } from "@/lib/site-config";
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-const hi = (n?: string | null) => `Hi ${n ? n : "there"},`;
+const hi = (n?: string | null) => `Hi ${n ? esc(n) : "there"},`;
 const p = (s: string) => `<p style="margin:0 0 16px;line-height:1.6">${s}</p>`;
 const a = (href: string, label: string) => `<a href="${href}" style="color:#6c63ff;font-weight:600">${esc(label)}</a>`;
 const wrap = (inner: string) => `<div style="font-family:system-ui,sans-serif;max-width:560px;color:#111">${inner}</div>`;

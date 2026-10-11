@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
 import { LEGAL_PAGES_REVIEWED } from '@/lib/site-config'
+import { PrivacyContact } from '@/components/PrivacyContact'
 import { LegalPendingNotice } from '@/components/LegalPendingNotice'
 
 export const metadata = LEGAL_PAGES_REVIEWED ? pageMetadata({
@@ -29,7 +30,7 @@ function PrivacyFull() {
         <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '2.5rem' }}>Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
         <h2 style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '2rem', marginBottom: '0.5rem' }}>1. Who We Are</h2>
-        <p style={{ color: 'var(--text-dim)' }}>Algegram ("we", "us", "our") operates the AI math tutoring service at algegram.xyz. Contact: <a href="mailto:privacy@algegram.xyz" style={{ color: 'var(--accent2)' }}>privacy@algegram.xyz</a></p>
+        <p style={{ color: 'var(--text-dim)' }}>Algegram ("we", "us", "our") operates the AI math tutoring service at algegram.xyz. Contact: <PrivacyContact /></p>
 
         <h2 style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '2rem', marginBottom: '0.5rem' }}>2. Data We Collect</h2>
         <p style={{ color: 'var(--text-dim)', marginBottom: '0.75rem' }}><strong style={{ color: 'var(--text)' }}>For all users (including guests):</strong></p>
@@ -58,10 +59,10 @@ function PrivacyFull() {
         <p style={{ color: 'var(--text-dim)' }}>Payments are processed by Stripe. We do not store card numbers. We receive and store only a Stripe customer ID and subscription status.</p>
 
         <h2 style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '2rem', marginBottom: '0.5rem' }}>5. GDPR (EEA Users)</h2>
-        <p style={{ color: 'var(--text-dim)' }}>You have the right to access, correct, or delete your personal data. To exercise these rights, email <a href="mailto:privacy@algegram.xyz" style={{ color: 'var(--accent2)' }}>privacy@algegram.xyz</a>. You may also delete your account at any time from Account Settings. Your data will be erased within 30 days of deletion.</p>
+        <p style={{ color: 'var(--text-dim)' }}>You have the right to access, correct, or delete your personal data. To exercise these rights, email <PrivacyContact />. You may also delete your account at any time from Account Settings. Your data will be erased within 30 days of deletion.</p>
 
         <h2 style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '2rem', marginBottom: '0.5rem' }}>6. COPPA (Children Under 13)</h2>
-        <p style={{ color: 'var(--text-dim)' }}>We comply with the Children's Online Privacy Protection Act. We do not knowingly collect personal information from children under 13 without verifiable parental consent. If you believe we have inadvertently collected such information, please contact <a href="mailto:privacy@algegram.xyz" style={{ color: 'var(--accent2)' }}>privacy@algegram.xyz</a> immediately.</p>
+        <p style={{ color: 'var(--text-dim)' }}>We comply with the Children's Online Privacy Protection Act. We do not knowingly collect personal information from children under 13 without verifiable parental consent. If you believe we have inadvertently collected such information, please contact <PrivacyContact /> immediately.</p>
 
         <h2 style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '2rem', marginBottom: '0.5rem' }}>7. Cookies</h2>
         <p style={{ color: 'var(--text-dim)' }}>We use essential cookies only: authentication session cookies (Supabase) and a signed HttpOnly cookie to count guest questions. We do not use advertising or tracking cookies.</p>
@@ -70,7 +71,7 @@ function PrivacyFull() {
         <p style={{ color: 'var(--text-dim)' }}>Account data is retained until you delete your account. Usage counts are retained for 90 days. Hashed IP rate-limit counters expire after 4 hours.</p>
 
         <h2 style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '2rem', marginBottom: '0.5rem' }}>9. Contact</h2>
-        <p style={{ color: 'var(--text-dim)' }}>Privacy questions: <a href="mailto:privacy@algegram.xyz" style={{ color: 'var(--accent2)' }}>privacy@algegram.xyz</a></p>
+        <p style={{ color: 'var(--text-dim)' }}>Privacy questions: <PrivacyContact /></p>
       </article>
 
       <footer style={{ borderTop: '1px solid var(--border)', padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>

@@ -106,6 +106,9 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
+            <p style={{ marginTop: '1rem', fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.5 }}>
+              Premium models for normal use. Heavy use switches to our standard model for the rest of the day.
+            </p>
           </div>
         </div>
 

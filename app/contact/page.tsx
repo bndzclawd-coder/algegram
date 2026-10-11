@@ -41,11 +41,13 @@ export default function Contact() {
           </div>
           )}
 
+          {MAILBOX_LIVE && (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔒</div>
             <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Privacy</div>
             <a href="mailto:privacy@algegram.xyz" style={{ color: 'var(--accent2)', textDecoration: 'none' }}>privacy@algegram.xyz</a>
           </div>
+          )}
 
           {MAILBOX_LIVE && (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
