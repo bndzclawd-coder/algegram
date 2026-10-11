@@ -5,10 +5,7 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000', 'algegram.xyz', 'www.algegram.xyz'],
     },
   },
-  // Static homepage prototype for UAT only (not linked, not in sitemap, noindex).
-  async rewrites() {
-    return [{ source: '/preview', destination: '/preview/index.html' }]
-  },
+  // Homepage prototype (app/preview) for UAT only (not linked, not in sitemap, noindex).
   async headers() {
     return [{ source: '/preview/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] },
             { source: '/preview', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]

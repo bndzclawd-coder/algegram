@@ -117,7 +117,8 @@ function SignupWall({ onClose }: { onClose: () => void }) {
   )
 }
 
-export default function HomepageChat() {
+/** intro: optional fixed line rendered by the page (not the model) above the first answer. */
+export default function HomepageChat({ intro }: { intro?: string } = {}) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
@@ -219,7 +220,14 @@ export default function HomepageChat() {
       )}
       {hasMessages && (
         <div ref={messagesBoxRef} style={{ marginBottom: '1rem', maxHeight: '55vh', overflowY: 'auto', paddingRight: '0.25rem' }}>
-          {messages.map((m, i) => <MessageBubble key={i} msg={m} />)}
+          {messages.map((m, i) => (
+            <div key={i}>
+              {intro && m.role === 'assistant' && i === messages.findIndex(x => x.role === 'assistant') && (
+                <div data-testid='tutor-intro' style={{ fontWeight: 700, fontSize: '0.9rem', margin: '0 0 0.35rem 2.25rem' }}>{intro}</div>
+              )}
+              <MessageBubble msg={m} />
+            </div>
+          ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dim)', fontSize: '0.85rem', padding: '0 0 0.75rem 2.25rem' }}>
               <span style={{ display: 'inline-flex', gap: '3px' }}>{[0,1,2].map(i => <span key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', animation: `bounce 1s ${i*0.2}s infinite` }} />)}</span>
