@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { TRIAL_DAYS } from '@/lib/site-config'
 import { attributionLabel, readAttribution } from '@/lib/attribution/server'
 
 export async function POST(req: NextRequest) {
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
     allow_promotion_codes: true,
     subscription_data: {
-      trial_period_days: 7,
+      trial_period_days: TRIAL_DAYS,
       metadata: { supabase_user_id: user.id, ...refMeta },
     },
     managed_payments: { enabled: false },

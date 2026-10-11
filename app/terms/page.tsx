@@ -1,13 +1,21 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
+import { LEGAL_PAGES_REVIEWED } from '@/lib/site-config'
+import { LegalPendingNotice } from '@/components/LegalPendingNotice'
+import { MAILBOX_LIVE } from '@/lib/site-config'
 
-export const metadata = pageMetadata({
+export const metadata = LEGAL_PAGES_REVIEWED ? pageMetadata({
   title: 'Terms of Service | Algegram',
   description: 'Algegram Terms of Service. Read our terms covering SaaS subscription, age restrictions, and parental consent.',
   path: '/terms',
-})
+}) : pageMetadata({ title: 'Terms of Service | Algegram', description: 'This page is being updated.', path: '/terms', noindex: true })
 
 export default function Terms() {
+  if (!LEGAL_PAGES_REVIEWED) return <LegalPendingNotice title='Terms of Service' />
+  return <TermsFull />
+}
+
+function TermsFull() {
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>
       <nav style={{ borderBottom: '1px solid var(--border)', padding: '0 1rem' }}
@@ -53,7 +61,7 @@ export default function Terms() {
         <p style={{ color: 'var(--text-dim)' }}>We may update these Terms at any time. Continued use of the Service after changes constitutes acceptance of the new Terms.</p>
 
         <h2 style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '2rem', marginBottom: '0.5rem' }}>11. Contact</h2>
-        <p style={{ color: 'var(--text-dim)' }}>Questions about these Terms? Email <a href="mailto:hello@algegram.xyz" style={{ color: 'var(--accent2)' }}>hello@algegram.xyz</a></p>
+        {MAILBOX_LIVE && <p style={{ color: 'var(--text-dim)' }}>Questions about these Terms? Email <a href="mailto:hello@algegram.xyz" style={{ color: 'var(--accent2)' }}>hello@algegram.xyz</a></p>}
       </article>
 
       <footer style={{ borderTop: '1px solid var(--border)', padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>

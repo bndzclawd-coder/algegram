@@ -11,3 +11,10 @@ export const GUEST_FREE_QUESTIONS = 5
 export const FREE_DAILY_QUESTIONS = 20
 export const PILOT_MAILTO =
   'mailto:hello@algegram.xyz?subject=' + encodeURIComponent('Algegram pilot request')
+
+/** hello@ and support@ mailto links stay hidden until those mailboxes receive mail. Set NEXT_PUBLIC_MAILBOX_LIVE=true to show. */
+export const MAILBOX_LIVE = process.env.NEXT_PUBLIC_MAILBOX_LIVE === 'true'
+/** Stripe Checkout trial length (days). Keep in sync with /terms copy. */
+export const TRIAL_DAYS = 7
+/** /privacy and /terms show a short "being updated" notice (noindex) until the legal copy is reviewed. */
+export const LEGAL_PAGES_REVIEWED = process.env.NEXT_PUBLIC_LEGAL_PAGES_REVIEWED === 'true'

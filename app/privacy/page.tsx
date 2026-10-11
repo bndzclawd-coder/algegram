@@ -1,13 +1,20 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
+import { LEGAL_PAGES_REVIEWED } from '@/lib/site-config'
+import { LegalPendingNotice } from '@/components/LegalPendingNotice'
 
-export const metadata = pageMetadata({
+export const metadata = LEGAL_PAGES_REVIEWED ? pageMetadata({
   title: 'Privacy Policy | Algegram',
   description: 'Algegram Privacy Policy. Learn what data we collect, how we protect it, and your rights under GDPR and COPPA.',
   path: '/privacy',
-})
+}) : pageMetadata({ title: 'Privacy Policy | Algegram', description: 'This page is being updated.', path: '/privacy', noindex: true })
 
 export default function Privacy() {
+  if (!LEGAL_PAGES_REVIEWED) return <LegalPendingNotice title='Privacy Policy' />
+  return <PrivacyFull />
+}
+
+function PrivacyFull() {
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>
       <nav style={{ borderBottom: '1px solid var(--border)', padding: '0 1rem' }}

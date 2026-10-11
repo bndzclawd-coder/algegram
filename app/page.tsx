@@ -6,7 +6,7 @@ import { JsonLd } from '@/components/JsonLd'
 import { SiteNav, SiteFooter } from '@/components/SiteChrome'
 import { pageMetadata } from '@/lib/seo'
 import {
-  SITE_URL, PILOT_MAILTO, PRO_PRICE_TEXT, PRO_OFFER_TEXT, PRO_CTA_TEXT,
+  SITE_URL, PILOT_MAILTO, MAILBOX_LIVE, PRO_PRICE_TEXT, PRO_OFFER_TEXT, PRO_CTA_TEXT,
   GUEST_FREE_QUESTIONS, FREE_DAILY_QUESTIONS,
 } from '@/lib/site-config'
 
@@ -25,8 +25,8 @@ const JSON_LD = {
       name: 'Algegram',
       url: SITE_URL,
       logo: `${SITE_URL}/icon.png`,
-      email: 'hello@algegram.xyz',
-      contactPoint: { '@type': 'ContactPoint', email: 'support@algegram.xyz', contactType: 'customer support' },
+      ...(MAILBOX_LIVE ? { email: 'hello@algegram.xyz' } : {}),
+      ...(MAILBOX_LIVE ? { contactPoint: { '@type': 'ContactPoint', email: 'support@algegram.xyz', contactType: 'customer support' } } : {}),
     },
     {
       '@type': 'WebSite',
@@ -139,6 +139,7 @@ export default function Home({ searchParams }: { searchParams: { code?: string; 
           </div>
         </section>
 
+        {MAILBOX_LIVE && (
         <section id='pilot' style={{ borderTop: '1px solid var(--border)', padding: '3rem 1rem', textAlign: 'center', background: 'rgba(108,99,255,.04)' }}>
           <h2 style={{ ...h2, marginBottom: '0.75rem' }}>For tutoring centers &amp; schools</h2>
           <p style={{ color: 'var(--text-dim)', maxWidth: 560, margin: '0 auto 1.5rem' }}>
@@ -149,6 +150,7 @@ export default function Home({ searchParams }: { searchParams: { code?: string; 
             Request a pilot →
           </a>
         </section>
+        )}
       </main>
 
       <SiteFooter />

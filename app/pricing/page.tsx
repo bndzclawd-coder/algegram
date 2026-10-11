@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { PLANS } from '@/lib/plans'
-import { PRO_CTA_TEXT, PRO_OFFER_TEXT } from '@/lib/site-config'
+import { PRO_CTA_TEXT, PRO_OFFER_TEXT, MAILBOX_LIVE } from '@/lib/site-config'
 import { createClient } from '@/lib/supabase/client'
 
 
@@ -119,7 +119,7 @@ export default function Pricing() {
           <Link href="/terms" style={{ color: 'var(--text-dim)' }}>Terms</Link>
           <Link href="/privacy" style={{ color: 'var(--text-dim)' }}>Privacy</Link>
           <Link href="/contact" style={{ color: 'var(--text-dim)' }}>Contact</Link>
-          <a href="mailto:support@algegram.xyz" style={{ color: 'var(--text-dim)' }}>Help</a>
+          {MAILBOX_LIVE && <a href="mailto:support@algegram.xyz" style={{ color: 'var(--text-dim)' }}>Help</a>}
         </div>
         © {new Date().getFullYear()} Algegram
       </footer>
