@@ -13,7 +13,7 @@ create table if not exists public.practice_results (
 create index if not exists practice_results_user_created_idx on public.practice_results (user_id, created_at desc);
 
 alter table public.practice_results enable row level security;
-revoke all on public.practice_results from public, anon;
+revoke all on public.practice_results from public, anon, authenticated;
 grant select on public.practice_results to authenticated;
 -- Users can read only their own rows. Inserts happen server-side with the service role.
 drop policy if exists "practice_results_select_own" on public.practice_results;
