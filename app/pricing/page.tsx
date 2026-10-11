@@ -10,11 +10,15 @@ import { createClient } from '@/lib/supabase/client'
 export default function Pricing() {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [subscribed, setSubscribed] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      if (data.user) fetch('/api/stripe/status').then(r => r.json()).then(d => setSubscribed(!!d.subscribed)).catch(() => {})
+    })
   }, [])
 
   async function handleUpgrade() {
@@ -24,9 +28,11 @@ export default function Pricing() {
     }
     setLoading(true)
     try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      // Existing subscribers go to the Customer Portal; checkout also redirects there server-side.
+      const res = await fetch(subscribed ? '/api/stripe/portal' : '/api/stripe/checkout', { method: 'POST' })
       const data = await res.json()
       if (data.url) window.location.href = data.url
+      else alert(data.error || 'Something went wrong. Please try again.')
     } catch {
       alert('Something went wrong. Please try again.')
     } finally {
@@ -93,7 +99,7 @@ export default function Pricing() {
               onClick={handleUpgrade}
               disabled={loading}
               style={{ display: 'block', width: '100%', textAlign: 'center', background: loading ? '#555' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.7rem', borderRadius: '10px', fontWeight: 700, marginBottom: '0.5rem', boxShadow: '0 0 20px rgba(108,99,255,.35)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem' }}>
-              {loading ? 'Loading...' : `${PRO_CTA_TEXT} →`}
+              {loading ? 'Loading...' : subscribed ? 'Manage billing →' : `${PRO_CTA_TEXT} →`}
             </button>
             <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '1.25rem' }}>
               then $12.99/month, cancel anytime

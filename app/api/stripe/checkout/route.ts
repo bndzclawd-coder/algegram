@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { TRIAL_DAYS } from '@/lib/site-config'
+import { hasLiveSubscription, portalUrl } from '@/lib/account/subscription-status'
 import { attributionLabel, readAttribution } from '@/lib/attribution/server'
 
 export async function POST(req: NextRequest) {
@@ -14,12 +15,23 @@ export async function POST(req: NextRequest) {
   // Get or create Stripe customer
   const { data: sub, error: subError } = await db
     .from('subscriptions')
-    .select('stripe_customer_id')
+    .select('stripe_customer_id, status')
     .eq('user_id', user.id)
     .single()
   if (subError && subError.code !== 'PGRST116') {
     console.error('Supabase error fetching subscription:', subError)
     return NextResponse.json({ error: 'Database error' }, { status: 500 })
+  }
+
+  // Already subscribed (active/trialing): never create a second Checkout Session.
+  // Send them to the Customer Portal to manage the existing subscription instead.
+  try {
+    if (await hasLiveSubscription(sub?.status, sub?.stripe_customer_id)) {
+      return NextResponse.json({ url: await portalUrl(sub!.stripe_customer_id!, '/pricing'), portal: true })
+    }
+  } catch (err: any) {
+    console.error('[checkout] subscription check failed', { type: err?.type, code: err?.code })
+    return NextResponse.json({ error: 'Could not check your subscription. Please try again.' }, { status: 503 })
   }
 
   let customerId = sub?.stripe_customer_id
