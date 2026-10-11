@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { PRO_MODELS, PRO_DEFAULT_MODEL } from '@/lib/models'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,13 +18,6 @@ const MODES: { id: Mode; label: string; icon: string; hint: string }[] = [
   { id: 'check', label: 'Check', icon: '✓', hint: 'Verify your work' },
 ]
 
-const PRO_MODELS = [
-  { id: 'qwen/qwen3.7-plus', label: 'Qwen3-14B' },
-  { id: 'openai/gpt-4o', label: 'GPT-4o' },
-  { id: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet' },
-  { id: 'google/gemini-2.5-flash', label: 'Gemini Flash' },
-  { id: 'deepseek/deepseek-r1', label: 'DeepSeek R1' },
-]
 
 // KaTeX renderer hook
 function useMathRenderer() {
@@ -141,7 +135,7 @@ function ChatInner() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<Mode>('math')
-  const [model, setModel] = useState('qwen/qwen3.7-plus')
+  const [model, setModel] = useState<string>(PRO_DEFAULT_MODEL)
   const [streaming, setStreaming] = useState(false)
   const [usage, setUsage] = useState<Usage | null>(null)
   const [user, setUser] = useState<any>(null)

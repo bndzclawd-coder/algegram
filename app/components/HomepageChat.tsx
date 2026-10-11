@@ -158,10 +158,6 @@ export default function HomepageChat() {
     const text = (overrideText ?? input).trim()
     if (!text || streaming) return
     if (guestRemaining <= 0) { setShowSignupWall(true); return }
-    const limitRes = await fetch('/api/guest-limit', { method: 'POST' })
-    const limitData = await limitRes.json()
-    if (!limitRes.ok || limitData.remaining < 0) { setShowSignupWall(true); return }
-    setGuestRemaining(limitData.remaining)
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
@@ -171,7 +167,11 @@ export default function HomepageChat() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: newMessages, mode: 'math' }),
     })
+    // /api/chat checks and counts the guest limit itself and reports what's left.
+    const left = res.headers.get('X-Guest-Remaining')
+    if (left !== null) setGuestRemaining(Math.max(0, parseInt(left, 10) || 0))
     if (!res.ok) {
+      if (res.status === 429) setGuestRemaining(0)
       const err = await res.json().catch(() => ({ error: 'Something went wrong' }))
       if (err.signup) { setShowSignupWall(true); setStreaming(false); return }
       setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}` }])
