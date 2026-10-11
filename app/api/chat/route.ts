@@ -3,7 +3,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/plans'
 import { maybeSendDailyLimitEmail } from '@/lib/email/lifecycle'
-import { resolveModel, type PlanKind } from '@/lib/models'
+import { resolveModel, FREE_MODEL, type PlanKind } from '@/lib/models'
+import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
@@ -87,7 +88,11 @@ async function handleGuest(req: NextRequest) {
   const parsed = parseBody(await req.json().catch(() => null))
   if (!parsed) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
 
-  if (!consumeIpQuota(req, secret)) {
+  const ipCheck = await consumeIpQuota(req)
+  if (ipCheck === 'error') {
+    return NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
+  }
+  if (ipCheck === 'limited') {
     return NextResponse.json({ error: 'Too many free questions from this network. Sign up to continue.', signup: true }, { status: 429 })
   }
 
@@ -111,6 +116,23 @@ export async function POST(req: NextRequest) {
   if (!parsed) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
 
   const db = createServiceClient()
+
+  // Server-verified age gate: accounts created by calling Supabase signUp directly (anon key)
+  // have no user_profiles row and cannot chat until they confirm their age server-side.
+  const { data: profile, error: profErr } = await db.from('user_profiles').select('age_verified').eq('user_id', user.id).maybeSingle()
+  if (profErr) {
+    console.error('[chat] profile lookup failed', { code: profErr.code })
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 503 })
+  }
+  if (!profile?.age_verified) {
+    return NextResponse.json(
+      profile
+        ? { error: 'A parent or guardian needs to approve this account before it can be used.', ageRequired: true }
+        : { error: 'Please confirm your birth year to continue: [Confirm birth year →](/auth/age)', ageRequired: true },
+      { status: 403 }
+    )
+  }
+
   const { data: sub } = await db
     .from('subscriptions')
     .select('plan, status')
@@ -141,10 +163,22 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const ai = await aiStream(plan, resolveModel(plan, parsed.model), parsed.messages, parsed.mode)
+  // Pro fair use: premium (non-free) models count toward PRO_FAIR_USE_DAILY; past it, fall back to FREE_MODEL.
+  let model = resolveModel(plan, parsed.model)
+  let fairUseFallback = false
+  if (isPro && model !== FREE_MODEL) {
+    const { data, error } = await db.rpc('increment_premium_usage', {
+      p_user_id: user.id, p_day: new Date().toISOString().split('T')[0], p_limit: PRO_FAIR_USE_DAILY,
+    })
+    if (error) console.error('[chat] increment_premium_usage failed', { code: error.code })
+    if (error || data === null || data === undefined) { model = FREE_MODEL; fairUseFallback = true }
+  }
+
+  const ai = await aiStream(plan, model, parsed.messages, parsed.mode)
   if (!ai.ok) return ai.res
 
   const headers = new Headers(streamHeaders(plan))
+  if (fairUseFallback) headers.set('X-Fair-Use-Fallback', '1')
   if (usedToday !== null) {
     headers.set('X-Messages-Used', String(usedToday))
     headers.set('X-Messages-Limit', String(FREE_LIMIT))

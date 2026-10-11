@@ -1,16 +1,15 @@
-import { createHmac, createHash, timingSafeEqual } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
+import { consume, clientIp } from '@/lib/rate-limit'
 import type { NextRequest, NextResponse } from 'next/server'
 
 // Guest (signed-out) question limit, enforced server-side by /api/chat.
-// Privacy: the IP is only ever used as a salted hash, kept in memory for a few hours,
+// Privacy: the IP is only ever used as a salted hash, stored in the database for a few hours,
 // never logged, and never stored with question text, analytics, or sent to the AI provider.
 export const GUEST_LIMIT = 5
 export const GUEST_COOKIE = 'gl'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
-const IP_WINDOW_MS = 4 * 60 * 60 * 1000 // 4 hours
+const IP_WINDOW_S = 4 * 60 * 60 // 4 hours
 const IP_MAX = GUEST_LIMIT * 3 // generous: shared IPs (schools, homes) still work
-
-const ipCounts = new Map<string, { count: number; expiresAt: number }>()
 
 export function guestSecret(): string | null {
   const s = process.env.GUEST_COOKIE_SECRET
@@ -44,28 +43,12 @@ export function setGuestCount(res: NextResponse, secret: string, n: number) {
   })
 }
 
-function clientIp(req: NextRequest): string {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown'
-}
-
-function ipKey(req: NextRequest, secret: string): string {
-  const day = new Date().toISOString().slice(0, 10) // daily rotation: no cross-day linkage
-  return createHash('sha256').update(`${secret}:${day}:${clientIp(req)}`).digest('hex').slice(0, 24)
-}
-
-/** Counts one guest request against the hashed-IP limit. Returns false if over the limit. */
-export function consumeIpQuota(req: NextRequest, secret: string): boolean {
-  const now = Date.now()
-  if (ipCounts.size > 50_000) {
-    ipCounts.forEach((v, k) => { if (v.expiresAt < now) ipCounts.delete(k) })
-  }
-  const key = ipKey(req, secret)
-  const entry = ipCounts.get(key)
-  if (!entry || entry.expiresAt < now) {
-    ipCounts.set(key, { count: 1, expiresAt: now + IP_WINDOW_MS })
-    return true
-  }
-  if (entry.count >= IP_MAX) return false
-  entry.count++
-  return true
+/**
+ * Counts one guest request against the per-network backstop, stored in the database
+ * (public.rate_limit_buckets) so it survives cookie clearing and serverless cold starts.
+ * Key = sha256(secret:guest-ip:UTC day:ip); never the raw IP, never logged, never linked to
+ * question text or analytics; rows expire after 4 hours. Fails closed ('error').
+ */
+export async function consumeIpQuota(req: NextRequest): Promise<'ok' | 'limited' | 'error'> {
+  return consume('guest-ip', clientIp(req), IP_MAX, IP_WINDOW_S)
 }

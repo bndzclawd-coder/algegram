@@ -38,7 +38,7 @@ export default function Settings() {
       router.push('/?deleted=1')
     } else {
       const d = await res.json().catch(() => ({}))
-      alert(d.error || 'Failed to delete account. Please contact support@algegram.xyz')
+      alert(d.error || 'Could not delete your account right now. Please try again later.')
       setDeleting(false)
     }
   }

@@ -39,6 +39,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
+  // Server-verified age record: lets this account use /api/chat.
+  if (newUser.user) {
+    const { error: profErr } = await db.from('user_profiles').upsert({
+      user_id: newUser.user.id, birth_year: payload.childBirthYear, age_verified: true, parental_consent: true,
+    })
+    if (profErr) console.error('[consent] profile write failed', { code: profErr.code })
+  }
+
   // Account-only welcome to the PARENT (no promo). No-op unless LIFECYCLE_EMAILS_ENABLED=true.
   if (newUser.user) {
     try { await sendWelcomeEmail(newUser.user) } catch (e) { console.error('[consent] welcome email failed:', e) }
