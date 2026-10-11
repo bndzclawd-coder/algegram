@@ -26,7 +26,6 @@ export const PLANS = {
       'Unlimited messages',
       'Access to GPT-4o, Claude & more',
       'Step-by-step solutions',
-      'Priority support',
     ],
   },
 } as const
