@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
   if (!profile?.age_verified) {
     return NextResponse.json(
       profile
-        ? { error: "Algegram needs a parent's OK for users under 13. We'll set that up soon, and your account is safe.", ageRequired: true }
+        ? { error: "Algegram needs a parent's OK for users under 13. Your account is safe! Ask a grown-up to help: [Get a parent's OK →](/auth/age)", ageRequired: true }
         : { error: 'Please confirm your birth year to continue: [Confirm birth year →](/auth/age)', ageRequired: true },
       { status: 403 }
     )

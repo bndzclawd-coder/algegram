@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
+import { EXISTING_CONSENT_TOKEN } from '@/lib/account/pause'
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
@@ -10,8 +11,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const payload = jwt.verify(token, secret) as { childEmail: string; parentEmail: string; childBirthYear: number; type: string }
-    if (payload.type !== 'parental-consent') throw new Error('Wrong token type')
-    return NextResponse.json({ childEmail: payload.childEmail, parentEmail: payload.parentEmail, childBirthYear: payload.childBirthYear })
+    if (payload.type !== 'parental-consent' && payload.type !== EXISTING_CONSENT_TOKEN) throw new Error('Wrong token type')
+    return NextResponse.json({
+      childEmail: payload.childEmail, parentEmail: payload.parentEmail, childBirthYear: payload.childBirthYear,
+      existingAccount: payload.type === EXISTING_CONSENT_TOKEN,
+    })
   } catch (err: any) {
     return NextResponse.json({ error: 'Link expired or invalid. Please ask the child to sign up again.' }, { status: 400 })
   }

@@ -12,7 +12,7 @@ function ConsentContent() {
   const [message, setMessage] = useState('')
   const [password, setPassword] = useState('')
   const [step, setStep] = useState<'confirm' | 'password' | 'done'>('confirm')
-  const [payload, setPayload] = useState<{ childEmail: string; parentEmail: string; childBirthYear: number } | null>(null)
+  const [payload, setPayload] = useState<{ childEmail: string; parentEmail: string; childBirthYear: number; existingAccount?: boolean } | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -40,6 +40,17 @@ function ConsentContent() {
     else { setMessage(data.error || 'Failed to create account.'); setLoading(false) }
   }
 
+  async function handleApproveExisting() {
+    if (!token) return
+    setLoading(true)
+    const res = await fetch('/api/auth/parental-consent/approve-existing', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) setStep('done')
+    else { setMessage(data.error || 'Failed to approve the account.'); setLoading(false) }
+  }
+
   async function handleDelete() {
     // Simply show a deleted message — no account was created
     setStatus('deleted')
@@ -55,7 +66,9 @@ function ConsentContent() {
     <div style={{ textAlign: 'center', padding: '4rem' }}>
       <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
       <h2 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.75rem' }}>Request declined</h2>
-      <p style={{ color: 'var(--text-dim)' }}>No account has been created. The request has been dismissed.</p>
+      <p style={{ color: 'var(--text-dim)' }}>{payload?.existingAccount
+        ? 'The account stays paused and will be deleted automatically after 14 days without approval.'
+        : 'No account has been created. The request has been dismissed.'}</p>
     </div>
   )
 
@@ -71,9 +84,11 @@ function ConsentContent() {
   if (step === 'done') return (
     <div style={{ textAlign: 'center', padding: '4rem' }}>
       <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
-      <h2 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.75rem' }}>Account created!</h2>
+      <h2 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.75rem' }}>{payload?.existingAccount ? 'Account approved!' : 'Account created!'}</h2>
       <p style={{ color: 'var(--text-dim)', marginBottom: '1.5rem' }}>
-        {payload?.childEmail} can now sign in. A confirmation email has been sent to them.
+        {payload?.existingAccount
+          ? `${payload.childEmail} can sign in and keep learning. Thank you!`
+          : `${payload?.childEmail} can now sign in. A confirmation email has been sent to them.`}
       </p>
       <Link href="/auth/login" style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem 2rem', borderRadius: '10px', fontWeight: 700, textDecoration: 'none' }}>
         Go to sign in
@@ -88,7 +103,7 @@ function ConsentContent() {
           <>
             <h2 style={{ fontWeight: 700, fontSize: '1.3rem', marginBottom: '1rem' }}>Parental Consent</h2>
             <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '1rem' }}>
-              You are approving an Algegram account for:
+              {payload?.existingAccount ? 'You are approving an existing, currently paused Algegram account for:' : 'You are approving an Algegram account for:'}
             </p>
             <div style={{ background: 'rgba(108,99,255,.08)', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem' }}>
               <p style={{ margin: 0 }}><strong>Child email:</strong> {payload?.childEmail}</p>
@@ -98,10 +113,16 @@ function ConsentContent() {
               By approving, you confirm you are the parent or legal guardian of this child and consent to them using Algegram.
               Math question history will not be stored until you explicitly enable it.
             </p>
+            {message && step === 'confirm' && <p style={{ color: 'var(--red)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{message}</p>}
             {action === 'delete' ? (
               <button onClick={handleDelete}
                 style={{ width: '100%', background: '#ef4444', color: '#fff', padding: '0.8rem', borderRadius: '10px', fontWeight: 700, border: 'none', cursor: 'pointer', marginBottom: '0.75rem' }}>
                 Decline this request
+              </button>
+            ) : payload?.existingAccount ? (
+              <button onClick={handleApproveExisting} disabled={loading}
+                style={{ width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem', borderRadius: '10px', fontWeight: 700, border: 'none', cursor: 'pointer', marginBottom: '0.75rem' }}>
+                {loading ? 'Approving…' : 'Approve this account →'}
               </button>
             ) : (
               <button onClick={() => setStep('password')}
