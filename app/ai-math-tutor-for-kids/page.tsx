@@ -7,6 +7,7 @@ import { WorkedExample, type Example } from "@/components/WorkedExample";
 import { TopicCta } from "@/components/TopicCta";
 import { Page, H1, H2, P, Lead, Ul } from "@/components/Prose";
 import { GUEST_FREE_QUESTIONS, FREE_DAILY_QUESTIONS, PRO_PRICE_TEXT, PRO_OFFER_TEXT } from "@/lib/site-config";
+import { MAILBOX_LIVE } from '@/lib/site-config'
 
 export const metadata = pageMetadata({
   title: "AI Math Tutor for Kids – Step-by-Step Help for Parents & Students | Algegram",
@@ -81,8 +82,8 @@ export default function KidsTutorPage() {
       </Ul>
       <P>
         AI can make mistakes. Every worked answer should end with a check (putting the answer back into the problem),
-        and it’s worth teaching your child to do that check themselves. If you spot a wrong answer, tell us at{" "}
-        <a href="mailto:support@algegram.xyz" style={{ color: "var(--accent2)" }}>support@algegram.xyz</a>.
+        and it’s worth teaching your child to do that check themselves.{MAILBOX_LIVE && (<>{" "}If you spot a wrong answer, tell us at{" "}
+        <a href="mailto:support@algegram.xyz" style={{ color: "var(--accent2)" }}>support@algegram.xyz</a>.</>)}
       </P>
 
       <H2>Which ages it suits</H2>

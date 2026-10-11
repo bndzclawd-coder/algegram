@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { MAILBOX_LIVE } from '@/lib/site-config'
 
 export default function Settings() {
   const [user, setUser] = useState<any>(null)
@@ -53,7 +54,7 @@ export default function Settings() {
         </Link>
         <div className="flex gap-4 items-center">
           <Link href="/chat" style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Chat</Link>
-          <a href="mailto:support@algegram.xyz" style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Help</a>
+          {MAILBOX_LIVE && <a href="mailto:support@algegram.xyz" style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Help</a>}
         </div>
       </nav>
 

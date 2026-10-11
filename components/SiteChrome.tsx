@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { MAILBOX_LIVE } from '@/lib/site-config'
 
 const brand = { fontWeight: 800, fontSize: '1.25rem', background: 'linear-gradient(135deg,#6c63ff,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flexShrink: 0, textDecoration: 'none' } as const
 
@@ -27,7 +28,7 @@ export function SiteFooter() {
         <Link href='/terms' style={l}>Terms</Link>
         <Link href='/privacy' style={l}>Privacy</Link>
         <Link href='/contact' style={l}>Contact</Link>
-        <a href='mailto:support@algegram.xyz' style={l}>Help</a>
+        {MAILBOX_LIVE && <a href='mailto:support@algegram.xyz' style={l}>Help</a>}
       </div>
       © {new Date().getFullYear()} Algegram
     </footer>
