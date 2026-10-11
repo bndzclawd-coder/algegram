@@ -1,123 +1,157 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import HomepageChat from '@/app/components/HomepageChat'
+import { WorkedExample, type Example } from '@/components/WorkedExample'
+import { JsonLd } from '@/components/JsonLd'
+import { SiteNav, SiteFooter } from '@/components/SiteChrome'
+import { pageMetadata } from '@/lib/seo'
+import {
+  SITE_URL, PILOT_MAILTO, PRO_PRICE_TEXT, PRO_OFFER_TEXT, PRO_CTA_TEXT,
+  GUEST_FREE_QUESTIONS, FREE_DAILY_QUESTIONS,
+} from '@/lib/site-config'
+
+export const metadata = pageMetadata({
+  title: 'Algegram – AI Math Tutor with Step-by-Step Answers',
+  description: `Type any math problem and see every step explained, from fractions to calculus. ${GUEST_FREE_QUESTIONS} free questions with no sign-up.`,
+  path: '/',
+})
 
 const JSON_LD = {
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'Organization',
-      '@id': 'https://www.algegram.xyz/#org',
+      '@id': `${SITE_URL}/#org`,
       name: 'Algegram',
-      url: 'https://www.algegram.xyz',
-      logo: 'https://www.algegram.xyz/og-image.png',
-      contactPoint: { '@type': 'ContactPoint', email: 'hello@algegram.xyz', contactType: 'customer support' },
+      url: SITE_URL,
+      logo: `${SITE_URL}/icon.png`,
+      email: 'hello@algegram.xyz',
+      contactPoint: { '@type': 'ContactPoint', email: 'support@algegram.xyz', contactType: 'customer support' },
     },
     {
       '@type': 'WebSite',
-      '@id': 'https://www.algegram.xyz/#website',
-      url: 'https://www.algegram.xyz',
+      '@id': `${SITE_URL}/#website`,
+      url: SITE_URL,
       name: 'Algegram',
-      publisher: { '@id': 'https://www.algegram.xyz/#org' },
+      publisher: { '@id': `${SITE_URL}/#org` },
     },
   ],
 }
 
+const example: Example = {
+  id: 'example',
+  title: 'See how it works: a worked example',
+  problem: 'Solve 2x + 5 = 17',
+  steps: [
+    { math: '2x + 5 − 5 = 17 − 5', why: 'Subtract 5 from both sides to get the x-term by itself.' },
+    { math: '2x = 12', why: 'Simplify both sides.' },
+    { math: '2x ÷ 2 = 12 ÷ 2', why: 'Divide both sides by 2, the number multiplying x.' },
+    { math: 'x = 6', why: 'Simplify.' },
+  ],
+  answer: 'x = 6',
+  check: '2(6) + 5 = 12 + 5 = 17 ✓',
+}
+
+// Only link pages that exist and are ready. /ai-math-tutor-for-kids is held back until
+// parental consent + privacy features it describes are confirmed live.
 const TOPICS = [
-  { icon: '∫', title: 'Calculus', desc: 'Derivatives, integrals, limits, series — with full workings.' },
-  { icon: '√', title: 'Algebra', desc: 'Solve equations, factor polynomials, simplify expressions.' },
-  { icon: '∑', title: 'Statistics', desc: 'Probability, distributions, hypothesis testing.' },
-  { icon: 'λ', title: 'Linear Algebra', desc: 'Matrices, eigenvalues, vector spaces.' },
-  { icon: '📈', title: 'Graphing', desc: 'Understand and describe functions with LaTeX.' },
-  { icon: '🔢', title: 'Number Theory', desc: 'Primes, modular arithmetic, combinatorics.' },
+  { href: '/fraction-calculator', icon: '½', title: 'Fractions', body: 'Add, subtract, multiply and divide fractions, with every step shown.' },
+  { href: '/quadratic-equation-solver', icon: 'x²', title: 'Quadratic equations', body: 'Factoring, the quadratic formula and completing the square.' },
+  { href: '/solve/algebra', icon: '√', title: 'Algebra', body: 'Solve equations, factor polynomials, simplify expressions.' },
+  { href: '/solve/calculus', icon: '∫', title: 'Calculus', body: 'Derivatives, integrals, limits and series, with full workings.' },
+  { href: '/solve/statistics', icon: '∑', title: 'Statistics', body: 'Probability, distributions, hypothesis testing.' },
+  { href: '/solve/linear-algebra', icon: 'λ', title: 'Linear algebra', body: 'Matrices, eigenvalues, vector spaces.' },
 ]
 
+const card = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '1.25rem', textDecoration: 'none', color: 'var(--text)', display: 'block' } as const
+const h2 = { textAlign: 'center', fontWeight: 800, fontSize: 'clamp(1.3rem,4vw,1.75rem)', marginBottom: '1.5rem' } as const
+
 export default function Home({ searchParams }: { searchParams: { code?: string; type?: string } }) {
-  // Supabase falls back to site root when redirectTo isn't in allowlist
-  // Forward the code to the proper callback handler
+  // Supabase falls back to the site root when redirectTo isn't in its allowlist.
+  // Forward the code to the proper callback handler.
   if (searchParams?.code) {
     const next = searchParams?.type === 'recovery' ? '/auth/update-password' : '/chat'
-    redirect(`/auth/callback?code=${searchParams.code}&next=${next}`)
+    redirect(`/auth/callback?code=${encodeURIComponent(searchParams.code)}&next=${encodeURIComponent(next)}`)
   }
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', overflowX: 'hidden' }}>
-      <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
+      <JsonLd data={JSON_LD} />
+      <SiteNav />
 
-      <nav style={{ borderBottom: '1px solid var(--border)', padding: '0 1rem', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 50 }}
-        className='flex items-center justify-between h-14 sm:h-16 max-w-6xl mx-auto'>
-        <span style={{ fontWeight: 800, fontSize: '1.25rem', background: 'linear-gradient(135deg,#6c63ff,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', flexShrink: 0 }}>Algegram</span>
-        <div className='flex gap-3 sm:gap-6 items-center'>
-          <Link href='/pricing' className='hidden sm:block' style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Pricing</Link>
-          <Link href='/auth/login' className='hidden sm:block' style={{ color: 'var(--text-dim)', fontSize: '0.9rem' }}>Sign in</Link>
-          <Link href='/auth/signup' style={{ background: 'var(--accent)', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, whiteSpace: 'nowrap' }} className='sm:text-sm sm:px-4'>Get started free</Link>
+      <main>
+        {/* Hero: server-rendered heading, then the live guest solver (5 free questions, no sign-up) */}
+        <div style={{ maxWidth: 760, margin: '0 auto', padding: '2.5rem 1rem 0', textAlign: 'center' }}>
+          <h1 style={{ fontSize: 'clamp(1.75rem,5vw,3.25rem)', fontWeight: 800, lineHeight: 1.15, marginBottom: '1rem' }}>
+            Try a free math question.<br />
+            <span style={{ background: 'linear-gradient(135deg,#6c63ff,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              See every step explained. 📐
+            </span>
+          </h1>
+          <p style={{ fontSize: 'clamp(0.9rem,2.5vw,1.05rem)', color: 'var(--text-dim)', maxWidth: 540, margin: '0 auto' }}>
+            From fractions and first equations to university calculus. Type your question below.
+          </p>
         </div>
-      </nav>
 
-      {/* Static hero heading — server-rendered for SEO */}
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: '2.5rem 1rem 0', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 'clamp(1.75rem,5vw,3.25rem)', fontWeight: 800, lineHeight: 1.15, marginBottom: '1rem' }}>
-          Ask any math question.<br />
-          <span style={{ background: 'linear-gradient(135deg,#6c63ff,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Get step-by-step answers instantly. 📐
-          </span>
-        </h1>
-        <p style={{ fontSize: 'clamp(0.9rem, 2.5vw, 1.05rem)', color: 'var(--text-dim)', maxWidth: '520px', margin: '0 auto' }}>
-          From basic arithmetic to university-level calculus — just type your question below.
-        </p>
-      </div>
+        <HomepageChat />
 
-      {/* Interactive chat widget */}
-      <HomepageChat />
+        <section style={{ maxWidth: 760, margin: '0 auto', padding: '1rem 1rem 1rem' }}>
+          <WorkedExample ex={example} headingLevel={2} />
+        </section>
 
-      {/* Static features section — server-rendered for SEO */}
-      <section style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1rem 4rem' }}>
-        <h2 style={{ textAlign: 'center', fontWeight: 700, fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', marginBottom: '2rem', color: 'var(--text-dim)' }}>Covers every branch of math</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1rem' }}>
-          {TOPICS.map(f => (
-            <a key={f.title} href='#chat' style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.25rem', textDecoration: 'none', color: 'inherit', display: 'block' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.6rem' }}>{f.icon}</div>
-              <div style={{ fontWeight: 600, marginBottom: '0.3rem' }}>{f.title}</div>
-              <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem', lineHeight: 1.6 }}>{f.desc}</div>
-            </a>
-          ))}
-        </div>
-      </section>
+        <section style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1rem' }}>
+          <h2 style={h2}>Pick a topic</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: '1rem' }}>
+            {TOPICS.map(t => (
+              <Link key={t.href} href={t.href} style={card}>
+                <div style={{ fontSize: '1.5rem', marginBottom: '0.6rem' }} aria-hidden>{t.icon}</div>
+                <div style={{ fontWeight: 600, marginBottom: '0.3rem' }}>{t.title} →</div>
+                <div style={{ color: 'var(--text-dim)', fontSize: '0.85rem', lineHeight: 1.6 }}>{t.body}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-      <section style={{ borderTop: '1px solid var(--border)', padding: '3rem 1rem', textAlign: 'center', background: 'rgba(108,99,255,.04)' }}>
-        <h2 style={{ fontWeight: 800, fontSize: 'clamp(1.3rem, 4vw, 1.75rem)', marginBottom: '0.75rem' }}>For Tutoring Centers &amp; Schools</h2>
-        <p style={{ color: 'var(--text-dim)', marginBottom: '1.5rem', fontSize: 'clamp(0.875rem, 2.5vw, 1rem)', maxWidth: 520, margin: '0 auto 1.5rem' }}>
-          Give every student their own AI math tutor — available 24/7.
-        </p>
-        <ul style={{ listStyle: 'none', padding: 0, maxWidth: 440, margin: '0 auto 2rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <li style={{ display: 'flex', gap: '0.6rem', fontSize: '0.925rem' }}><span style={{ color: 'var(--accent2)' }}>✓</span> Reduce teacher workload with instant step-by-step explanations</li>
-          <li style={{ display: 'flex', gap: '0.6rem', fontSize: '0.925rem' }}><span style={{ color: 'var(--accent2)' }}>✓</span> Works across all levels — from pre-algebra to calculus</li>
-          <li style={{ display: 'flex', gap: '0.6rem', fontSize: '0.925rem' }}><span style={{ color: 'var(--accent2)' }}>✓</span> COPPA-compliant with parental consent for under-13 learners</li>
-        </ul>
-        <a href='mailto:hello@algegram.xyz?subject=Pilot Request'
-          style={{ display: 'inline-block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>
-          Request a pilot →
-        </a>
-      </section>
+        <section style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1rem' }}>
+          <h2 style={h2}>Free vs Pro</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1rem' }}>
+            <div style={card}>
+              <div style={{ fontWeight: 700 }}>Free · $0</div>
+              <ul style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: 1.8, marginTop: '0.5rem' }}>
+                <li>✓ {GUEST_FREE_QUESTIONS} questions without signing up</li>
+                <li>✓ {FREE_DAILY_QUESTIONS} questions a day with a free account</li>
+                <li>✓ Step-by-step explanations</li>
+              </ul>
+            </div>
+            <div style={card}>
+              <div style={{ fontWeight: 700 }}>Pro · {PRO_PRICE_TEXT}</div>
+              <ul style={{ color: 'var(--text-dim)', fontSize: '0.9rem', lineHeight: 1.8, marginTop: '0.5rem' }}>
+                <li>✓ Unlimited questions</li>
+                <li>✓ Stronger AI models</li>
+                <li>✓ Saved question history</li>
+              </ul>
+              {PRO_OFFER_TEXT && <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>{PRO_OFFER_TEXT}</p>}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.5rem' }}>
+            <Link href='/auth/signup' style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Sign up free →</Link>
+            <Link href='/pricing' style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.8rem 2rem', borderRadius: 12, fontWeight: 600, textDecoration: 'none' }}>{PRO_CTA_TEXT}</Link>
+          </div>
+        </section>
 
-      <section style={{ borderTop: '1px solid var(--border)', padding: '3rem 1rem', textAlign: 'center' }}>
-        <h2 style={{ fontWeight: 800, fontSize: 'clamp(1.3rem, 4vw, 1.75rem)', marginBottom: '0.75rem' }}>Want unlimited questions?</h2>
-        <p style={{ color: 'var(--text-dim)', marginBottom: '1.75rem', fontSize: 'clamp(0.875rem, 2.5vw, 1rem)' }}>Sign up free for 20/day, or go Pro for unlimited access to GPT-4o &amp; Claude.</p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href='/auth/signup' style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>Sign up free →</Link>
-          <Link href='/pricing' style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none' }}>See pricing</Link>
-        </div>
-      </section>
+        <section id='pilot' style={{ borderTop: '1px solid var(--border)', padding: '3rem 1rem', textAlign: 'center', background: 'rgba(108,99,255,.04)' }}>
+          <h2 style={{ ...h2, marginBottom: '0.75rem' }}>For tutoring centers &amp; schools</h2>
+          <p style={{ color: 'var(--text-dim)', maxWidth: 560, margin: '0 auto 1.5rem' }}>
+            Want to try Algegram with a group of students? Tell us about your center or class and we’ll set up a pilot.
+          </p>
+          <a href={PILOT_MAILTO}
+            style={{ display: 'inline-block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>
+            Request a pilot →
+          </a>
+        </section>
+      </main>
 
-      <footer style={{ borderTop: '1px solid var(--border)', padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
-        <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-          <Link href='/terms' style={{ color: 'var(--text-dim)' }}>Terms</Link>
-          <Link href='/privacy' style={{ color: 'var(--text-dim)' }}>Privacy</Link>
-          <Link href='/contact' style={{ color: 'var(--text-dim)' }}>Contact</Link>
-          <a href='mailto:support@algegram.xyz' style={{ color: 'var(--text-dim)' }}>Help</a>
-          <Link href='/pricing' style={{ color: 'var(--text-dim)' }}>Pricing</Link>
-        </div>
-        © {new Date().getFullYear()} Algegram · Built with ❤️ and AI
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 'use client'
+import { PRO_CTA_TEXT, PRO_PRICE_TEXT, PRO_OFFER_TEXT } from '@/lib/site-config'
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -136,11 +137,11 @@ function SignupForm() {
         </Link>
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '2rem' }}>
           <h1 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.4rem' }}>
-            {plan === 'pro' ? 'Start your Pro trial' : 'Create your free account'}
+            {plan === 'pro' ? `${PRO_CTA_TEXT}: create your account` : 'Create your free account'}
           </h1>
           <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
             {plan === 'pro'
-              ? 'Start your 7-day free Pro trial — $12.99/month after, cancel anytime.'
+              ? `Create your account, then upgrade to Pro (${PRO_PRICE_TEXT}${PRO_OFFER_TEXT ? `, ${PRO_OFFER_TEXT}` : ''}). Cancel anytime.`
               : '20 free messages per day. No credit card.'}
           </p>
 

@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Terms of Service — Algegram',
+export const metadata = pageMetadata({
+  title: 'Terms of Service | Algegram',
   description: 'Algegram Terms of Service. Read our terms covering SaaS subscription, age restrictions, and parental consent.',
-  alternates: { canonical: 'https://www.algegram.xyz/terms' },
-}
+  path: '/terms',
+})
 
 export default function Terms() {
   return (

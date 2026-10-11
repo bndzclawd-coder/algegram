@@ -4,10 +4,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 type Message = { role: 'user' | 'assistant'; content: string }
 
 const EXAMPLE_QUESTIONS = [
-  '∫ x² sin(x) dx',
+  '3/4 + 1/6',
   'Solve: 2x² + 5x − 3 = 0',
   'What is a derivative?',
-  'Graph y = sin(x)/x',
+  '∫ x² sin(x) dx',
 ]
 
 function useMathRenderer(dep: any) {
@@ -140,7 +140,17 @@ export default function HomepageChat() {
       .catch(() => {})
   }, [])
 
+  // Topic pages link to /?q=...#try so the box arrives prefilled (never auto-sent).
   useEffect(() => {
+    const pre = new URLSearchParams(window.location.search).get('q')
+    if (pre) {
+      setInput(pre.slice(0, 500))
+      inputRef.current?.focus()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (messages.length === 0) return
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
@@ -148,10 +158,6 @@ export default function HomepageChat() {
     const text = (overrideText ?? input).trim()
     if (!text || streaming) return
     if (guestRemaining <= 0) { setShowSignupWall(true); return }
-    const limitRes = await fetch('/api/guest-limit', { method: 'POST' })
-    const limitData = await limitRes.json()
-    if (!limitRes.ok || limitData.remaining < 0) { setShowSignupWall(true); return }
-    setGuestRemaining(limitData.remaining)
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
@@ -161,7 +167,11 @@ export default function HomepageChat() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: newMessages, mode: 'math' }),
     })
+    // /api/chat checks and counts the guest limit itself and reports what's left.
+    const left = res.headers.get('X-Guest-Remaining')
+    if (left !== null) setGuestRemaining(Math.max(0, parseInt(left, 10) || 0))
     if (!res.ok) {
+      if (res.status === 429) setGuestRemaining(0)
       const err = await res.json().catch(() => ({ error: 'Something went wrong' }))
       if (err.signup) { setShowSignupWall(true); setStreaming(false); return }
       setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}` }])
@@ -198,7 +208,7 @@ export default function HomepageChat() {
   const hasMessages = messages.length > 0
 
   return (
-    <section id='chat' className='hero-section' style={{ maxWidth: 760, margin: '0 auto', padding: '2.5rem 1rem 2rem' }}>
+    <section id='try' aria-label='Try a free question' className='hero-section' style={{ maxWidth: 760, margin: '0 auto', padding: '1.5rem 1rem 1rem', scrollMarginTop: '5rem' }}>
       {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} />}
       {!hasMessages && (
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -222,7 +232,7 @@ export default function HomepageChat() {
       <div style={{ background: 'var(--surface)', border: '2px solid rgba(108,99,255,.35)', borderRadius: '16px', padding: '0.9rem 1rem 0.75rem', boxShadow: '0 0 40px rgba(108,99,255,.1)' }}>
         <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-          placeholder='Type any math problem… e.g. Solve x² + 5x + 6 = 0' rows={3}
+          placeholder='Type any math problem… e.g. 3/4 + 1/6 or 2x + 5 = 17' rows={3} aria-label='Type a math question'
           style={{ width: '100%', background: 'none', border: 'none', outline: 'none', resize: 'none', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.65, fontFamily: 'inherit', display: 'block', boxSizing: 'border-box' }} />
         <div className='input-bottom-row' style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', gap: '0.5rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', flexShrink: 1, minWidth: 0 }}>

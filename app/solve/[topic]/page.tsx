@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 
 // Static list of supported topics and example Q&A pairs
 // Never render user input on these pages — SEO-safe static content only
@@ -98,14 +99,17 @@ export async function generateStaticParams() {
   return Object.keys(TOPIC_DATA).map(topic => ({ topic }))
 }
 
+// Unknown topics are real 404s (not soft-404 pages with a 200 status).
+export const dynamicParams = false
+
 export async function generateMetadata({ params }: { params: { topic: string } }): Promise<Metadata> {
   const data = TOPIC_DATA[params.topic]
-  if (!data) return { title: 'Math Help — Algegram' }
-  return {
-    title: `${data.title} Help — Algegram`,
+  if (!data) return { title: 'Math Help', robots: { index: false } }
+  return pageMetadata({
+    title: `${data.title} Help – Step-by-Step Examples | Algegram`,
     description: `${data.description} See example problems and solutions. Ask your own question free.`,
-    alternates: { canonical: `https://www.algegram.xyz/solve/${params.topic}` },
-  }
+    path: `/solve/${params.topic}`,
+  })
 }
 
 export default function SolveTopic({ params }: { params: { topic: string } }) {
