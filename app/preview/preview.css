@@ -83,3 +83,7 @@
 [data-reveal].in{opacity:1;transform:none}
 @media(max-width:900px){.pv .hero{grid-template-columns:1fr;padding-top:24px;gap:40px}.pv .nl{display:none}.pv .bento{grid-template-columns:1fr}.pv .c1,.pv .c2,.pv .c3,.pv .c4{grid-column:auto}.pv .prices{grid-template-columns:1fr}.pv section{padding:52px 0}}
 @media(prefers-reduced-motion:reduce){.pv *,.pv *::before,.pv *::after{animation:none!important;transition:none!important}[data-reveal]{opacity:1;transform:none}.pv .phone{transform:rotateY(-6deg)}}
+.pv .price li.soon{color:var(--dim)}
+.pv .price li.soon::before{content:"○";color:var(--dim)}
+.pv .tag{display:inline-block;margin-left:6px;font-size:.7rem;font-weight:700;letter-spacing:.02em;color:#e9e5ff;background:rgba(139,123,255,.16);border:1px solid rgba(139,123,255,.4);border-radius:999px;padding:1px 8px;vertical-align:middle}
+.pv .foot{margin:14px 0 0;font-size:.78rem;color:var(--dim)}

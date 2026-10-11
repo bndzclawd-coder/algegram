@@ -123,8 +123,14 @@ export default function PreviewPage() {
               <div className='price pro' data-reveal>
                 <h3>{PLANS.pro.name}</h3>
                 <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
-                <ul><li>Your choice of GPT-4o or Claude, with daily fair-use limits</li><li>Step-by-step solutions</li></ul>
+                <ul>
+                  <li>Step-by-step solutions</li>
+                  {['Practice questions on any topic', 'Quizzes and tests', 'Weekly progress report by email', 'Weak-spot practice built from your mistakes'].map(f => (
+                    <li key={f} className='soon'>{f} <span className='tag'>Coming soon</span></li>
+                  ))}
+                </ul>
                 <a className='btn' href='/pricing'>{PRO_CTA_TEXT}</a>
+                <p className='foot'>Fair-use limits apply.</p>
               </div>
             </div>
           </section>
