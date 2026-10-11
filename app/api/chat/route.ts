@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/plans'
-import { createHmac } from 'crypto'
 import { maybeSendDailyLimitEmail } from '@/lib/email/lifecycle'
+import { resolveModel, type PlanKind } from '@/lib/models'
+import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
-
-const FREE_MODEL = 'qwen/qwen3.7-plus'
-const PRO_DEFAULT_MODEL = 'qwen/qwen3.7-plus'
-const GUEST_LIMIT = 5
+const AI_UNAVAILABLE = 'The tutor is having trouble answering right now. Please try again in a moment.'
 
 const SYSTEM_PROMPTS: Record<string, string> = {
   math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.`,
@@ -18,26 +16,28 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$.`,
 }
 
-function verifyGuestCookie(signed: string): number {
-  const secret = process.env.GUEST_COOKIE_SECRET
-  if (!secret) return 0
-  const lastDot = signed.lastIndexOf('.')
-  if (lastDot < 0) return 0
-  const value = signed.slice(0, lastDot)
-  const mac = signed.slice(lastDot + 1)
-  const expected = createHmac('sha256', secret).update(value).digest('hex')
-  if (mac.length !== expected.length) return 0
-  let diff = 0
-  for (let i = 0; i < mac.length; i++) diff |= mac.charCodeAt(i) ^ expected.charCodeAt(i)
-  if (diff !== 0) return 0
-  const n = parseInt(value, 10)
-  return isNaN(n) ? 0 : Math.max(0, n)
+type ChatMessage = { role: 'user' | 'assistant'; content: string }
+
+function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mode: string } | null {
+  if (!raw || typeof raw !== 'object') return null
+  const b = raw as Record<string, unknown>
+  if (!Array.isArray(b.messages)) return null
+  const messages = b.messages
+    .filter((m): m is ChatMessage =>
+      !!m && typeof m === 'object' &&
+      ((m as ChatMessage).role === 'user' || (m as ChatMessage).role === 'assistant') &&
+      typeof (m as ChatMessage).content === 'string')
+    .map(m => ({ role: m.role, content: m.content }))
+  if (messages.length === 0) return null
+  const mode = typeof b.mode === 'string' && b.mode in SYSTEM_PROMPTS ? b.mode : 'math'
+  return { messages, model: b.model, mode }
 }
 
-async function callOpenRouter(model: string, messages: object[], mode: string) {
-  const body: Record<string, unknown> = {
+// Every OpenRouter request goes through here, so data_collection: 'deny' is always set.
+async function callOpenRouter(model: string, messages: ChatMessage[], mode: string) {
+  const body = {
     model,
-    messages: [{ role: 'system', content: SYSTEM_PROMPTS[mode] || SYSTEM_PROMPTS.math }, ...messages],
+    messages: [{ role: 'system', content: SYSTEM_PROMPTS[mode] }, ...messages],
     stream: true,
     temperature: 0.3,
     max_tokens: 2048,
@@ -55,40 +55,60 @@ async function callOpenRouter(model: string, messages: object[], mode: string) {
   })
 }
 
+/** Calls OpenRouter; on failure logs status only (never user content or the raw body) and returns a generic error. */
+async function aiStream(plan: PlanKind, model: string, messages: ChatMessage[], mode: string) {
+  try {
+    const res = await callOpenRouter(model, messages, mode)
+    if (res.ok && res.body) return { ok: true as const, body: res.body }
+    console.error('[chat] OpenRouter request failed', { plan, model, status: res.status })
+    res.body?.cancel().catch(() => {})
+  } catch (e) {
+    console.error('[chat] OpenRouter request threw', { plan, model, name: (e as Error)?.name })
+  }
+  return { ok: false as const, res: NextResponse.json({ error: AI_UNAVAILABLE }, { status: 502 }) }
+}
+
+function streamHeaders(plan: PlanKind) {
+  return { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'X-Plan': plan }
+}
+
+async function handleGuest(req: NextRequest) {
+  const secret = guestSecret()
+  if (!secret) {
+    console.error('[chat] GUEST_COOKIE_SECRET missing; refusing guest requests')
+    return NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
+  }
+
+  const used = readGuestCount(req, secret)
+  if (used >= GUEST_LIMIT) {
+    return NextResponse.json({ error: 'You have used your 5 free questions. Sign up to continue.', signup: true }, { status: 429 })
+  }
+
+  const parsed = parseBody(await req.json().catch(() => null))
+  if (!parsed) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
+
+  if (!consumeIpQuota(req, secret)) {
+    return NextResponse.json({ error: 'Too many free questions from this network. Sign up to continue.', signup: true }, { status: 429 })
+  }
+
+  // Count the question before calling the AI, so concurrent/failed calls can't be used to dodge the limit.
+  const nextUsed = used + 1
+  const lastUser = [...parsed.messages].reverse().find(m => m.role === 'user')
+  const ai = await aiStream('guest', resolveModel('guest', parsed.model), lastUser ? [lastUser] : parsed.messages.slice(-1), parsed.mode)
+  const res = ai.ok
+    ? new NextResponse(ai.body, { status: 200, headers: { ...streamHeaders('guest'), 'X-Guest-Remaining': String(GUEST_LIMIT - nextUsed) } })
+    : ai.res
+  setGuestCount(res, secret, nextUsed)
+  return res
+}
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return handleGuest(req)
 
-  if (!user) {
-    // Enforce guest limit via HMAC-signed cookie
-    const cookieValue = req.cookies.get('gl')?.value
-    const guestCount = cookieValue ? verifyGuestCookie(cookieValue) : 0
-    if (guestCount >= GUEST_LIMIT) {
-      return NextResponse.json(
-        { error: 'You have used your 5 free questions. Sign up to continue.', signup: true },
-        { status: 429 }
-      )
-    }
-
-    const body = await req.json()
-    const { messages, mode } = body
-    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')
-    const guestMessages = lastUserMsg ? [lastUserMsg] : messages.slice(-1)
-    const orRes = await callOpenRouter(FREE_MODEL, guestMessages, mode || 'math')
-    if (!orRes.ok) {
-      const errText = await orRes.text()
-      console.error('OpenRouter guest error:', orRes.status, errText)
-      return NextResponse.json({ error: 'AI error', detail: errText }, { status: 502 })
-    }
-    return new NextResponse(orRes.body, {
-      status: 200,
-      headers: {
-        'X-Plan': 'guest',
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-      }
-    })
-  }
+  const parsed = parseBody(await req.json().catch(() => null))
+  if (!parsed) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
 
   const db = createServiceClient()
   const { data: sub } = await db
@@ -98,53 +118,36 @@ export async function POST(req: NextRequest) {
     .single()
 
   const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing')
+  const plan: PlanKind = isPro ? 'pro' : 'free'
 
+  let usedToday: number | null = null
   if (!isPro) {
     const today = new Date().toISOString().split('T')[0]
-    const { data: usage } = await db
-      .from('usage')
-      .select('count')
-      .eq('user_id', user.id)
-      .eq('day', today)
-      .single()
-    const count = usage?.count ?? 0
-    if (count >= FREE_LIMIT) {
+    // Atomic check-and-increment (supabase/migrations/20261011010000_atomic_usage_increment.sql).
+    const { data, error } = await db.rpc('increment_usage', { p_user_id: user.id, p_day: today, p_limit: FREE_LIMIT })
+    if (error) {
+      console.error('[chat] increment_usage failed', { code: error.code })
+      return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 503 })
+    }
+    if (data === null || data === undefined) {
       return NextResponse.json(
         { error: `Free limit reached (${FREE_LIMIT}/day). Upgrade to Pro for unlimited messages.`, upgrade: true },
         { status: 429 }
       )
     }
-    await db.from('usage').upsert(
-      { user_id: user.id, day: today, count: count + 1 },
-      { onConflict: 'user_id,day' }
-    )
-    // Last free question of the day: maybe send the (gated, once-a-week, never under-13) limit email.
-    if (count + 1 === FREE_LIMIT) {
-      maybeSendDailyLimitEmail(db, user).catch(e => console.error('[chat] limit email failed:', e))
+    usedToday = Number(data)
+    if (usedToday === FREE_LIMIT) {
+      maybeSendDailyLimitEmail(db, user).catch(() => console.error('[chat] limit email failed'))
     }
   }
 
-  const body = await req.json()
-  const { messages, model: requestedModel, mode } = body
-  const model = isPro ? (requestedModel || PRO_DEFAULT_MODEL) : FREE_MODEL
+  const ai = await aiStream(plan, resolveModel(plan, parsed.model), parsed.messages, parsed.mode)
+  if (!ai.ok) return ai.res
 
-  const orRes = await callOpenRouter(model, messages, mode || 'math')
-  if (!orRes.ok) {
-    const err = await orRes.text()
-    console.error('OpenRouter error:', orRes.status, err)
-    return NextResponse.json({ error: `AI error: ${err}` }, { status: 502 })
-  }
-
-  const headers = new Headers()
-  headers.set('Content-Type', 'text/event-stream')
-  headers.set('Cache-Control', 'no-cache')
-  headers.set('X-Plan', isPro ? 'pro' : 'free')
-  if (!isPro) {
-    const today = new Date().toISOString().split('T')[0]
-    const { data: usage } = await db.from('usage').select('count').eq('user_id', user.id).eq('day', today).single()
-    headers.set('X-Messages-Used', String(usage?.count ?? 1))
+  const headers = new Headers(streamHeaders(plan))
+  if (usedToday !== null) {
+    headers.set('X-Messages-Used', String(usedToday))
     headers.set('X-Messages-Limit', String(FREE_LIMIT))
   }
-  return new NextResponse(orRes.body, { status: 200, headers })
+  return new NextResponse(ai.body, { status: 200, headers })
 }
-
