@@ -49,7 +49,7 @@ export default function PreviewPage() {
                 <div className='askin'>
                   <span className='ai-note' role='note'>🤖 Layla is an AI tutor, not a real person</span>
                   <div className='ask-live'>
-                    <HomepageChat intro="Hi, I'm Layla, an AI tutor." placeholders={EXAMPLES} />
+                    <HomepageChat intro="Hi, I'm Layla, an AI tutor." placeholders={EXAMPLES} proPitch='or go Pro for more.' />
                   </div>
                 </div>
               </div>
@@ -123,7 +123,7 @@ export default function PreviewPage() {
               <div className='price pro' data-reveal>
                 <h3>{PLANS.pro.name}</h3>
                 <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
-                <ul>{PLANS.pro.features.map(f => <li key={f}>{f}</li>)}</ul>
+                <ul><li>Your choice of GPT-4o or Claude, with daily fair-use limits</li><li>Step-by-step solutions</li></ul>
                 <a className='btn' href='/pricing'>{PRO_CTA_TEXT}</a>
               </div>
             </div>

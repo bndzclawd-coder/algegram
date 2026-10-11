@@ -89,14 +89,14 @@ function MessageBubble({ msg }: { msg: Message }) {
   )
 }
 
-function SignupWall({ onClose }: { onClose: () => void }) {
+function SignupWall({ onClose, proPitch = 'or go Pro for unlimited math tutoring.' }: { onClose: () => void; proPitch?: string }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
       <div style={{ background: 'var(--surface)', border: '1px solid rgba(108,99,255,.4)', borderRadius: '24px', padding: '2rem', maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 0 60px rgba(108,99,255,.2)' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎉</div>
         <h2 style={{ fontWeight: 800, fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', marginBottom: '0.5rem' }}>You’ve used your 5 free questions!</h2>
         <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '0.75rem', fontSize: '0.9rem' }}>
-          Sign up free to get <strong style={{ color: 'var(--text)' }}>20 questions/day</strong>, or go Pro for unlimited math tutoring.
+          Sign up free to get <strong style={{ color: 'var(--text)' }}>20 questions/day</strong>, {proPitch}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
           <a href='/auth/signup' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.9rem', borderRadius: '12px', fontWeight: 700, fontSize: '1rem', textDecoration: 'none' }}>
@@ -118,7 +118,7 @@ function SignupWall({ onClose }: { onClose: () => void }) {
 }
 
 /** intro: optional fixed line rendered by the page (not the model) above the first answer. */
-export default function HomepageChat({ intro, placeholders }: { intro?: string; placeholders?: string[] } = {}) {
+export default function HomepageChat({ intro, placeholders, proPitch }: { intro?: string; placeholders?: string[]; proPitch?: string } = {}) {
   const [phIdx, setPhIdx] = useState(0)
   useEffect(() => {
     if (!placeholders?.length) return
@@ -216,7 +216,7 @@ export default function HomepageChat({ intro, placeholders }: { intro?: string; 
 
   return (
     <section id='try' aria-label='Try a free question' className='hero-section' style={{ maxWidth: 760, margin: '0 auto', padding: '1.5rem 1rem 1rem', scrollMarginTop: '5rem' }}>
-      {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} />}
+      {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} proPitch={proPitch} />}
       {!hasMessages && (
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-block', background: 'rgba(108,99,255,.12)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent2)', marginBottom: '1.25rem' }}>
