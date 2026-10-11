@@ -125,7 +125,7 @@ export default function PreviewPage() {
                 <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
                 <ul>
                   <li>Step-by-step solutions</li>
-                  {['Practice questions on any topic', 'Quizzes and tests', 'Weekly progress report by email', 'Weak-spot practice built from your mistakes'].map(f => (
+                  {['Practice questions on any topic', 'Quizzes and tests', 'Weekly progress report by email', 'Weak-spot practice built from your mistakes', 'Video lessons that explain each step'].map(f => (
                     <li key={f} className='soon'>{f} <span className='tag'>Coming soon</span></li>
                   ))}
                 </ul>
