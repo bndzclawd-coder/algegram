@@ -1,49 +1,142 @@
 import type { Metadata } from 'next'
 import HomepageChat from '@/app/components/HomepageChat'
 import { GUEST_FREE_QUESTIONS, FREE_DAILY_QUESTIONS, PRO_CTA_TEXT } from '@/lib/site-config'
-import { PROTO_CSS, PROTO_NAV, PROTO_REST } from './proto'
+import { PLANS } from '@/lib/plans'
+import PreviewFx from './PreviewFx'
+import './preview.css'
 
-// UAT-only homepage prototype. Not linked, not in the sitemap, noindex (meta + X-Robots-Tag header).
-// The Ask Layla box is the live guest chat (/api/chat): same server-side 5-question limit,
-// nothing stored, no analytics, question text never logged.
+// UAT-only homepage redesign. Not linked, not in the sitemap, noindex (meta + X-Robots-Tag header).
+// The Ask Layla box is the live guest chat (/api/chat): same server-side 5-question limit and
+// signed cookie, same guest model, nothing stored, no analytics, question text never logged.
 export const metadata: Metadata = {
   title: { absolute: 'Algegram homepage prototype (preview)' },
+  description: 'Design preview of the Algegram homepage.',
   robots: { index: false, follow: false },
 }
 
-const fill = (s: string) =>
-  s.replaceAll('__GUEST__', String(GUEST_FREE_QUESTIONS))
-   .replaceAll('__FREE__', String(FREE_DAILY_QUESTIONS))
-   .replaceAll('__CTA__', PRO_CTA_TEXT)
-
-const ASK_CSS = `.ask-live{--surface:#fff;--text:#1d1b3a;--text-dim:#5d5a7a;--border:#e4def5;--accent:#6c4cf5;--accent2:#6c4cf5;color:#1d1b3a;margin:14px 0}
-.ask-live .hero-section{padding:0!important;max-width:none!important}
-.ai-note{display:inline-block;background:#ece7ff;color:#1d1b3a;border-radius:999px;padding:4px 12px;font-size:.8rem;font-weight:700;margin-bottom:8px}`
+const EXAMPLES = ['2x + 5 = 17', '3/4 + 1/6', 'x² − 5x + 6 = 0', 'derivative of x³', '∫ x² dx']
+const SYMBOLS = [['∫', 8, 12], ['√', 82, 18], ['π', 14, 62], ['Σ', 70, 70], ['∞', 45, 40], ['θ', 90, 88], ['Δ', 30, 92]] as const
+const CLIPS = [
+  ['layla-15s-1', 'clip-1', '2x + 5 = 17'],
+  ['layla-15s-2', 'clip-2', '3x − 4 = 11'],
+  ['layla-15s-3', 'clip-3', 'The ×11 trick (when the two digits add up to 9 or less)'],
+  ['layla-15s-4', 'clip-4', 'Can you beat me? x/4 + 3 = 7'],
+] as const
 
 export default function PreviewPage() {
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: PROTO_CSS + ASK_CSS }} />
-      <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: PROTO_NAV }} />
-      <div className='wrap'>
-        <header className='hero'>
-          <div>
-            <span className='badge'>✦ AI tutor</span>
-            <h1>Meet <em>Layla</em>, your AI math tutor</h1>
-            <p className='sub'>Type any problem. Watch her explain it, step by step.</p>
-            <div className='ask-live'>
-              <span className='ai-note' role='note'>🤖 Layla is an AI tutor, not a real person</span>
-              <HomepageChat intro="Hi, I'm Layla, an AI tutor." />
-            </div>
-            <div className='cta'><a className='btn alt' href='/auth/signup'>Sign up free for {FREE_DAILY_QUESTIONS} questions a day</a><span className='small'>Arithmetic to university calculus.</span></div>
-          </div>
-          <div className='phone'>
-            <video src='/preview/layla-2x5-voice.mp4' poster='/preview/hero-poster.png' controls playsInline preload='metadata' />
-            <span className='badge'>AI tutor · voiced by AI</span>
-          </div>
-        </header>
+    <div className='pv'>
+      <PreviewFx />
+      <div className='proto' role='note'>Design prototype, not the live site</div>
+      <div className='glow g1' aria-hidden /><div className='glow g2' aria-hidden /><div className='glow g3' aria-hidden />
+      <div className='sym' aria-hidden>
+        {SYMBOLS.map(([s, x, y], i) => <span key={i} style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${-i * 3}s` }}>{s}</span>)}
       </div>
-      <div style={{ display: 'contents' }} dangerouslySetInnerHTML={{ __html: fill(PROTO_REST) }} />
-    </>
+
+      <div className='w'>
+        <nav aria-label='Main'>
+          <a className='logo' href='/'>alge<b>gram</b></a>
+          <div className='nl'><a href='#why'>Why Layla</a><a href='#clips'>Lessons</a><a href='#pricing'>Pricing</a><a href='/auth/login'>Sign in</a></div>
+        </nav>
+
+        <main>
+          <header className='hero'>
+            <div>
+              <span className='pill'>✦ AI math tutor · arithmetic to calculus</span>
+              <h1><span className='ln'><span>Math, explained</span></span><span className='ln'><span>by <em>Layla</em>.</span></span></h1>
+              <p className='sub'>Type any problem. Layla walks you through it, one step at a time.</p>
+              <div className='askwrap'>
+                <div className='askin'>
+                  <span className='ai-note' role='note'>🤖 Layla is an AI tutor, not a real person</span>
+                  <div className='ask-live'>
+                    <HomepageChat intro="Hi, I'm Layla, an AI tutor." placeholders={EXAMPLES} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className='phone-wrap'>
+              <div className='phone' data-parallax>
+                <video src='/preview/layla-2x5-voice.mp4' poster='/preview/hero-poster.jpg' controls playsInline preload='none' aria-label='Layla, an AI tutor, solves 2x + 5 = 17' />
+                <span className='vbadge'>AI tutor · voiced by AI</span>
+              </div>
+            </div>
+          </header>
+
+          <section id='why' aria-labelledby='why-h'>
+            <h2 id='why-h' data-reveal>Built to teach, not to cheat.</h2>
+            <p className='lead' data-reveal>Hints first, full answers when you ask. The goal is that you understand it.</p>
+            <div className='bento'>
+              <article className='card c1' data-reveal>
+                <div className='ic' aria-hidden>🧠</div>
+                <h3>Teach, don’t cheat</h3>
+                <p>Layla nudges with a hint first, so students do the thinking. The full worked solution comes when they ask for it.</p>
+                <div className='steps3'><span>1 · Nudge</span><span>2 · Guide</span><span>3 · Reveal</span></div>
+              </article>
+              <article className='card c2' data-reveal>
+                <div className='ic' aria-hidden>✍️</div>
+                <h3>Step-by-step</h3>
+                <p>Every line of working, written out in clean math notation.</p>
+              </article>
+              <article className='card c3' data-reveal>
+                <div className='ic' aria-hidden>∑</div>
+                <h3>Every topic</h3>
+                <p>One tutor from first fractions to university calculus.</p>
+                <div className='topics'>{['Arithmetic', 'Algebra', 'Geometry', 'Statistics', 'Linear algebra', 'Calculus'].map(t => <span key={t}>{t}</span>)}</div>
+              </article>
+              <article className='card c4' data-reveal>
+                <div className='ic' aria-hidden>🛡️</div>
+                <h3>Parent-safe</h3>
+                <p>Clearly labeled as AI. No ads. Kids under 13 need a parent’s OK to sign up, and you can delete your account and data anytime.</p>
+              </article>
+            </div>
+          </section>
+
+          <section id='clips' aria-labelledby='clips-h'>
+            <h2 id='clips-h' data-reveal>15 seconds with Layla</h2>
+            <p className='lead' data-reveal>Short whiteboard lessons. Swipe through.</p>
+            <div className='car' role='region' aria-label='Lesson clips' tabIndex={0}>
+              {CLIPS.map(([v, p, label]) => (
+                <figure className='clip' key={v} style={{ margin: 0 }}>
+                  <video src={`/preview/${v}.mp4`} poster={`/preview/${p}.jpg`} controls playsInline preload='none' aria-label={label} />
+                  <span className='vbadge'>AI tutor · voiced by AI</span>
+                  <figcaption><p>{label}</p></figcaption>
+                </figure>
+              ))}
+            </div>
+          </section>
+
+          <section id='pricing' aria-labelledby='pricing-h'>
+            <h2 id='pricing-h' data-reveal>Simple pricing</h2>
+            <p className='lead' data-reveal>Start free. Upgrade when you want more.</p>
+            <div className='prices'>
+              <div className='price' data-reveal>
+                <h3>{PLANS.free.name}</h3>
+                <div className='amt'>$0</div>
+                <ul>
+                  <li>{GUEST_FREE_QUESTIONS} free questions, no sign-up</li>
+                  <li>{FREE_DAILY_QUESTIONS} questions a day with a free account</li>
+                  <li>Algebra &amp; calculus help</li>
+                  <li>Step-by-step answers</li>
+                </ul>
+                <a className='btn ghost' href='/auth/signup'>Start free</a>
+              </div>
+              <div className='price pro' data-reveal>
+                <h3>{PLANS.pro.name}</h3>
+                <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
+                <ul>{PLANS.pro.features.map(f => <li key={f}>{f}</li>)}</ul>
+                <a className='btn' href='/pricing'>{PRO_CTA_TEXT}</a>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <footer>
+        <div className='w'>
+          <div><a href='/terms'>Terms</a><a href='/privacy'>Privacy</a><a href='/contact'>Contact</a></div>
+          <span>© 2026 Algegram</span>
+        </div>
+      </footer>
+    </div>
   )
 }

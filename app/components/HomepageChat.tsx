@@ -118,7 +118,13 @@ function SignupWall({ onClose }: { onClose: () => void }) {
 }
 
 /** intro: optional fixed line rendered by the page (not the model) above the first answer. */
-export default function HomepageChat({ intro }: { intro?: string } = {}) {
+export default function HomepageChat({ intro, placeholders }: { intro?: string; placeholders?: string[] } = {}) {
+  const [phIdx, setPhIdx] = useState(0)
+  useEffect(() => {
+    if (!placeholders?.length) return
+    const id = setInterval(() => setPhIdx(i => (i + 1) % placeholders.length), 3000)
+    return () => clearInterval(id)
+  }, [placeholders])
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
@@ -240,7 +246,7 @@ export default function HomepageChat({ intro }: { intro?: string } = {}) {
       <div style={{ background: 'var(--surface)', border: '2px solid rgba(108,99,255,.35)', borderRadius: '16px', padding: '0.9rem 1rem 0.75rem', boxShadow: '0 0 40px rgba(108,99,255,.1)' }}>
         <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-          placeholder='Type any math problem… e.g. 3/4 + 1/6 or 2x + 5 = 17' rows={3} aria-label='Type a math question'
+          placeholder={placeholders?.length ? `Try: ${placeholders[phIdx]}` : 'Type any math problem… e.g. 3/4 + 1/6 or 2x + 5 = 17'} rows={3} aria-label='Type a math question'
           style={{ width: '100%', background: 'none', border: 'none', outline: 'none', resize: 'none', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.65, fontFamily: 'inherit', display: 'block', boxSizing: 'border-box' }} />
         <div className='input-bottom-row' style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', gap: '0.5rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', flexShrink: 1, minWidth: 0 }}>
