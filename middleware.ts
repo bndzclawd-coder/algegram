@@ -8,6 +8,7 @@ function isProtected(pathname: string) {
   return (
     pathname === '/chat' || pathname.startsWith('/chat/') ||
     pathname === '/settings' || pathname.startsWith('/settings/') ||
+    pathname === '/practice' || pathname === '/test' ||
     pathname === '/api/stripe/portal' ||
     pathname === '/api/account/delete'
   )

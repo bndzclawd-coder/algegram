@@ -309,6 +309,12 @@ function ChatInner() {
               <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro Plan</div>
               <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '2px' }}>Unlimited messages</div>
             </div>
+          ) : null}
+          {isPro ? (
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <Link href='/practice' style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, padding: '0.45rem', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text)' }}>📝 Practice</Link>
+              <Link href='/test' style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, padding: '0.45rem', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text)' }}>⏱ Tests</Link>
+            </div>
           ) : (
             <div style={{ marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.35rem' }}>
