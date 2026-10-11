@@ -1,11 +1,12 @@
-import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { pageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Pricing — Algegram',
-  description: 'Start free, upgrade to Pro for unlimited AI math tutoring. 7-day free trial. Cancel anytime.',
-  alternates: { canonical: 'https://www.algegram.xyz/pricing' },
-}
+// Offer wording (trial vs $1 first month) is not decided, so the description stays generic.
+export const metadata = pageMetadata({
+  title: 'Pricing: Free and Pro Plans | Algegram',
+  description: 'Start free with 20 questions a day, or go Pro for unlimited step-by-step math help. Cancel anytime.',
+  path: '/pricing',
+})
 
 export default function PricingLayout({ children }: { children: ReactNode }) {
   return <>{children}</>

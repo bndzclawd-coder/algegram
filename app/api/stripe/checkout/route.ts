@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { attributionLabel, readAttribution } from '@/lib/attribution/server'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -37,8 +38,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // First-touch source label (e.g. "ig", "pilot-firecracker"). Internal revenue reporting only;
+  // never forwarded to ad platforms. Stripe metadata values must be strings, so omit when absent.
+  const ref = attributionLabel(readAttribution())
+  const refMeta: Record<string, string> = ref ? { ref } : {}
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
+    client_reference_id: user.id,
+    metadata: { supabase_user_id: user.id, ...refMeta },
     mode: 'subscription',
     line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID!, quantity: 1 }],
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/chat?upgraded=1`,
@@ -46,7 +54,7 @@ export async function POST(req: NextRequest) {
     allow_promotion_codes: true,
     subscription_data: {
       trial_period_days: 7,
-      metadata: { supabase_user_id: user.id },
+      metadata: { supabase_user_id: user.id, ...refMeta },
     },
     managed_payments: { enabled: false },
   } as any)

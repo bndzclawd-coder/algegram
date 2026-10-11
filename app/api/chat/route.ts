@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
-import { PLANS } from '@/lib/stripe'
+import { PLANS } from '@/lib/plans'
 import { createHmac } from 'crypto'
+import { maybeSendDailyLimitEmail } from '@/lib/email/lifecycle'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
 
@@ -117,6 +118,10 @@ export async function POST(req: NextRequest) {
       { user_id: user.id, day: today, count: count + 1 },
       { onConflict: 'user_id,day' }
     )
+    // Last free question of the day: maybe send the (gated, once-a-week, never under-13) limit email.
+    if (count + 1 === FREE_LIMIT) {
+      maybeSendDailyLimitEmail(db, user).catch(e => console.error('[chat] limit email failed:', e))
+    }
   }
 
   const body = await req.json()

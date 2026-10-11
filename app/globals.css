@@ -9,7 +9,7 @@
   --surface: #17171f;
   --border: #2a2a38;
   --text: #e8e8f0;
-  --text-dim: #6b6b80;
+  --text-dim: #9a9ab0; /* was #6b6b80: failed WCAG AA contrast on --bg */
   --accent: #6c63ff;
   --accent2: #a78bfa;
   --green: #34d399;

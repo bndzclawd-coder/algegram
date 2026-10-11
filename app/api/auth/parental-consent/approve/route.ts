@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { createServiceClient } from '@/lib/supabase/server'
+import { sendWelcomeEmail } from '@/lib/email/lifecycle'
 
 export async function POST(req: NextRequest) {
   const { token, password } = await req.json()
@@ -36,6 +37,11 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  // Account-only welcome to the PARENT (no promo). No-op unless LIFECYCLE_EMAILS_ENABLED=true.
+  if (newUser.user) {
+    try { await sendWelcomeEmail(newUser.user) } catch (e) { console.error('[consent] welcome email failed:', e) }
   }
 
   return NextResponse.json({ ok: true, userId: newUser.user?.id })

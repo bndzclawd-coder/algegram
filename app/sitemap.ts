@@ -1,25 +1,28 @@
 import type { MetadataRoute } from 'next'
+import { SITE_URL as BASE } from '@/lib/site-config'
 
-const BASE = 'https://www.algegram.xyz'
-
+// Only indexable, ready pages. /ai-math-tutor-for-kids is deliberately left out (noindex) until
+// the parental-consent / privacy features it describes are confirmed live.
 export default function sitemap(): MetadataRoute.Sitemap {
   const today = new Date().toISOString()
 
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, lastModified: today, changeFrequency: 'weekly', priority: 1 },
-    { url: `${BASE}/pricing`, lastModified: today, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${BASE}/terms`, lastModified: today, changeFrequency: 'monthly', priority: 0.3 },
+  const pages: MetadataRoute.Sitemap = [
+    { url: `${BASE}/`, lastModified: today, changeFrequency: 'weekly', priority: 1 },
+    { url: `${BASE}/quadratic-equation-solver`, lastModified: today, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/fraction-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/pricing`, lastModified: today, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE}/contact`, lastModified: today, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE}/privacy`, lastModified: today, changeFrequency: 'monthly', priority: 0.3 },
-    { url: `${BASE}/contact`, lastModified: today, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE}/terms`, lastModified: today, changeFrequency: 'monthly', priority: 0.3 },
   ]
 
   const topics = ['algebra', 'calculus', 'fractions', 'statistics', 'linear-algebra', 'number-theory']
   const topicPages: MetadataRoute.Sitemap = topics.map(t => ({
     url: `${BASE}/solve/${t}`,
     lastModified: today,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
   }))
 
-  return [...staticPages, ...topicPages]
+  return [...pages, ...topicPages]
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { PLANS } from '@/lib/stripe'
+import { PLANS } from '@/lib/plans'
 
 export async function GET() {
   const supabase = await createClient()

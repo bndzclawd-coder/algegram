@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy — Algegram',
+export const metadata = pageMetadata({
+  title: 'Privacy Policy | Algegram',
   description: 'Algegram Privacy Policy. Learn what data we collect, how we protect it, and your rights under GDPR and COPPA.',
-  alternates: { canonical: 'https://www.algegram.xyz/privacy' },
-}
+  path: '/privacy',
+})
 
 export default function Privacy() {
   return (

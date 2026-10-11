@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { PLANS } from '@/lib/stripe'
+import { PLANS } from '@/lib/plans'
+import { PRO_CTA_TEXT, PRO_OFFER_TEXT } from '@/lib/site-config'
 import { createClient } from '@/lib/supabase/client'
 
 
@@ -83,16 +84,16 @@ export default function Pricing() {
             </div>
             <div style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>Billed monthly &middot; Cancel anytime</div>
 
-            {/* Trial badge */}
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(52,211,153,.12)', border: '1px solid rgba(52,211,153,.3)', borderRadius: '999px', padding: '0.25rem 0.75rem', fontSize: '0.75rem', color: 'var(--green)', fontWeight: 600, marginBottom: '1.25rem' }}>
-              🎁 7-day free trial
-            </div>
+            {/* Offer badge: shown only once PRO_OFFER_TEXT is set in lib/site-config.ts */}
+            {PRO_OFFER_TEXT && <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(52,211,153,.12)', border: '1px solid rgba(52,211,153,.3)', borderRadius: '999px', padding: '0.25rem 0.75rem', fontSize: '0.75rem', color: 'var(--green)', fontWeight: 600, marginBottom: '1.25rem' }}>
+              🎁 {PRO_OFFER_TEXT}
+            </div>}
 
             <button
               onClick={handleUpgrade}
               disabled={loading}
               style={{ display: 'block', width: '100%', textAlign: 'center', background: loading ? '#555' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.7rem', borderRadius: '10px', fontWeight: 700, marginBottom: '0.5rem', boxShadow: '0 0 20px rgba(108,99,255,.35)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem' }}>
-              {loading ? 'Loading...' : 'Start Pro free trial →'}
+              {loading ? 'Loading...' : `${PRO_CTA_TEXT} →`}
             </button>
             <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '1.25rem' }}>
               then $12.99/month, cancel anytime

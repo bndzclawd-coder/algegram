@@ -1,7 +1,25 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { withAttribution } from '@/lib/attribution/middleware'
+
+// Routes that need a signed-in user. Only these pay for the Supabase session check;
+// public pages just get the first-touch attribution cookie.
+function isProtected(pathname: string) {
+  return (
+    pathname === '/chat' || pathname.startsWith('/chat/') ||
+    pathname === '/settings' || pathname.startsWith('/settings/') ||
+    pathname === '/api/stripe/portal' ||
+    pathname === '/api/account/delete'
+  )
+}
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
+  if (!isProtected(pathname)) {
+    return withAttribution(request, NextResponse.next({ request }))
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -26,35 +44,24 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    const pathname = request.nextUrl.pathname
-    const isApiRoute = pathname.startsWith('/api/')
-
-    if (
-      pathname.startsWith('/chat') ||
-      pathname.startsWith('/settings') ||
-      pathname === '/api/stripe/portal' ||
-      pathname === '/api/account/delete'
-    ) {
-      if (isApiRoute) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      url.searchParams.set('next', pathname)
-      return NextResponse.redirect(url)
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    url.search = ''
+    url.searchParams.set('next', pathname)
+    return withAttribution(request, NextResponse.redirect(url))
   }
 
-  return supabaseResponse
+  return withAttribution(request, supabaseResponse)
 }
 
 export const config = {
+  // Pages + the two protected API routes. Skips other API routes, Next internals and static files.
   matcher: [
-    '/chat',
-    '/chat/:path*',
-    '/settings',
-    '/settings/:path*',
     '/api/stripe/portal',
     '/api/account/delete',
+    '/((?!api|_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|og-image.png|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|svg|webp|ico|css|js|txt|xml)$).*)',
   ],
 }

@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Contact — Algegram',
+export const metadata = pageMetadata({
+  title: 'Contact | Algegram',
   description: 'Contact the Algegram team. Email us at hello@algegram.xyz',
-  alternates: { canonical: 'https://www.algegram.xyz/contact' },
-}
+  path: '/contact',
+})
 
 export default function Contact() {
   return (

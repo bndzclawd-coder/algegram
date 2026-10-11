@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { sendWelcomeEmail } from '@/lib/emails/welcome'
+import { sendWelcomeEmail as sendLegacyWelcomeEmail } from '@/lib/emails/welcome'
+import { lifecycleEnabled, sendWelcomeEmail } from '@/lib/email/lifecycle'
+import { recordSignupAttribution } from '@/lib/attribution/server'
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
@@ -37,9 +39,15 @@ export async function GET(req: NextRequest) {
 
   // Send welcome email on first confirmation (onboarded flag not yet set)
   if (user && !user.user_metadata?.onboarded) {
+    // Read the first-touch cookie now, while we're still inside the request.
+    const attributionWrite = recordSignupAttribution(createServiceClient(), user.id)
     ;(async () => {
+      await attributionWrite
       try {
-        if (user.email) await sendWelcomeEmail(user.email)
+        // New lifecycle welcome (support@ reply-to, under-13 safe) only when enabled;
+        // otherwise keep the existing welcome email exactly as today.
+        if (lifecycleEnabled()) await sendWelcomeEmail(user)
+        else if (user.email) await sendLegacyWelcomeEmail(user.email)
       } catch (e) {
         console.error('[auth/callback] Welcome email failed:', e)
       }
