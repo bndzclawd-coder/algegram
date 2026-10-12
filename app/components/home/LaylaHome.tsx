@@ -120,10 +120,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
                 <h3>{PLANS.pro.name}</h3>
                 <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
                 <ul>
-                  {['Step-by-step solutions', 'Practice questions on any topic', 'Quizzes and timed tests', 'Unlimited Layla whiteboard lessons'].map(f => <li key={f}>{f}</li>)}
-                  {['Weekly progress report by email', 'Weak-spot practice built from your mistakes', 'Video lessons that explain each step'].map(f => (
-                    <li key={f} className='soon'>{f} <span className='tag'>Coming soon</span></li>
-                  ))}
+                  {['Step-by-step solutions', 'Practice questions on any topic', 'Quizzes and timed tests', 'Weak-spot practice built from your mistakes', 'Unlimited Layla whiteboard lessons that explain each step', 'Weekly progress report by email'].map(f => <li key={f}>{f}</li>)}
                 </ul>
                 <a className='btn' href='/pricing'>{PRO_CTA_TEXT}</a>
                 <p className='foot'>Fair-use limits apply.</p>

@@ -2,10 +2,12 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import MathText from '@/app/components/MathText'
+import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
 import { PRACTICE_TOPICS, DIFFICULTIES, type TopicId, type Difficulty } from '@/lib/practice/topics'
 
 type Mode = 'practice' | 'test'
 type Review = { correct: boolean; answer: string; steps: string[]; hint: string | null }
+type Spot = { topic: TopicId; label: string; pct: number; total: number }
 type ErrBody = { error?: string; upgrade?: boolean; signin?: boolean; ageRequired?: boolean; href?: string; limit?: boolean }
 
 const card = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '1.25rem' } as const
@@ -33,6 +35,7 @@ function Solution({ r }: { r: Review }) {
       <ol style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem', color: 'var(--text-dim)' }}>
         {r.steps.map((s, i) => <li key={i}><MathText text={s} /></li>)}
       </ol>
+      {r.steps.length > 0 && <WatchLaylaButton answer={[...r.steps.map((s, i) => `Step ${i + 1}: ${s}`), `Step ${r.steps.length + 1}: Answer: ${r.answer}`].join('\n\n')} />}
     </div>
   )
 }
@@ -49,6 +52,13 @@ export default function PracticeClient({ mode }: { mode: Mode }) {
   const [result, setResult] = useState<{ score: number; total: number; review: Review[] } | null>(null)
   const [left, setLeft] = useState<number | null>(null)
   const finishing = useRef(false)
+  const [spots, setSpots] = useState<Spot[]>([])
+
+  // Weak spots: lowest-scoring topics from your saved topic scores (no questions are stored).
+  useEffect(() => {
+    fetch('/api/practice/weak-spots', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
+      .then(d => { if (Array.isArray(d?.spots)) setSpots(d.spots) }).catch(() => {})
+  }, [result])
 
   async function post(url: string, body: unknown) {
     const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -56,9 +66,10 @@ export default function PracticeClient({ mode }: { mode: Mode }) {
     return { ok: res.ok, data }
   }
 
-  async function start() {
+  async function start(t: TopicId = topic) {
+    setTopic(t)
     setLoading(true); setErr(null); setResult(null); finishing.current = false
-    const { ok, data } = await post('/api/practice/generate', { mode, topic, difficulty })
+    const { ok, data } = await post('/api/practice/generate', { mode, topic: t, difficulty })
     setLoading(false)
     if (!ok) { setErr(data); return }
     setToken(data.token); setQuestions(data.questions)
@@ -106,6 +117,20 @@ export default function PracticeClient({ mode }: { mode: Mode }) {
         {' '}Questions are written by AI, so they can occasionally be wrong.
       </p>
 
+      {!inSet && spots.length > 0 && (
+        <div style={{ ...card, marginTop: '1.25rem' }}>
+          <div style={{ fontWeight: 700 }}>Your weak spots</div>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem', margin: '0.25rem 0 0.75rem' }}>Built from your scores in the last 30 days. Tap one to practice it.</p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {spots.map(sp => (
+              <button key={sp.topic} type='button' style={ghost} disabled={loading} onClick={() => start(sp.topic)}>
+                {sp.label} · {sp.pct}%
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!inSet && (
         <div style={{ ...card, marginTop: '1.25rem', display: 'grid', gap: '0.9rem' }}>
           <label>Topic
@@ -122,7 +147,7 @@ export default function PracticeClient({ mode }: { mode: Mode }) {
               ))}
             </div>
           </fieldset>
-          <div><button style={btn} onClick={start} disabled={loading}>{loading ? 'Writing your questions…' : mode === 'test' ? 'Start test' : 'Start practice'}</button></div>
+          <div><button style={btn} onClick={() => start()} disabled={loading}>{loading ? 'Writing your questions…' : mode === 'test' ? 'Start test' : 'Start practice'}</button></div>
         </div>
       )}
 
