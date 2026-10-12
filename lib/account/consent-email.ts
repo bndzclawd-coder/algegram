@@ -8,6 +8,20 @@ import { MAILBOX_LIVE } from '@/lib/site-config'
 export const PER_IP = { limit: 5, windowSeconds: 60 * 60 }        // 5 requests / hour / network
 export const PER_PARENT = { limit: 3, windowSeconds: 6 * 60 * 60 } // 3 emails / 6 h / parent address
 
+// Server-side time limits so a stuck dependency can never leave the signup form spinning.
+export const SEND_TIMEOUT_MS = 10_000
+export const LIMITS_TIMEOUT_MS = 5_000
+export const KID_SEND_ERROR = 'Something went wrong sending the email to your grown-up. Please try again.'
+
+export class TimeoutError extends Error { constructor(label: string) { super(`${label} timed out`); this.name = 'TimeoutError' } }
+
+/** Rejects with TimeoutError if `p` doesn't settle within `ms`. */
+export function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  let t: ReturnType<typeof setTimeout> | undefined
+  const timer = new Promise<never>((_, reject) => { t = setTimeout(() => reject(new TimeoutError(label)), ms) })
+  return Promise.race([p, timer]).finally(() => clearTimeout(t))
+}
+
 export type LimitResult = null | { status: number; error: string }
 
 export async function checkConsentLimits(req: NextRequest, parentEmail: string): Promise<LimitResult> {
@@ -30,7 +44,7 @@ export async function sendConsentEmail(opts: {
   const child = escapeHtml(opts.childEmail)
   const year = escapeHtml(opts.childBirthYear)
   const contact = MAILBOX_LIVE
-    ? 'Questions? Email <a href="mailto:privacy@algegram.xyz">privacy@algegram.xyz</a>'
+    ? 'Questions? Email <a href="mailto:support@algegram.xyz">support@algegram.xyz</a>'
     : `Questions? See ${escapeHtml(`${appUrl}/contact`)}`
   const intro = opts.existingAccount
     ? `<strong>${child}</strong> (birth year: ${year}) already has an Algegram account, which is paused until a parent or guardian approves it.
@@ -39,9 +53,10 @@ export async function sendConsentEmail(opts: {
   const approveLabel = opts.existingAccount ? 'Approve this account' : 'Approve and create account'
   const declineLabel = opts.existingAccount ? 'Decline' : 'Decline - delete this request'
 
+  if (!process.env.RESEND_API_KEY) { console.error('[consent] email not configured'); return false }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
-    await resend.emails.send({
+    const { error } = await withTimeout(resend.emails.send({
       from: 'Algegram <noreply@algegram.xyz>',
       to: opts.parentEmail,
       subject: 'Permission needed for your child to use Algegram', // no user input in the subject
@@ -52,8 +67,21 @@ export async function sendConsentEmail(opts: {
           <p>${intro} Algegram is an AI-powered math tutor.</p>
           <p>As a parent or guardian, your permission is required for users under 13 (COPPA compliance).</p>
           <p>
-            <strong>What data we collect for under-13 accounts:</strong><br/>
-            Email address only. Math question history is <em>not</em> saved until you grant consent and the child opts in.
+            <strong>What we store for an under-13 account:</strong>
+          </p>
+          <ul style="padding-left: 1.2rem; line-height: 1.6;">
+            <li>Your child's email address and your email address (the parent contact)</li>
+            <li>Your child's birth year</li>
+            <li>A consent record: whether you approved, and when</li>
+            <li>Practice results: the topic, score and number of questions for each practice set</li>
+            <li>Daily usage counts (how many questions, practice sets and lessons were used each day)</li>
+          </ul>
+          <p>
+            We do <em>not</em> save your child's math question history.
+            Read our full privacy policy: <a href="https://www.algegram.xyz/privacy">https://www.algegram.xyz/privacy</a>
+          </p>
+          <p style="color: #888; font-size: 0.85rem;">
+            Both buttons below open a confirmation page. Nothing is approved or declined until you press a button on that page.
           </p>
           <div style="margin: 2rem 0;">
             <a href="${consentUrl}" style="display: inline-block; background: #6c63ff; color: #fff; padding: 0.9rem 2rem; border-radius: 10px; text-decoration: none; font-weight: 700;">
@@ -70,10 +98,12 @@ export async function sendConsentEmail(opts: {
           </p>
         </div>
       `,
-    })
+    }), SEND_TIMEOUT_MS, 'resend')
+    // The SDK returns errors instead of throwing: treat them as failures (log the error name only, never addresses).
+    if (error) { console.error('[consent] email send failed', { name: error.name }); return false }
     return true
-  } catch {
-    console.error('[consent] email send failed') // no addresses in logs
+  } catch (e) {
+    console.error('[consent] email send threw', { name: (e as Error)?.name }) // no addresses in logs
     return false
   }
 }

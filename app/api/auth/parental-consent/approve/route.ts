@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email/lifecycle'
+import { claimToken, releaseToken, USED_LINK_ERROR } from '@/lib/account/consent-token'
 
 export async function POST(req: NextRequest) {
   const { token, password } = await req.json()
@@ -22,6 +23,11 @@ export async function POST(req: NextRequest) {
 
   const db = createServiceClient()
 
+  // Single use: claim the link before creating anything. A second POST can never set a password.
+  const claim = await claimToken(db, token, 'approve')
+  if (claim === 'used') return NextResponse.json({ error: USED_LINK_ERROR, used: true }, { status: 410 })
+  if (claim === 'error') return NextResponse.json({ error: 'Please try again later.' }, { status: 503 })
+
   // Create user via Supabase admin
   const { data: newUser, error } = await db.auth.admin.createUser({
     email: payload.childEmail,
@@ -36,6 +42,7 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) {
+    await releaseToken(db, token) // nothing was created; let the parent retry
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 

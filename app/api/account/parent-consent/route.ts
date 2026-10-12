@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { EMAIL_RE } from '@/lib/age'
-import { checkConsentLimits, sendConsentEmail } from '@/lib/account/consent-email'
+import { checkConsentLimits, sendConsentEmail, withTimeout, KID_SEND_ERROR, LIMITS_TIMEOUT_MS } from '@/lib/account/consent-email'
 import { EXISTING_CONSENT_TOKEN, deleteAfter } from '@/lib/account/pause'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 30
 
 async function pausedProfile() {
   const supabase = await createClient()
@@ -45,7 +46,13 @@ export async function POST(req: NextRequest) {
   const secret = process.env.CONSENT_JWT_SECRET
   if (!secret) return NextResponse.json({ error: 'Server config error.' }, { status: 500 })
 
-  const limited = await checkConsentLimits(req, parentEmail)
+  let limited
+  try {
+    limited = await withTimeout(checkConsentLimits(req, parentEmail), LIMITS_TIMEOUT_MS, 'rate-limit')
+  } catch (e) {
+    console.error('[consent] limit check failed', { name: (e as Error)?.name })
+    return NextResponse.json({ error: KID_SEND_ERROR }, { status: 503 })
+  }
   if (limited) return NextResponse.json({ error: limited.error }, { status: limited.status })
 
   const token = jwt.sign(
@@ -53,6 +60,6 @@ export async function POST(req: NextRequest) {
     secret, { expiresIn: '1h' },
   )
   const sent = await sendConsentEmail({ parentEmail, childEmail, childBirthYear: profile.birth_year, token, existingAccount: true })
-  if (!sent) return NextResponse.json({ error: 'Failed to send email. Please try again.' }, { status: 500 })
+  if (!sent) return NextResponse.json({ error: KID_SEND_ERROR }, { status: 502 })
   return NextResponse.json({ ok: true })
 }
