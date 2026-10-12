@@ -67,8 +67,21 @@ export async function sendConsentEmail(opts: {
           <p>${intro} Algegram is an AI-powered math tutor.</p>
           <p>As a parent or guardian, your permission is required for users under 13 (COPPA compliance).</p>
           <p>
-            <strong>What data we collect for under-13 accounts:</strong><br/>
-            Email address only. Math question history is <em>not</em> saved until you grant consent and the child opts in.
+            <strong>What we store for an under-13 account:</strong>
+          </p>
+          <ul style="padding-left: 1.2rem; line-height: 1.6;">
+            <li>Your child's email address and your email address (the parent contact)</li>
+            <li>Your child's birth year</li>
+            <li>A consent record: whether you approved, and when</li>
+            <li>Practice results: the topic, score and number of questions for each practice set</li>
+            <li>Daily usage counts (how many questions, practice sets and lessons were used each day)</li>
+          </ul>
+          <p>
+            We do <em>not</em> save your child's math question history.
+            Read our full privacy policy: <a href="https://www.algegram.xyz/privacy">https://www.algegram.xyz/privacy</a>
+          </p>
+          <p style="color: #888; font-size: 0.85rem;">
+            Both buttons below open a confirmation page. Nothing is approved or declined until you press a button on that page.
           </p>
           <div style="margin: 2rem 0;">
             <a href="${consentUrl}" style="display: inline-block; background: #6c63ff; color: #fff; padding: 0.9rem 2rem; border-radius: 10px; text-decoration: none; font-weight: 700;">

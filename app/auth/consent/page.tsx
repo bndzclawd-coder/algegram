@@ -51,6 +51,8 @@ function ConsentContent() {
     else { setMessage(data.error || 'Failed to approve the account.'); setLoading(false) }
   }
 
+  // GET safety: loading this page (with or without action=delete) only verifies the token via a read-only GET.
+  // Approve happens only on a button click (POST); Decline never writes anything.
   async function handleDelete() {
     // Simply show a deleted message — no account was created
     setStatus('deleted')
