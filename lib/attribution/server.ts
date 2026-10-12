@@ -31,8 +31,8 @@ export async function recordSignupAttribution(db: ServiceDb, userId: string): Pr
         { user_id: userId, signup_ref: attributionLabel(a), signup_attribution: a },
         { onConflict: 'user_id', ignoreDuplicates: true }
       )
-    if (error) console.error('[attribution] could not store signup attribution:', error.message)
+    if (error) console.error('[attribution] could not store signup attribution', { code: error.code })
   } catch (e) {
-    console.error('[attribution] could not store signup attribution:', e)
+    console.error('[attribution] could not store signup attribution', { name: (e as Error)?.name })
   }
 }

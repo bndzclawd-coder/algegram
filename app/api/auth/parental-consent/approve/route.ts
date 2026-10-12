@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
   // Account-only welcome to the PARENT (no promo). No-op unless LIFECYCLE_EMAILS_ENABLED=true.
   if (newUser.user) {
-    try { await sendWelcomeEmail(newUser.user) } catch (e) { console.error('[consent] welcome email failed:', e) }
+    try { await sendWelcomeEmail(newUser.user) } catch (e) { console.error('[consent] welcome email threw', { name: (e as Error)?.name }) }
   }
 
   return NextResponse.json({ ok: true, userId: newUser.user?.id })
