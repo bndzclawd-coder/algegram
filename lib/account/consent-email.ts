@@ -44,7 +44,7 @@ export async function sendConsentEmail(opts: {
   const child = escapeHtml(opts.childEmail)
   const year = escapeHtml(opts.childBirthYear)
   const contact = MAILBOX_LIVE
-    ? 'Questions? Email <a href="mailto:privacy@algegram.xyz">privacy@algegram.xyz</a>'
+    ? 'Questions? Email <a href="mailto:support@algegram.xyz">support@algegram.xyz</a>'
     : `Questions? See ${escapeHtml(`${appUrl}/contact`)}`
   const intro = opts.existingAccount
     ? `<strong>${child}</strong> (birth year: ${year}) already has an Algegram account, which is paused until a parent or guardian approves it.
