@@ -1,3 +1,4 @@
+import { resolvePro } from '@/lib/account/pro'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { guestSecret } from '@/lib/guest-limit'
@@ -28,8 +29,7 @@ export async function lessonAccess(req: NextRequest, consume: boolean): Promise<
   if (profErr) { console.error('[lesson] profile lookup failed', { code: profErr.code }); return UNAVAILABLE }
   if (!profile?.age_verified) return json({ allowed: false, pro: false, locked: false, ageRequired: true, reason: 'age' }, 403)
 
-  const { data: sub } = await db.from('subscriptions').select('plan, status').eq('user_id', user.id).single()
-  const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing')
+  const { isPro } = await resolvePro(db, user.id)
   if (isPro) return json({ allowed: true, pro: true, locked: false })
 
   const day = new Date().toISOString().slice(0, 10)

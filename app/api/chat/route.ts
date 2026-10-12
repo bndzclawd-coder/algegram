@@ -1,3 +1,4 @@
+import { resolvePro } from '@/lib/account/pro'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
@@ -136,13 +137,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { data: sub } = await db
-    .from('subscriptions')
-    .select('plan, status')
-    .eq('user_id', user.id)
-    .single()
-
-  const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing')
+  const { isPro } = await resolvePro(db, user.id)
   const plan: PlanKind = isPro ? 'pro' : 'free'
 
   let usedToday: number | null = null

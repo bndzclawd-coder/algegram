@@ -16,6 +16,9 @@ export async function POST(req: NextRequest) {
   }
 
   const db = createServiceClient()
+  // Comp (free) Pro lives in user_profiles.comp_pro_until / comp_reason (migration 20261012020000).
+  // This handler must NEVER read-modify or write user_profiles: it only writes Stripe-owned columns
+  // of public.subscriptions, so no Stripe event (cancel, payment failure, downgrade) can clear comp Pro.
 
   switch (event.type) {
     case 'checkout.session.completed': {
