@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { PRO_MODELS, PRO_DEFAULT_MODEL } from '@/lib/models'
@@ -381,7 +382,12 @@ function ChatInner() {
               </div>
             </div>
           )}
-          {messages.map((m, i) => <MessageBubble key={i} msg={m} />)}
+          {messages.map((m, i) => (
+            <div key={i}>
+              <MessageBubble msg={m} />
+              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <WatchLaylaButton answer={m.content} />}
+            </div>
+          ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-dim)', fontSize: '0.85rem', padding: '0 0 1rem 2.5rem' }}>
               <span style={{ display: 'inline-flex', gap: '3px' }}>
