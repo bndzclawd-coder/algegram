@@ -1,4 +1,4 @@
--- Single-use parental consent links. NOT yet applied to live Supabase: needs approval.
+-- Single-use parental consent links. APPLIED to live Supabase on 2026-10-11 (approved by the user). Idempotent.
 -- Stores only a SHA-256 hash of the consent token (never the token, never emails).
 create table if not exists public.consent_tokens_used (
   token_hash text primary key,          -- hex sha256 of the signed consent JWT
