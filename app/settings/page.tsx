@@ -13,6 +13,22 @@ export default function Settings() {
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const router = useRouter()
+  const [weekly, setWeekly] = useState<{ available: boolean; enabled: boolean; pro: boolean } | null>(null)
+  const [weeklySaving, setWeeklySaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/account/weekly-report', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then(setWeekly).catch(() => {})
+  }, [])
+
+  async function toggleWeekly() {
+    if (!weekly) return
+    setWeeklySaving(true)
+    const res = await fetch('/api/account/weekly-report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: !weekly.enabled }) })
+    const d = await res.json().catch(() => ({}))
+    setWeeklySaving(false)
+    if (res.ok) setWeekly({ ...weekly, enabled: d.enabled })
+    else alert(d.error || 'Could not save. Please try again.')
+  }
 
   useEffect(() => {
     const supabase = createClient()
@@ -65,6 +81,19 @@ export default function Settings() {
           <h2 style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '1rem' }}>Account</h2>
           <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>{user?.email}</p>
         </div>
+
+        {weekly?.available && (weekly.pro || weekly.enabled) && (
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem', marginBottom: '1.25rem' }}>
+            <h2 style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '1rem' }}>Weekly progress report</h2>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+              A short email each week with practice topics, scores and trend. Under 13? It goes to your parent's email, not yours. Only topic names and scores are used.
+            </p>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.9rem', cursor: 'pointer' }}>
+              <input type="checkbox" checked={weekly.enabled} disabled={weeklySaving} onChange={toggleWeekly} />
+              {weekly.enabled ? 'On' : 'Off'}
+            </label>
+          </div>
+        )}
 
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem', marginBottom: '1.25rem' }}>
           <h2 style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '1rem' }}>Billing</h2>
