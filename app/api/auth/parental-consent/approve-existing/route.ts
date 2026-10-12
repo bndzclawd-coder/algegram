@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resumeBilling } from '@/lib/account/billing'
 import { EXISTING_CONSENT_TOKEN } from '@/lib/account/pause'
+import { claimToken, releaseToken, USED_LINK_ERROR } from '@/lib/account/consent-token'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,10 +30,14 @@ export async function POST(req: NextRequest) {
   if (!profile) return NextResponse.json({ error: 'This account no longer exists.' }, { status: 404 })
   if (profile.age_verified) return NextResponse.json({ ok: true, alreadyApproved: true })
 
+  const claim = await claimToken(db, token, 'approve')
+  if (claim === 'used') return NextResponse.json({ error: USED_LINK_ERROR, used: true }, { status: 410 })
+  if (claim === 'error') return NextResponse.json({ error: 'Please try again later.' }, { status: 503 })
+
   const { error: upErr } = await db.from('user_profiles')
     .update({ age_verified: true, parental_consent: true, paused_at: null })
     .eq('user_id', payload.userId)
-  if (upErr) return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
+  if (upErr) { await releaseToken(db, token); return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 }) }
 
   // If Stripe is down, billing_paused stays true and the daily cron retries the resume.
   const billing = await resumeBilling(db, payload.userId)

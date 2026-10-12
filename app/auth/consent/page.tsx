@@ -14,6 +14,7 @@ function ConsentContent() {
   const [step, setStep] = useState<'confirm' | 'password' | 'done'>('confirm')
   const [payload, setPayload] = useState<{ childEmail: string; parentEmail: string; childBirthYear: number; existingAccount?: boolean } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [used, setUsed] = useState(false)
 
   useEffect(() => {
     if (!token) { setStatus('error'); setMessage('Missing consent token.'); return }
@@ -21,7 +22,7 @@ function ConsentContent() {
     fetch(`/api/auth/parental-consent/verify?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
       .then(data => {
-        if (data.error) { setStatus('error'); setMessage(data.error) }
+        if (data.error) { setUsed(!!data.used); setStatus('error'); setMessage(data.error) }
         else { setPayload(data); setStatus('success') }
       })
       .catch(() => { setStatus('error'); setMessage('Failed to verify token.') })
@@ -37,6 +38,7 @@ function ConsentContent() {
     })
     const data = await res.json()
     if (res.ok) setStep('done')
+    else if (data.used) { setUsed(true); setMessage(data.error); setStatus('error') }
     else { setMessage(data.error || 'Failed to create account.'); setLoading(false) }
   }
 
@@ -48,14 +50,23 @@ function ConsentContent() {
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) setStep('done')
+    else if (data.used) { setUsed(true); setMessage(data.error); setStatus('error') }
     else { setMessage(data.error || 'Failed to approve the account.'); setLoading(false) }
   }
 
   // GET safety: loading this page (with or without action=delete) only verifies the token via a read-only GET.
-  // Approve happens only on a button click (POST); Decline never writes anything.
+  // Approve/Decline happen only on a button click (POST) and burn the link (single use).
   async function handleDelete() {
-    // Simply show a deleted message — no account was created
-    setStatus('deleted')
+    if (!token) return
+    setLoading(true)
+    // POST burns the link so it can never approve later. No account data is changed.
+    const res = await fetch('/api/auth/parental-consent/decline', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setLoading(false)
+    if (res.ok) setStatus('deleted')
+    else { setUsed(!!data.used); setMessage(data.error || 'Something went wrong. Please try again.'); setStatus('error') }
   }
 
   if (status === 'loading') return (
@@ -77,9 +88,9 @@ function ConsentContent() {
   if (status === 'error') return (
     <div style={{ textAlign: 'center', padding: '4rem' }}>
       <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-      <h2 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.75rem' }}>Link expired or invalid</h2>
-      <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>{message}</p>
-      <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>The link is only valid for 1 hour. Please ask your child to try signing up again.</p>
+      <h2 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.75rem' }}>{used ? 'This link has already been used.' : 'Link expired or invalid'}</h2>
+      {!used && <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>{message}</p>}
+      <p style={{ color: 'var(--text-dim)', fontSize: '0.85rem' }}>{used ? 'Each consent link works only once. Nothing was changed.' : 'The link is only valid for 1 hour. Please ask your child to try signing up again.'}</p>
     </div>
   )
 
