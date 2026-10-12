@@ -1,13 +1,13 @@
 // Pro weekly progress report. Built at send time from practice_results (topic + score only).
-// No-op unless LIFECYCLE_EMAILS_ENABLED=true AND WEEKLY_REPORTS_ENABLED=true.
+// No-op unless WEEKLY_REPORTS_ENABLED=true (independent of LIFECYCLE_EMAILS_ENABLED).
 import { createHmac, timingSafeEqual } from 'crypto'
 import { Resend } from 'resend'
 import { SITE_URL } from '@/lib/site-config'
-import { lifecycleEnabled, isUnder13, type AuthUserLike } from './lifecycle'
+import { isUnder13, type AuthUserLike } from './lifecycle'
 import type { WeeklySummary } from '@/lib/practice/weakspots'
 
-const FROM = process.env.LIFECYCLE_FROM ?? 'Algegram <noreply@algegram.xyz>'
-export const weeklyEnabled = () => lifecycleEnabled() && process.env.WEEKLY_REPORTS_ENABLED === 'true'
+const FROM = 'Algegram <support@algegram.xyz>'
+export const weeklyEnabled = () => process.env.WEEKLY_REPORTS_ENABLED === 'true'
 
 let _resend: Resend | null = null
 const resend = () => (_resend ??= new Resend(process.env.RESEND_API_KEY))
