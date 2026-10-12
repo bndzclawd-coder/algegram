@@ -1,3 +1,4 @@
+import { resolvePro } from '@/lib/account/pro'
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
@@ -21,8 +22,7 @@ export async function requirePro(): Promise<ProUser | NextResponse> {
         : { error: 'Please confirm your birth year to continue.', ageRequired: true, href: '/auth/age' },
       { status: 403 })
   }
-  const { data: sub } = await db.from('subscriptions').select('plan, status').eq('user_id', user.id).single()
-  const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing')
+  const { isPro } = await resolvePro(db, user.id)
   if (!isPro) return NextResponse.json({ error: 'Practice and tests are part of Pro.', upgrade: true }, { status: 402 })
   return { userId: user.id, db }
 }

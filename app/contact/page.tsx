@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
-import { MAILBOX_LIVE } from '@/lib/site-config'
+import { MAILBOX_LIVE, HELLO_EMAIL, PILOT_MAILTO } from '@/lib/site-config'
 
 export const metadata = pageMetadata({
   title: 'Contact | Algegram',
@@ -25,13 +25,11 @@ export default function Contact() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {MAILBOX_LIVE && (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💌</div>
             <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>General</div>
-            <a href="mailto:hello@algegram.xyz" style={{ color: 'var(--accent2)', textDecoration: 'none' }}>hello@algegram.xyz</a>
+            <a href={`mailto:${HELLO_EMAIL}`} style={{ color: 'var(--accent2)', textDecoration: 'none' }}>{HELLO_EMAIL}</a>
           </div>
-          )}
 
           {MAILBOX_LIVE && (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
@@ -49,17 +47,16 @@ export default function Contact() {
           </div>
           )}
 
-          {MAILBOX_LIVE && (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🏫</div>
             <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Schools & Tutoring Centers</div>
             <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>Interested in a pilot for your institution?</p>
-            <a href="mailto:hello@algegram.xyz?subject=Pilot Request"
+            <p style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Email <a href={`mailto:${HELLO_EMAIL}`} style={{ color: 'var(--accent2)', textDecoration: 'none' }}>{HELLO_EMAIL}</a></p>
+            <a href={PILOT_MAILTO}
               style={{ display: 'inline-block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.6rem 1.5rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>
               Request a pilot →
             </a>
           </div>
-          )}
         </div>
       </div>
 

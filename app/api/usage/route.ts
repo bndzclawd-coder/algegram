@@ -1,3 +1,4 @@
+import { resolvePro } from '@/lib/account/pro'
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/plans'
@@ -10,21 +11,21 @@ export async function GET() {
   const db = createServiceClient()
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: usageRow }, { data: sub }] = await Promise.all([
+  const [{ data: usageRow }, { isPro, comp, paid, compProUntil, sub }] = await Promise.all([
     db.from('usage').select('count').eq('user_id', user.id).eq('day', today).single(),
-    db.from('subscriptions').select('plan, status, current_period_end').eq('user_id', user.id).single(),
+    resolvePro(db, user.id),
   ])
-
-  const isPro = sub?.plan === 'pro' && sub?.status === 'active'
   const used = usageRow?.count ?? 0
   const limit = isPro ? null : PLANS.free.messagesPerDay
 
   return NextResponse.json({
-    plan: sub?.plan ?? 'free',
-    status: sub?.status ?? 'active',
+    plan: isPro ? 'pro' : 'free',
+    status: paid ? sub?.status : 'active',
+    comp,
+    compProUntil,
     used,
     limit,
     remaining: limit !== null ? Math.max(0, limit - used) : null,
-    periodEnd: sub?.current_period_end ?? null,
+    periodEnd: paid ? (sub?.current_period_end ?? null) : comp ? compProUntil : null,
   })
 }

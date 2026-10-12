@@ -13,6 +13,8 @@ export const PILOT_MAILTO =
   'mailto:hello@algegram.xyz?subject=' + encodeURIComponent('Algegram pilot request')
 
 /** hello@, support@ and privacy@ mailto links stay hidden until those mailboxes receive mail. Set NEXT_PUBLIC_MAILBOX_LIVE=true to show. */
+/** hello@algegram.xyz receives mail on Google Workspace (verified 2026-10-11), so it is shown regardless of MAILBOX_LIVE. */
+export const HELLO_EMAIL = 'hello@algegram.xyz'
 export const MAILBOX_LIVE = process.env.NEXT_PUBLIC_MAILBOX_LIVE === 'true'
 /** Stripe Checkout trial length (days). Keep in sync with /terms copy. */
 export const TRIAL_DAYS = 7
