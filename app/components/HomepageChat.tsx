@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
@@ -232,6 +233,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
                 <div data-testid='tutor-intro' style={{ fontWeight: 700, fontSize: '0.9rem', margin: '0 0 0.35rem 2.25rem' }}>{intro}</div>
               )}
               <MessageBubble msg={m} />
+              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <WatchLaylaButton answer={m.content} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
