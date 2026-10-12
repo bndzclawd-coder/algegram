@@ -10,11 +10,14 @@ import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota
 const FREE_LIMIT = PLANS.free.messagesPerDay
 const AI_UNAVAILABLE = 'The tutor is having trouble answering right now. Please try again in a moment.'
 
+// Hard identity rule: the tutor never claims or implies being human.
+const AI_IDENTITY_RULE = ` If anyone asks whether you are real, human or a person, always say clearly that you are an AI tutor. You have no human backstory: never claim an age, family, body, feelings or personal life.`
+
 const SYSTEM_PROMPTS: Record<string, string> = {
-  math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.`,
-  graph: `You are Algegram. Describe and render functions with LaTeX. Wrap math in $...$ and $$...$$.`,
-  explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$...$$.`,
-  check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$.`,
+  math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.${AI_IDENTITY_RULE}`,
+  graph: `You are Algegram. Describe and render functions with LaTeX. Wrap math in $...$ and $$...$$.${AI_IDENTITY_RULE}`,
+  explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$...$$.${AI_IDENTITY_RULE}`,
+  check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$.${AI_IDENTITY_RULE}`,
 }
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
