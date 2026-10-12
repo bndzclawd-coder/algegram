@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 
 export const dynamic = 'force-dynamic'
 
+const CONSENT_SEND_ERROR = 'Something went wrong sending the email to your grown-up. Please try again.'
+
 function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,7 +34,7 @@ function SignupForm() {
     setLoading(true)
     setError('')
 
-    if (!supabase) return
+    if (!supabase) { setLoading(false); return }
 
     const yearNum = parseInt(birthYear, 10)
     if (!birthYear || isNaN(yearNum) || yearNum < 1900 || yearNum > currentYear) {
@@ -48,18 +50,28 @@ function SignupForm() {
         setLoading(false)
         return
       }
-      const res = await fetch('/api/auth/parental-consent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childEmail: email, childBirthYear: yearNum, parentEmail }),
-      })
-      if (!res.ok) {
+      // Never leave the button spinning: give up after 20s and show a friendly error.
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 20_000)
+      try {
+        const res = await fetch('/api/auth/parental-consent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ childEmail: email, childBirthYear: yearNum, parentEmail }),
+          signal: ctrl.signal,
+        })
         const d = await res.json().catch(() => ({}))
-        setError(d.error || 'Failed to send consent email.')
-      } else {
-        setParentalConsentSent(true)
+        if (!res.ok || !d?.ok) {
+          setError(d?.error || CONSENT_SEND_ERROR)
+        } else {
+          setParentalConsentSent(true)
+        }
+      } catch {
+        setError(CONSENT_SEND_ERROR)
+      } finally {
+        clearTimeout(timer)
+        setLoading(false)
       }
-      setLoading(false)
       return
     }
 

@@ -8,6 +8,20 @@ import { MAILBOX_LIVE } from '@/lib/site-config'
 export const PER_IP = { limit: 5, windowSeconds: 60 * 60 }        // 5 requests / hour / network
 export const PER_PARENT = { limit: 3, windowSeconds: 6 * 60 * 60 } // 3 emails / 6 h / parent address
 
+// Server-side time limits so a stuck dependency can never leave the signup form spinning.
+export const SEND_TIMEOUT_MS = 10_000
+export const LIMITS_TIMEOUT_MS = 5_000
+export const KID_SEND_ERROR = 'Something went wrong sending the email to your grown-up. Please try again.'
+
+export class TimeoutError extends Error { constructor(label: string) { super(`${label} timed out`); this.name = 'TimeoutError' } }
+
+/** Rejects with TimeoutError if `p` doesn't settle within `ms`. */
+export function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  let t: ReturnType<typeof setTimeout> | undefined
+  const timer = new Promise<never>((_, reject) => { t = setTimeout(() => reject(new TimeoutError(label)), ms) })
+  return Promise.race([p, timer]).finally(() => clearTimeout(t))
+}
+
 export type LimitResult = null | { status: number; error: string }
 
 export async function checkConsentLimits(req: NextRequest, parentEmail: string): Promise<LimitResult> {
@@ -39,9 +53,10 @@ export async function sendConsentEmail(opts: {
   const approveLabel = opts.existingAccount ? 'Approve this account' : 'Approve and create account'
   const declineLabel = opts.existingAccount ? 'Decline' : 'Decline - delete this request'
 
+  if (!process.env.RESEND_API_KEY) { console.error('[consent] email not configured'); return false }
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
-    await resend.emails.send({
+    const { error } = await withTimeout(resend.emails.send({
       from: 'Algegram <noreply@algegram.xyz>',
       to: opts.parentEmail,
       subject: 'Permission needed for your child to use Algegram', // no user input in the subject
@@ -70,10 +85,12 @@ export async function sendConsentEmail(opts: {
           </p>
         </div>
       `,
-    })
+    }), SEND_TIMEOUT_MS, 'resend')
+    // The SDK returns errors instead of throwing: treat them as failures (log the error name only, never addresses).
+    if (error) { console.error('[consent] email send failed', { name: error.name }); return false }
     return true
-  } catch {
-    console.error('[consent] email send failed') // no addresses in logs
+  } catch (e) {
+    console.error('[consent] email send threw', { name: (e as Error)?.name }) // no addresses in logs
     return false
   }
 }
