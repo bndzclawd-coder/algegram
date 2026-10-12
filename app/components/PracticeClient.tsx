@@ -19,7 +19,7 @@ function ErrorBox({ err }: { err: ErrBody }) {
   return (
     <div role='alert' style={{ ...card, borderColor: 'rgba(248,113,113,.4)', marginTop: '1rem' }}>
       <p style={{ margin: 0 }}>{err.error}</p>
-      {err.upgrade && <Link href='/pricing' style={{ color: 'var(--accent2)', fontWeight: 700 }}>See Pro →</Link>}
+      {err.upgrade && <a href='/upgrade' rel='nofollow' style={{ color: 'var(--accent2)', fontWeight: 700 }}>Try Pro →</a>}
       {err.signin && <Link href='/auth/login' style={{ color: 'var(--accent2)', fontWeight: 700 }}>Sign in →</Link>}
       {err.href && <Link href={err.href} style={{ color: 'var(--accent2)', fontWeight: 700 }}>Continue →</Link>}
     </div>

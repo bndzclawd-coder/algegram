@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Mode = 'math' | 'graph' | 'explain' | 'check'
-type Usage = { plan: string; used: number; limit: number | null; remaining: number | null }
+type Usage = { child?: boolean; plan: string; used: number; limit: number | null; remaining: number | null }
 
 const MODES: { id: Mode; label: string; icon: string; hint: string }[] = [
   { id: 'math', label: 'Solve', icon: '∫', hint: 'Solve any math problem step by step' },
@@ -153,6 +153,10 @@ function ChatInner() {
   // Session + plan come from the server (/api/usage reads the auth cookies), not the browser
   // client, so a signed-in user is never shown as a guest. null = still loading.
   const [authResolved, setAuthResolved] = useState(false)
+  const [askState, setAskState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [askError, setAskError] = useState('')
+  const childRef = useRef(false)
+  useEffect(() => { childRef.current = !!usage?.child }, [usage])
   useEffect(() => { fetchUsage().finally(() => setAuthResolved(true)) }, [])
 
   useEffect(() => {
@@ -195,7 +199,7 @@ function ChatInner() {
         setStreaming(false)
         return
       }
-      setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}${err.upgrade ? '\n\n[Upgrade to Pro →](/pricing)' : ''}` }])
+      setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}${err.upgrade ? (childRef.current ? '\n\nWant more? Tap "Ask a parent about Pro" below.' : '\n\n[Upgrade to Pro →](/upgrade)') : ''}` }])
       setStreaming(false)
       fetchUsage()
       return
@@ -235,9 +239,21 @@ function ChatInner() {
   }, [input, streaming, messages, model, mode])
 
   async function upgradeToPro() {
+    if (usage?.child) return askParent()
     const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-    const { url } = await res.json()
-    if (url) window.location.href = url
+    const data = await res.json().catch(() => ({}))
+    if (data.url) window.location.href = data.url
+    else if (data.child) askParent()
+  }
+
+  async function askParent() {
+    setAskState('sending')
+    try {
+      const r = await fetch('/api/account/ask-parent-pro', { method: 'POST' })
+      const d = await r.json().catch(() => ({}))
+      if (r.ok) setAskState('sent')
+      else { setAskState('error'); setAskError(d.error || 'Could not send right now. Please try again later.') }
+    } catch { setAskState('error'); setAskError('Could not send right now. Please try again later.') }
   }
 
   async function signOut() {
@@ -325,7 +341,19 @@ function ChatInner() {
               <div style={{ height: 4, background: 'var(--border)', borderRadius: 99 }}>
                 <div style={{ height: '100%', width: `${usagePercent}%`, background: usagePercent > 80 ? 'var(--red)' : 'var(--accent)', borderRadius: 99, transition: 'width .3s' }} />
               </div>
-              {user && (
+              {user && usage?.child ? (
+                askState === 'sent' ? (
+                  <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--green)', textAlign: 'center' }}>✅ We let your grown-up know! They'll get an email about Pro.</p>
+                ) : (
+                  <>
+                    <button onClick={askParent} disabled={askState === 'sending'}
+                      style={{ marginTop: '0.75rem', width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
+                      {askState === 'sending' ? 'Sending…' : 'Ask a parent about Pro'}
+                    </button>
+                    {askState === 'error' && <p style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--red)' }}>{askError}</p>}
+                  </>
+                )
+              ) : user && (
                 <button onClick={upgradeToPro}
                   style={{ marginTop: '0.75rem', width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
                   Upgrade to Pro →

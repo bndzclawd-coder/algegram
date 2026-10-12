@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import LaylaHome from '@/app/components/home/LaylaHome'
 import type { Example } from '@/components/WorkedExample'
 import { JsonLd } from '@/components/JsonLd'
@@ -58,13 +57,12 @@ const TOPICS = [
   { href: '/solve/linear-algebra', icon: 'λ', title: 'Linear algebra', body: 'Matrices, eigenvalues, vector spaces.' },
 ]
 
-export default function Home({ searchParams }: { searchParams: { code?: string; type?: string } }) {
-  // Supabase falls back to the site root when redirectTo isn't in its allowlist.
-  // Forward the code to the proper callback handler.
-  if (searchParams?.code) {
-    const next = searchParams?.type === 'recovery' ? '/auth/update-password' : '/chat'
-    redirect(`/auth/callback?code=${encodeURIComponent(searchParams.code)}&next=${encodeURIComponent(next)}`)
-  }
+// Static: served from the CDN with no serverless cold start. The Supabase ?code= fallback
+// redirect lives in middleware.ts (it made this page dynamic before).
+export const dynamic = 'force-static'
+export const revalidate = 3600
+
+export default function Home() {
 
   return (
     <>
