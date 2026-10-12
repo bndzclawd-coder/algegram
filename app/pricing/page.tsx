@@ -119,7 +119,7 @@ export default function Pricing() {
         </div>
 
         <p style={{ marginTop: '2rem', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
-          All plans include 256-bit encryption &middot; GDPR compliant &middot; Payments secured by Stripe
+          Secure HTTPS connection &middot; Payments secured by Stripe
         </p>
       </div>
 
