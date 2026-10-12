@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         status: sub.status,
         current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
       }, { onConflict: 'user_id' })
-      if (error) console.error('Supabase error (checkout.session.completed):', error)
+      if (error) console.error('[webhook] db write failed', { event: 'checkout.session.completed', code: error.code })
       break
     }
     case 'customer.subscription.created':
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         status: sub.status,
         current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
       }, { onConflict: 'user_id' })
-      if (error) console.error('Supabase error (subscription created/updated):', error)
+      if (error) console.error('[webhook] db write failed', { event: 'subscription created/updated', code: error.code })
       break
     }
     case 'customer.subscription.deleted': {
@@ -65,14 +65,14 @@ export async function POST(req: NextRequest) {
         status: 'canceled',
         stripe_subscription_id: null,
       }).eq('stripe_customer_id', custId)
-      if (error) console.error('Supabase error (subscription deleted):', error)
+      if (error) console.error('[webhook] db write failed', { event: 'subscription deleted', code: error.code })
       break
     }
     case 'invoice.payment_failed': {
       const invoice = event.data.object as Stripe.Invoice
       const custId = invoice.customer as string
       const { error } = await db.from('subscriptions').update({ status: 'past_due' }).eq('stripe_customer_id', custId)
-      if (error) console.error('Supabase error (invoice.payment_failed):', error)
+      if (error) console.error('[webhook] db write failed', { event: 'invoice.payment_failed', code: error.code })
       break
     }
   }

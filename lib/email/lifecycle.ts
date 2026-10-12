@@ -57,7 +57,7 @@ export async function sendWelcomeEmail(u: AuthUserLike) {
   if (!to) return { skipped: 'no_recipient' as const }
   if (child && u.user_metadata?.parental_consent !== true) return { skipped: 'no_consent' as const }
   const t = welcomeEmail({ firstName: null, accountOnly: child })
-  return resend().emails.send({ from: FROM, to, subject: t.subject, text: t.text, html: t.html })
+  return checked('welcome', await resend().emails.send({ from: FROM, to, subject: t.subject, text: t.text, html: t.html }))
 }
 
 /**
@@ -76,7 +76,7 @@ export async function maybeSendDailyLimitEmail(db: ServiceDb, u: AuthUserLike) {
     .eq('user_id', u.id)
     .maybeSingle()
   if (error) {
-    console.error('[lifecycle] state lookup failed (migration applied?):', error.message)
+    console.error('[lifecycle] state lookup failed', { code: error.code })
     return { skipped: 'no_state' as const }
   }
   if (row?.marketing_opt_out) return { skipped: 'opted_out' as const }
@@ -87,14 +87,23 @@ export async function maybeSendDailyLimitEmail(db: ServiceDb, u: AuthUserLike) {
     .from('user_attribution')
     .upsert({ user_id: u.id, last_limit_email_at: new Date().toISOString() }, { onConflict: 'user_id' })
   if (markErr) {
-    console.error('[lifecycle] could not mark limit email:', markErr.message)
+    console.error('[lifecycle] could not mark limit email', { code: markErr.code })
     return { skipped: 'no_state' as const }
   }
 
   const unsub = unsubscribeUrl(u.id)
   const t = dailyLimitEmail({ firstName: null, resetTimeText: 'at midnight UTC', unsubscribeUrl: unsub })
-  return resend().emails.send({
+  return checked('daily-limit', await resend().emails.send({
     from: FROM, to: u.email, subject: t.subject, text: t.text, html: t.html,
     headers: { 'List-Unsubscribe': `<${unsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
-  })
+  }))
+}
+
+/** The Resend SDK returns { error } instead of throwing. Turn that into a failure; log the error name only. */
+function checked(kind: string, r: { data: unknown; error: { name?: string } | null }) {
+  if (r.error) {
+    console.error('[lifecycle] email send failed', { kind, name: r.error.name })
+    return { sent: false as const, error: r.error.name ?? 'error' }
+  }
+  return { sent: true as const }
 }

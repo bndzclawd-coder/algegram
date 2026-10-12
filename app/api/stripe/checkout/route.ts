@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     .eq('user_id', user.id)
     .single()
   if (subError && subError.code !== 'PGRST116') {
-    console.error('Supabase error fetching subscription:', subError)
+    console.error('[checkout] subscription lookup failed', { code: subError.code })
     return NextResponse.json({ error: 'Database error' }, { status: 500 })
   }
 
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       { onConflict: 'user_id' }
     )
     if (upsertError) {
-      console.error('Supabase error upserting customer:', upsertError)
+      console.error('[checkout] customer upsert failed', { code: upsertError.code })
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
   }

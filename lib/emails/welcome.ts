@@ -1,4 +1,4 @@
-const RESEND_API_KEY = process.env.RESEND_API_KEY!
+const RESEND_API_KEY = process.env.RESEND_API_KEY
 const FROM = 'Algegram <noreply@algegram.xyz>'
 
 export function welcomeEmailHtml(): string {
@@ -84,7 +84,9 @@ export function welcomeEmailHtml(): string {
 </html>`
 }
 
-export async function sendWelcomeEmail(email: string): Promise<void> {
+/** Returns true when Resend accepted the email. Never logs the address or the response body. */
+export async function sendWelcomeEmail(email: string): Promise<boolean> {
+  if (!RESEND_API_KEY) { console.error('[welcome] email not configured'); return false }
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -100,7 +102,8 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
   })
 
   if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Resend error ${res.status}: ${err}`)
+    console.error('[welcome] email send failed', { status: res.status })
+    return false
   }
+  return true
 }

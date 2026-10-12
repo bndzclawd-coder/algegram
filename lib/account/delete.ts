@@ -5,7 +5,7 @@ type Db = { from: (t: string) => any; auth: { admin: { deleteUser: (id: string) 
 
 // Tables with user data. All also reference auth.users ON DELETE CASCADE; deleting explicitly
 // first means a missing cascade can never leave data behind. 42P01 = table not created yet.
-export const USER_TABLES = ['conversations', 'questions', 'usage', 'premium_usage', 'user_attribution', 'user_profiles', 'subscriptions'] as const
+export const USER_TABLES = ['conversations', 'usage', 'premium_usage', 'user_attribution', 'user_profiles', 'subscriptions'] as const
 
 export type DeleteResult = { ok: boolean; stage?: 'lookup' | 'stripe' | 'refund' | 'data' | 'auth' }
 

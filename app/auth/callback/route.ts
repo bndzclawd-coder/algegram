@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   if (tokenHash && type === 'recovery') {
     const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
     if (error) {
-      console.error('[auth/callback] Recovery OTP verification failed:', error.message)
+      console.error('[auth/callback] recovery OTP verification failed', { status: error.status, code: (error as any).code })
       return NextResponse.redirect(`${origin}/auth/login?error=reset_failed`)
     }
     // Session is now established — redirect to update-password page
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
   if (exchangeError) {
-    console.error('[auth/callback] Code exchange failed:', exchangeError.message)
+    console.error('[auth/callback] code exchange failed', { status: exchangeError.status, code: (exchangeError as any).code })
     return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`)
   }
 
@@ -46,10 +46,11 @@ export async function GET(req: NextRequest) {
       try {
         // New lifecycle welcome (support@ reply-to, under-13 safe) only when enabled;
         // otherwise keep the existing welcome email exactly as today.
+        // Both senders report failure themselves (status/name only); nothing here logs addresses.
         if (lifecycleEnabled()) await sendWelcomeEmail(user)
         else if (user.email) await sendLegacyWelcomeEmail(user.email)
       } catch (e) {
-        console.error('[auth/callback] Welcome email failed:', e)
+        console.error('[auth/callback] welcome email threw', { name: (e as Error)?.name })
       }
       try {
         const admin = createServiceClient()
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
           user_metadata: { ...user.user_metadata, onboarded: true },
         })
       } catch (e) {
-        console.error('[auth/callback] Could not mark user as onboarded:', e)
+        console.error('[auth/callback] could not mark user as onboarded', { name: (e as Error)?.name })
       }
     })()
   }

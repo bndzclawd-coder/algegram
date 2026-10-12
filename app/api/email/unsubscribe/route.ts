@@ -23,7 +23,7 @@ async function optOut(req: NextRequest) {
     .from('user_attribution')
     .upsert({ user_id: u, marketing_opt_out: true }, { onConflict: 'user_id' })
   if (error) {
-    console.error('[unsubscribe] failed:', error.message)
+    console.error('[unsubscribe] failed', { code: error.code })
     return false
   }
   return true

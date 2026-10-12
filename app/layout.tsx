@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import 'katex/dist/katex.min.css'
 import KaTeXRenderer from '@/app/components/KaTeXRenderer'
@@ -25,9 +26,13 @@ export const metadata: Metadata = {
   },
 }
 
+// next/font downloads these at build time and serves them from our own domain (no Google requests at runtime).
+const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap', variable: '--font-inter' })
+const mono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], display: 'swap', variable: '--font-mono' })
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <body className="antialiased">
         <KaTeXRenderer />
         {children}
