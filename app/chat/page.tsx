@@ -150,15 +150,10 @@ function ChatInner() {
 
   useMathRenderer()
 
-  useEffect(() => {
-    if (!supabase) return
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser(data.user)
-        fetchUsage()
-      }
-    })
-  }, [supabase])
+  // Session + plan come from the server (/api/usage reads the auth cookies), not the browser
+  // client, so a signed-in user is never shown as a guest. null = still loading.
+  const [authResolved, setAuthResolved] = useState(false)
+  useEffect(() => { fetchUsage().finally(() => setAuthResolved(true)) }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -166,8 +161,14 @@ function ChatInner() {
 
   async function fetchUsage() {
     try {
-      const r = await fetch('/api/usage')
-      if (r.ok) setUsage(await r.json())
+      const r = await fetch('/api/usage', { cache: 'no-store', credentials: 'same-origin' })
+      if (r.ok) {
+        const data = await r.json()
+        setUsage(data)
+        setUser((u: any) => u ?? { id: data.userId, email: data.email })
+      } else if (r.status === 401) {
+        setUser(null); setUsage(null)
+      }
     } catch {}
   }
 
@@ -307,8 +308,7 @@ function ChatInner() {
         <div style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
           {isPro ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro Plan</div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '2px' }}>Unlimited messages</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro</div>
             </div>
           ) : null}
           {isPro ? (
@@ -316,7 +316,7 @@ function ChatInner() {
               <Link href='/practice' style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, padding: '0.45rem', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text)' }}>📝 Practice</Link>
               <Link href='/test' style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', fontWeight: 600, padding: '0.45rem', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text)' }}>⏱ Tests</Link>
             </div>
-          ) : (
+          ) : !authResolved ? null : (
             <div style={{ marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.35rem' }}>
                 <span>Daily messages</span>
@@ -338,7 +338,7 @@ function ChatInner() {
               <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.email}</div>
               <button onClick={signOut} style={{ marginTop: '0.4rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.75rem', cursor: 'pointer', padding: 0 }}>Sign out</button>
             </>
-          ) : (
+          ) : !authResolved ? null : (
             <a href="/auth/signup" style={{ display: 'block', textAlign: 'center', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.55rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', textDecoration: 'none' }}>
               Sign up free →
             </a>

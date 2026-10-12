@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/plans'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,6 +21,8 @@ export async function GET() {
   const limit = isPro ? null : PLANS.free.messagesPerDay
 
   return NextResponse.json({
+    userId: user.id,
+    email: user.email ?? null,
     plan: isPro ? 'pro' : 'free',
     status: paid ? sub?.status : 'active',
     comp,
