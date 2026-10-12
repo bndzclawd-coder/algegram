@@ -23,9 +23,12 @@ export const PLANS = {
       'deepseek/deepseek-r1',
     ],
     features: [
-      'Unlimited messages',
-      'Access to GPT-4o, Claude & more',
       'Step-by-step solutions',
+      'Practice questions on any topic',
+      'Quizzes and timed tests',
+      'Weak-spot practice built from your mistakes',
+      'Unlimited Layla whiteboard lessons that explain each step',
+      'Weekly progress report by email',
     ],
   },
 } as const

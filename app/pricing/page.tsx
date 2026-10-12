@@ -11,17 +11,28 @@ export default function Pricing() {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [subscribed, setSubscribed] = useState(false)
+  const [child, setChild] = useState(false)
+  const [askMsg, setAskMsg] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user)
+      if (data.user) fetch('/api/usage', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => setChild(!!d?.child)).catch(() => {})
       if (data.user) fetch('/api/stripe/status').then(r => r.json()).then(d => setSubscribed(!!d.subscribed)).catch(() => {})
     })
   }, [])
 
   async function handleUpgrade() {
+    if (child) {
+      setLoading(true)
+      const r = await fetch('/api/account/ask-parent-pro', { method: 'POST' }).catch(() => null)
+      const d = r ? await r.json().catch(() => ({})) : {}
+      setAskMsg(r?.ok ? "✅ We let your grown-up know! They'll get an email about Pro." : (d.error || 'Could not send right now. Please try again later.'))
+      setLoading(false)
+      return
+    }
     if (!user) {
       router.push('/auth/signup?plan=pro')
       return
@@ -32,6 +43,7 @@ export default function Pricing() {
       const res = await fetch(subscribed ? '/api/stripe/portal' : '/api/stripe/checkout', { method: 'POST' })
       const data = await res.json()
       if (data.url) window.location.href = data.url
+      else if (data.child) setChild(true)
       else alert(data.error || 'Something went wrong. Please try again.')
     } catch {
       alert('Something went wrong. Please try again.')
@@ -57,7 +69,7 @@ export default function Pricing() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-16 sm:pb-24 text-center">
         <h1 className="pricing-h1" style={{ fontSize: 'clamp(1.6rem, 5vw, 2.5rem)', fontWeight: 800, marginBottom: '1rem' }}>Simple, transparent pricing</h1>
-        <p style={{ color: 'var(--text-dim)', marginBottom: '2.5rem', fontSize: 'clamp(0.9rem, 2.5vw, 1.05rem)' }}>Start free. No credit card. No stress.</p>
+        <p style={{ color: 'var(--text-dim)', marginBottom: '2.5rem', fontSize: 'clamp(0.9rem, 2.5vw, 1.05rem)' }}>Start free. Upgrade when you want more.</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '1.5rem', textAlign: 'left' }}>
           {/* Free */}
@@ -99,10 +111,10 @@ export default function Pricing() {
               onClick={handleUpgrade}
               disabled={loading}
               style={{ display: 'block', width: '100%', textAlign: 'center', background: loading ? '#555' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.7rem', borderRadius: '10px', fontWeight: 700, marginBottom: '0.5rem', boxShadow: '0 0 20px rgba(108,99,255,.35)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem' }}>
-              {loading ? 'Loading...' : subscribed ? 'Manage billing →' : `${PRO_CTA_TEXT} →`}
+              {loading ? 'Loading...' : child ? 'Ask a parent about Pro' : subscribed ? 'Manage billing →' : `${PRO_CTA_TEXT} →`}
             </button>
             <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '1.25rem' }}>
-              then $12.99/month, cancel anytime
+              {child ? (askMsg || 'We\'ll send your grown-up a short note.') : 'then $12.99/month, cancel anytime'}
             </p>
 
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>

@@ -36,7 +36,7 @@ export default function WatchLaylaButton({ answer }: { answer: string }) {
   return (
     <>
       {status.locked
-        ? <a href='/pricing' style={{ ...style, opacity: 0.85 }} aria-label='Watch Layla explain this. Locked: included with Pro'>🔒 Watch Layla explain this · Pro</a>
+        ? <a href='/upgrade' rel='nofollow' style={{ ...style, opacity: 0.85 }} aria-label='Watch Layla explain this. Locked: included with Pro'>🔒 Watch Layla explain this · Pro</a>
         : <button type='button' onClick={start} style={style} disabled={busy}>
             🎬 Watch Layla explain this{!status.pro ? ' (1 free a day)' : ''}
           </button>}

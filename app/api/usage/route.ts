@@ -2,6 +2,7 @@ import { resolvePro } from '@/lib/account/pro'
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/plans'
+import { isChildAccount } from '@/lib/account/age-gate'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,12 +18,14 @@ export async function GET() {
     db.from('usage').select('count').eq('user_id', user.id).eq('day', today).single(),
     resolvePro(db, user.id),
   ])
+  const child = await isChildAccount(db, user)
   const used = usageRow?.count ?? 0
   const limit = isPro ? null : PLANS.free.messagesPerDay
 
   return NextResponse.json({
     userId: user.id,
     email: user.email ?? null,
+    child,
     plan: isPro ? 'pro' : 'free',
     status: paid ? sub?.status : 'active',
     comp,

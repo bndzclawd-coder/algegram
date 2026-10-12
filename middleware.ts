@@ -17,6 +17,17 @@ function isProtected(pathname: string) {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Supabase falls back to the site root when redirectTo isn't in its allowlist.
+  if (pathname === '/' && request.nextUrl.searchParams.get('code')) {
+    const sp = request.nextUrl.searchParams
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/callback'
+    url.search = ''
+    url.searchParams.set('code', sp.get('code')!)
+    url.searchParams.set('next', sp.get('type') === 'recovery' ? '/auth/update-password' : '/chat')
+    return NextResponse.redirect(url)
+  }
+
   if (!isProtected(pathname)) {
     return withAttribution(request, NextResponse.next({ request }))
   }
