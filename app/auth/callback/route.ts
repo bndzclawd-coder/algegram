@@ -9,7 +9,9 @@ export async function GET(req: NextRequest) {
   const code = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type')
-  const next = searchParams.get('next') ?? '/chat'
+  // Same-site paths only (no open redirect).
+  const rawNext = searchParams.get('next') ?? '/chat'
+  let next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\') ? rawNext : '/chat'
 
   const supabase = await createClient()
 
@@ -36,6 +38,10 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: { user } } = await supabase.auth.getUser()
+
+  // First confirmation of a "Try Pro" signup: continue to checkout even if the next param was lost.
+  // /upgrade itself sends under-13 accounts to the ask-a-parent screen, never to Stripe.
+  if (user && !user.user_metadata?.onboarded && user.user_metadata?.signup_plan === 'pro' && next === '/chat') next = '/upgrade'
 
   // Send welcome email on first confirmation (onboarded flag not yet set)
   if (user && !user.user_metadata?.onboarded) {

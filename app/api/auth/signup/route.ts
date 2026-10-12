@@ -25,11 +25,14 @@ export async function POST(req: NextRequest) {
   if (rl === 'error') return NextResponse.json({ error: 'Please try again later.' }, { status: 503 })
   if (rl === 'limited') return NextResponse.json({ error: 'Too many sign-ups from this network. Please try again later.' }, { status: 429 })
 
+  const wantsPro = body?.plan === 'pro'
   const origin = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
     email, password,
-    options: { emailRedirectTo: `${origin}/auth/callback?next=/chat`, data: { birth_year: birthYear } },
+    // Pro intent survives the email confirm twice over: in the redirect URL and in signup metadata
+    // (in case Supabase drops the query string and falls back to the site root).
+    options: { emailRedirectTo: `${origin}/auth/callback?next=${wantsPro ? '/upgrade' : '/chat'}`, data: { birth_year: birthYear, ...(wantsPro ? { signup_plan: 'pro' } : {}) } },
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
