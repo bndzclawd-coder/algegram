@@ -15,6 +15,8 @@ export const PILOT_MAILTO =
 /** hello@, support@ and privacy@ mailto links stay hidden until those mailboxes receive mail. Set NEXT_PUBLIC_MAILBOX_LIVE=true to show. */
 /** hello@algegram.xyz receives mail on Google Workspace (verified 2026-10-11), so it is shown regardless of MAILBOX_LIVE. */
 export const HELLO_EMAIL = 'hello@algegram.xyz'
+/** support@algegram.xyz (help, privacy, billing) receives mail (verified 2026-10-11), so it is shown regardless of MAILBOX_LIVE. */
+export const SUPPORT_EMAIL = 'support@algegram.xyz'
 export const MAILBOX_LIVE = process.env.NEXT_PUBLIC_MAILBOX_LIVE === 'true'
 /** Stripe Checkout trial length (days). Keep in sync with /terms copy. */
 export const TRIAL_DAYS = 7

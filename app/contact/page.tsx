@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
-import { MAILBOX_LIVE, HELLO_EMAIL, PILOT_MAILTO } from '@/lib/site-config'
+import { HELLO_EMAIL, SUPPORT_EMAIL, PILOT_MAILTO } from '@/lib/site-config'
 
 export const metadata = pageMetadata({
   title: 'Contact | Algegram',
-  description: 'Contact the Algegram team for support or privacy questions.',
+  description: 'Contact the Algegram team for help, privacy, billing, or school and tutoring-center pilots.',
   path: '/contact',
 })
 
@@ -26,26 +26,18 @@ export default function Contact() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🛠️</div>
+            <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Help, privacy & billing</div>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Account help, bug reports, parent and privacy requests, cancellations and refunds</p>
+            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: 'var(--accent2)', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
+          </div>
+
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💌</div>
             <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>General</div>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Questions, ideas and partnerships</p>
             <a href={`mailto:${HELLO_EMAIL}`} style={{ color: 'var(--accent2)', textDecoration: 'none' }}>{HELLO_EMAIL}</a>
           </div>
-
-          {MAILBOX_LIVE && (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🛠️</div>
-            <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Support</div>
-            <a href="mailto:support@algegram.xyz" style={{ color: 'var(--accent2)', textDecoration: 'none' }}>support@algegram.xyz</a>
-          </div>
-          )}
-
-          {MAILBOX_LIVE && (
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
-            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔒</div>
-            <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Privacy</div>
-            <a href="mailto:privacy@algegram.xyz" style={{ color: 'var(--accent2)', textDecoration: 'none' }}>privacy@algegram.xyz</a>
-          </div>
-          )}
 
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🏫</div>
