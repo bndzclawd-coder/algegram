@@ -1,18 +1,11 @@
-import type { Metadata } from 'next'
+import Link from 'next/link'
 import HomepageChat from '@/app/components/HomepageChat'
 import { GUEST_FREE_QUESTIONS, FREE_DAILY_QUESTIONS, PRO_CTA_TEXT } from '@/lib/site-config'
 import { PLANS } from '@/lib/plans'
-import PreviewFx from './PreviewFx'
-import './preview.css'
+import HomeFx from './HomeFx'
+import { WorkedExample, type Example } from '@/components/WorkedExample'
+import './home.css'
 
-// UAT-only homepage redesign. Not linked, not in the sitemap, noindex (meta + X-Robots-Tag header).
-// The Ask Layla box is the live guest chat (/api/chat): same server-side 5-question limit and
-// signed cookie, same guest model, nothing stored, no analytics, question text never logged.
-export const metadata: Metadata = {
-  title: { absolute: 'Algegram homepage prototype (preview)' },
-  description: 'Design preview of the Algegram homepage.',
-  robots: { index: false, follow: false },
-}
 
 const EXAMPLES = ['2x + 5 = 17', '3/4 + 1/6', 'x² − 5x + 6 = 0', 'derivative of x³', '∫ x² dx']
 const SYMBOLS = [['∫', 8, 12], ['√', 82, 18], ['π', 14, 62], ['Σ', 70, 70], ['∞', 45, 40], ['θ', 90, 88], ['Δ', 30, 92]] as const
@@ -23,11 +16,10 @@ const CLIPS = [
   ['layla-15s-4', 'clip-4', 'Can you beat me? x/4 + 3 = 7'],
 ] as const
 
-export default function PreviewPage() {
+export default function LaylaHome({ example, topics }: { example: Example; topics: { href: string; title: string }[] }) {
   return (
     <div className='pv'>
-      <PreviewFx />
-      <div className='proto' role='note'>Design prototype, not the live site</div>
+      <HomeFx />
       <div className='glow g1' aria-hidden /><div className='glow g2' aria-hidden /><div className='glow g3' aria-hidden />
       <div className='sym' aria-hidden>
         {SYMBOLS.map(([s, x, y], i) => <span key={i} style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${-i * 3}s` }}>{s}</span>)}
@@ -35,8 +27,8 @@ export default function PreviewPage() {
 
       <div className='w'>
         <nav aria-label='Main'>
-          <a className='logo' href='/'>alge<b>gram</b></a>
-          <div className='nl'><a href='#why'>Why Layla</a><a href='#clips'>Lessons</a><a href='#pricing'>Pricing</a><a href='/auth/login'>Sign in</a></div>
+          <Link className='logo' href='/'>alge<b>gram</b></Link>
+          <div className='nl'><a href='#why'>Why Layla</a><a href='#clips'>Lessons</a><a href='#pricing'>Pricing</a><Link href='/auth/login'>Sign in</Link><Link href='/auth/signup' className='btn' style={{ padding: '6px 14px' }}>Get started free</Link></div>
         </nav>
 
         <main>
@@ -81,7 +73,7 @@ export default function PreviewPage() {
                 <div className='ic' aria-hidden>∑</div>
                 <h3>Every topic</h3>
                 <p>One tutor from first fractions to university calculus.</p>
-                <div className='topics'>{['Arithmetic', 'Algebra', 'Geometry', 'Statistics', 'Linear algebra', 'Calculus'].map(t => <span key={t}>{t}</span>)}</div>
+                <div className='topics'>{topics.map(t => <Link key={t.href} href={t.href}>{t.title}</Link>)}</div>
               </article>
               <article className='card c4' data-reveal>
                 <div className='ic' aria-hidden>🛡️</div>
@@ -89,6 +81,10 @@ export default function PreviewPage() {
                 <p>Clearly labeled as AI. No ads. Kids under 13 need a parent’s OK to sign up, and you can delete your account and data anytime.</p>
               </article>
             </div>
+          </section>
+
+          <section aria-label='Worked example' data-reveal>
+            <WorkedExample ex={example} headingLevel={2} />
           </section>
 
           <section id='clips' aria-labelledby='clips-h'>
@@ -124,8 +120,8 @@ export default function PreviewPage() {
                 <h3>{PLANS.pro.name}</h3>
                 <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
                 <ul>
-                  <li>Step-by-step solutions</li>
-                  {['Practice questions on any topic', 'Quizzes and tests', 'Weekly progress report by email', 'Weak-spot practice built from your mistakes', 'Video lessons that explain each step'].map(f => (
+                  {['Step-by-step solutions', 'Practice questions on any topic', 'Quizzes and timed tests'].map(f => <li key={f}>{f}</li>)}
+                  {['Weekly progress report by email', 'Weak-spot practice built from your mistakes', 'Video lessons that explain each step'].map(f => (
                     <li key={f} className='soon'>{f} <span className='tag'>Coming soon</span></li>
                   ))}
                 </ul>

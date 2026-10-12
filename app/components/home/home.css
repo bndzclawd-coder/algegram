@@ -59,7 +59,7 @@
 .pv .steps3{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
 .pv .steps3 span{font-size:.8rem;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--dim)}
 .pv .topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-.pv .topics span{font-size:.82rem;background:rgba(255,255,255,.06);border-radius:8px;padding:5px 9px}
+.pv .topics a{text-decoration:none;font-size:.82rem;background:rgba(255,255,255,.06);border-radius:8px;padding:5px 9px}
 .pv .car{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 20px 18px;margin:0 -20px;scrollbar-width:thin}
 .pv .clip{flex:0 0 min(250px,70vw);scroll-snap-align:center;position:relative}
 .pv .clip video{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:22px;border:1px solid var(--line);background:#111;display:block}
@@ -87,3 +87,5 @@
 .pv .price li.soon::before{content:"○";color:var(--dim)}
 .pv .tag{display:inline-block;margin-left:6px;font-size:.7rem;font-weight:700;letter-spacing:.02em;color:#e9e5ff;background:rgba(139,123,255,.16);border:1px solid rgba(139,123,255,.4);border-radius:999px;padding:1px 8px;vertical-align:middle}
 .pv .foot{margin:14px 0 0;font-size:.78rem;color:var(--dim)}
+
+.pv .topics a:hover{background:rgba(139,123,255,.25)}
