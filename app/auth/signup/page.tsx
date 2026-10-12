@@ -79,7 +79,7 @@ function SignupForm() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, birthYear: yearNum }),
+      body: JSON.stringify({ email, password, birthYear: yearNum, plan: plan === 'pro' ? 'pro' : undefined }),
     })
     const d = await res.json().catch(() => ({}))
     if (!res.ok) {
