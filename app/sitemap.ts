@@ -17,7 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...(LEGAL_PAGES_REVIEWED ? [{ url: `${BASE}/terms`, lastModified: today, changeFrequency: 'monthly' as const, priority: 0.3 }] : []),
   ]
 
-  const topics = ['algebra', 'calculus', 'fractions', 'statistics', 'linear-algebra', 'number-theory']
+  const topics = ['fractions', 'linear-equations', 'percentages', 'order-of-operations', 'word-problems', 'algebra', 'calculus', 'statistics', 'linear-algebra', 'number-theory']
   const topicPages: MetadataRoute.Sitemap = topics.map(t => ({
     url: `${BASE}/solve/${t}`,
     lastModified: today,
