@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
+import { attributionForToken } from '@/lib/attribution/server'
 import { EMAIL_RE, isUnder13, parseBirthYear } from '@/lib/age'
 import { checkConsentLimits, sendConsentEmail, withTimeout, KID_SEND_ERROR, LIMITS_TIMEOUT_MS } from '@/lib/account/consent-email'
 
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   }
   if (limited) return NextResponse.json({ error: limited.error }, { status: limited.status })
 
-  const token = jwt.sign({ childEmail, parentEmail, childBirthYear, type: 'parental-consent' }, secret, { expiresIn: '1h' })
+  const token = jwt.sign({ childEmail, parentEmail, childBirthYear, type: 'parental-consent', attr: attributionForToken() }, secret, { expiresIn: '1h' })
   const sent = await sendConsentEmail({ parentEmail, childEmail, childBirthYear, token })
   if (!sent) return NextResponse.json({ error: KID_SEND_ERROR }, { status: 502 })
 

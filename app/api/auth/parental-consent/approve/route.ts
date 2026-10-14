@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email/lifecycle'
+import { recordSignupAttribution, attributionFromToken } from '@/lib/attribution/server'
 import { claimToken, releaseToken, USED_LINK_ERROR } from '@/lib/account/consent-token'
 
 export async function POST(req: NextRequest) {
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   const secret = process.env.CONSENT_JWT_SECRET
   if (!secret) return NextResponse.json({ error: 'Server config error.' }, { status: 500 })
 
-  let payload: { childEmail: string; parentEmail: string; childBirthYear: number; type: string }
+  let payload: { childEmail: string; parentEmail: string; childBirthYear: number; type: string; attr?: string }
   try {
     payload = jwt.verify(token, secret) as any
     if (payload.type !== 'parental-consent') throw new Error('Wrong token type')
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
     })
     if (profErr) console.error('[consent] profile write failed', { code: profErr.code })
   }
+
+  // First-touch source from the child's signup browser (carried in the signed consent token).
+  if (newUser.user) await recordSignupAttribution(db, newUser.user.id, attributionFromToken(payload.attr))
 
   // Account-only welcome to the PARENT (no promo). No-op unless LIFECYCLE_EMAILS_ENABLED=true.
   if (newUser.user) {
