@@ -56,8 +56,8 @@ function LoginForm() {
           <h1 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.5rem' }}>Welcome back</h1>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.4rem' }}>Email</label>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+              <label htmlFor="login-email" style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.4rem' }}>Email</label>
+              <input id="login-email" name="email" autoComplete="email" aria-label="Email" type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 style={inputStyle} placeholder="you@example.com" />
             </div>
             <div>

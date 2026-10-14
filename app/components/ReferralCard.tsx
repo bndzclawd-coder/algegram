@@ -7,7 +7,11 @@ export function ReferralCard() {
   const [r, setR] = useState<R | null>(null)
   const [copied, setCopied] = useState(false)
   useEffect(() => { fetch('/api/account/referral', { cache: 'no-store' }).then(x => (x.ok ? x.json() : null)).then(setR).catch(() => {}) }, [])
-  if (!r) return null
+  if (!r) return (
+    <div aria-busy="true" aria-label="Loading your share link" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      {[100, 90, 60].map(w => <div key={w} style={{ height: 12, width: `${w}%`, borderRadius: 6, background: 'rgba(255,255,255,.07)' }} />)}
+    </div>
+  )
   if (r.child) return (
     <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', lineHeight: 1.6, margin: 0 }}>
       Know someone who&apos;d like Layla? Ask a parent before you share algegram.xyz with a friend.
