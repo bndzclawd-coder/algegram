@@ -16,6 +16,7 @@ function SignupForm() {
   const [parentEmail, setParentEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
   const [done, setDone] = useState(false)
   const [parentalConsentSent, setParentalConsentSent] = useState(false)
   const [resendSent, setResendSent] = useState(false)
@@ -76,23 +77,48 @@ function SignupForm() {
     }
 
     // 13+: server-side signup (age is re-checked on the server)
-    const res = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, birthYear: yearNum, plan: plan === 'pro' ? 'pro' : undefined }),
-    })
-    const d = await res.json().catch(() => ({}))
-    if (!res.ok) {
-      setError(d.error || 'Sign-up failed. Please try again.')
+    // Never leave the button spinning: client timeout + always reset in finally.
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 20_000)
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, birthYear: yearNum, plan: plan === 'pro' ? 'pro' : undefined }),
+        signal: ctrl.signal,
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const msg: string = d.error || 'Sign-up failed. Please try again.'
+        const m = msg.match(/(\d+)\s*seconds?/i)
+        if (m) startCooldown(parseInt(m[1], 10))
+        else setError(msg)
+      } else {
+        setDone(true)
+      }
+    } catch {
+      setError('That took too long. Please check your connection and try again.')
+    } finally {
+      clearTimeout(timer)
       setLoading(false)
-    } else {
-      setDone(true)
     }
+  }
+
+  function startCooldown(secs: number) {
+    const until = Date.now() + Math.min(Math.max(secs, 1), 600) * 1000
+    const tick = () => {
+      const left = Math.ceil((until - Date.now()) / 1000)
+      if (left <= 0) { setCooldown(0); setError(''); return }
+      setCooldown(left)
+      setError(`Too many attempts. Please wait ${left} second${left === 1 ? '' : 's'} and try again.`)
+      setTimeout(tick, 1000)
+    }
+    tick()
   }
 
   async function handleResend() {
     if (!supabase || !email) return
-    await supabase.auth.resend({ type: 'signup', email })
+    await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: `${location.origin}/auth/confirm?next=${plan === 'pro' ? '/upgrade' : '/chat'}` } })
     setResendSent(true)
   }
 
@@ -188,9 +214,9 @@ function SignupForm() {
 
             {error && <p style={{ color: 'var(--red)', fontSize: '0.85rem' }}>{error}</p>}
 
-            <button type="submit" disabled={loading}
-              style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.95rem', border: 'none', cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>
-              {loading ? 'Please wait…' : isUnder13 ? 'Send parent consent email →' : plan === 'pro' ? 'Create account →' : 'Get started free →'}
+            <button type="submit" disabled={loading || cooldown > 0}
+              style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.95rem', border: 'none', cursor: 'pointer', opacity: loading || cooldown > 0 ? 0.7 : 1 }}>
+              {loading ? 'Please wait…' : cooldown > 0 ? `Try again in ${cooldown}s` : isUnder13 ? 'Send parent consent email →' : plan === 'pro' ? 'Create account →' : 'Get started free →'}
             </button>
           </form>
 
