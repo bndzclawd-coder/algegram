@@ -9,11 +9,13 @@ export type Attribution = {
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
+  utm_content?: string;
+  referrer_domain?: string; // bare hostname only (no path/query), recorded when there's no UTM
   landing_path?: string;
   first_seen?: string; // YYYY-MM-DD only
 };
 
-const KEYS = ["ref", "utm_source", "utm_medium", "utm_campaign"] as const;
+const KEYS = ["ref", "utm_source", "utm_medium", "utm_campaign", "utm_content"] as const;
 
 // Only allow short, label-like values so nobody can smuggle an email/name into the cookie.
 export function cleanValue(v: string | null): string | undefined {
@@ -24,13 +26,38 @@ export function cleanValue(v: string | null): string | undefined {
   return s;
 }
 
-export function attributionFromSearchParams(params: URLSearchParams, pathname: string): Attribution | null {
+const SEARCH_ENGINES = /(^|\.)(google\.[a-z.]+|bing\.com|duckduckgo\.com|yahoo\.[a-z.]+|ecosia\.org|search\.brave\.com|yandex\.[a-z.]+|baidu\.com|startpage\.com)$/;
+const OWN_HOST = /(^|\.)algegram\.xyz$/;
+
+/** Hostname of an external referrer, or undefined (own site, invalid, or not http). */
+export function referrerDomain(referer: string | null | undefined): string | undefined {
+  if (!referer) return undefined;
+  try {
+    const u = new URL(referer);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return undefined;
+    const h = u.hostname.toLowerCase().replace(/^www\./, "");
+    if (!h || OWN_HOST.test(h) || h === "localhost" || h.endsWith(".vercel.app")) return undefined;
+    return cleanValue(h);
+  } catch {
+    return undefined;
+  }
+}
+
+export function attributionFromSearchParams(params: URLSearchParams, pathname: string, referer?: string | null): Attribution | null {
   const out: Attribution = {};
   for (const k of KEYS) {
     const v = cleanValue(params.get(k));
     if (v) out[k] = v;
   }
-  if (!Object.keys(out).length) return null;
+  if (!Object.keys(out).length) {
+    // No campaign tags: record organic search / referral by the referrer's domain only.
+    const d = referrerDomain(referer);
+    if (!d) return null;
+    const isSearch = SEARCH_ENGINES.test(d);
+    out.utm_source = isSearch ? "seo" : "referrer"; // "referral" is reserved for our own referral links (utm_source=referral)
+    out.utm_medium = isSearch ? "organic" : "website";
+    out.referrer_domain = d;
+  }
   out.landing_path = pathname.slice(0, 128);
   out.first_seen = new Date().toISOString().slice(0, 10);
   return out;
@@ -50,6 +77,8 @@ export function decodeAttribution(raw: string | undefined): Attribution | null {
       const v = cleanValue(typeof parsed[k] === "string" ? parsed[k] : null);
       if (v) out[k] = v;
     }
+    const rd = cleanValue(typeof parsed.referrer_domain === "string" ? parsed.referrer_domain : null);
+    if (rd) out.referrer_domain = rd;
     if (typeof parsed.landing_path === "string" && parsed.landing_path.startsWith("/"))
       out.landing_path = parsed.landing_path.slice(0, 128);
     if (typeof parsed.first_seen === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.first_seen))

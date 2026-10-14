@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { EMAIL_RE, isUnder13, parseBirthYear } from '@/lib/age'
 import { consume, clientIp } from '@/lib/rate-limit'
+import { recordSignupAttribution } from '@/lib/attribution/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +46,9 @@ export async function POST(req: NextRequest) {
       console.error('[signup] profile write failed', { code: profErr.code })
       // The user can still confirm their year later at /auth/age; chat stays locked until then.
     }
+    // First-touch source, read now while we're in the signup browser (the confirm link may be
+    // opened on another device without the cookie). Insert-only; never blocks signup.
+    await recordSignupAttribution(createServiceClient(), user.id)
   }
   return NextResponse.json({ ok: true })
 }

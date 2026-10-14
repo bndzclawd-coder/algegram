@@ -5,7 +5,7 @@ import { ATTR_COOKIE, ATTR_MAX_AGE, attributionFromSearchParams, encodeAttributi
 
 export function withAttribution(req: NextRequest, res: NextResponse): NextResponse {
   if (req.cookies.get(ATTR_COOKIE)) return res
-  const attr = attributionFromSearchParams(req.nextUrl.searchParams, req.nextUrl.pathname)
+  const attr = attributionFromSearchParams(req.nextUrl.searchParams, req.nextUrl.pathname, req.headers.get('referer'))
   if (!attr) return res
   res.cookies.set(ATTR_COOKIE, encodeAttribution(attr), {
     maxAge: ATTR_MAX_AGE,
