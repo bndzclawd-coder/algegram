@@ -1,73 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { sendWelcomeEmail as sendLegacyWelcomeEmail } from '@/lib/emails/welcome'
-import { lifecycleEnabled, sendWelcomeEmail } from '@/lib/email/lifecycle'
-import { recordSignupAttribution } from '@/lib/attribution/server'
+import { createClient } from '@/lib/supabase/server'
+import { afterConfirm, linkIssueUrl, safeNext } from '@/lib/auth/post-confirm'
 
+// Legacy PKCE links (emails sent before /auth/confirm). New emails use /auth/confirm.
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const code = searchParams.get('code')
   const tokenHash = searchParams.get('token_hash')
   const type = searchParams.get('type')
-  // Same-site paths only (no open redirect).
-  const rawNext = searchParams.get('next') ?? '/chat'
-  let next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.includes('\\') ? rawNext : '/chat'
+  let next = safeNext(searchParams.get('next'))
+
+  // token_hash links are handled server-side by /auth/confirm.
+  if (tokenHash && type) {
+    const u = new URL(`${origin}/auth/confirm`)
+    u.searchParams.set('token_hash', tokenHash); u.searchParams.set('type', type); u.searchParams.set('next', type === 'recovery' ? '/auth/update-password' : next)
+    return NextResponse.redirect(u.toString())
+  }
+
+  // Supabase sends errors (e.g. otp_expired) back as query params.
+  const errCode = searchParams.get('error_code')
+  if (errCode || searchParams.get('error')) {
+    return NextResponse.redirect(linkIssueUrl(origin, errCode === 'otp_expired' ? 'expired' : 'confirmed', next))
+  }
+
+  if (!code) return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
 
   const supabase = await createClient()
-
-  // Password reset flow: token_hash + type=recovery
-  if (tokenHash && type === 'recovery') {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
-    if (error) {
-      console.error('[auth/callback] recovery OTP verification failed', { status: error.status, code: (error as any).code })
-      return NextResponse.redirect(`${origin}/auth/login?error=reset_failed`)
-    }
-    // Session is now established — redirect to update-password page
-    return NextResponse.redirect(`${origin}/auth/update-password`)
-  }
-
-  // Email confirmation / magic link flow: code (PKCE)
-  if (!code) {
-    return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
-  }
-
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
   if (exchangeError) {
+    // Usually the PKCE verifier cookie is missing (link opened on another device/browser).
+    // Supabase has already confirmed the email at this point, so ask them to sign in.
     console.error('[auth/callback] code exchange failed', { status: exchangeError.status, code: (exchangeError as any).code })
-    return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`)
+    return NextResponse.redirect(linkIssueUrl(origin, 'confirmed', next))
   }
 
   const { data: { user } } = await supabase.auth.getUser()
-
-  // First confirmation of a "Try Pro" signup: continue to checkout even if the next param was lost.
-  // /upgrade itself sends under-13 accounts to the ask-a-parent screen, never to Stripe.
-  if (user && !user.user_metadata?.onboarded && user.user_metadata?.signup_plan === 'pro' && next === '/chat') next = '/upgrade'
-
-  // Send welcome email on first confirmation (onboarded flag not yet set)
-  if (user && !user.user_metadata?.onboarded) {
-    // Read the first-touch cookie now, while we're still inside the request.
-    const attributionWrite = recordSignupAttribution(createServiceClient(), user.id)
-    ;(async () => {
-      await attributionWrite
-      try {
-        // New lifecycle welcome (support@ reply-to, under-13 safe) only when enabled;
-        // otherwise keep the existing welcome email exactly as today.
-        // Both senders report failure themselves (status/name only); nothing here logs addresses.
-        if (lifecycleEnabled()) await sendWelcomeEmail(user)
-        else if (user.email) await sendLegacyWelcomeEmail(user.email)
-      } catch (e) {
-        console.error('[auth/callback] welcome email threw', { name: (e as Error)?.name })
-      }
-      try {
-        const admin = createServiceClient()
-        await admin.auth.admin.updateUserById(user.id, {
-          user_metadata: { ...user.user_metadata, onboarded: true },
-        })
-      } catch (e) {
-        console.error('[auth/callback] could not mark user as onboarded', { name: (e as Error)?.name })
-      }
-    })()
-  }
-
+  next = await afterConfirm(user, next)
   return NextResponse.redirect(`${origin}${next}`)
 }

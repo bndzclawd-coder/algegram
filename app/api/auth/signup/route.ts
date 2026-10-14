@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     email, password,
     // Pro intent survives the email confirm twice over: in the redirect URL and in signup metadata
     // (in case Supabase drops the query string and falls back to the site root).
-    options: { emailRedirectTo: `${origin}/auth/callback?next=${wantsPro ? '/upgrade' : '/chat'}`, data: { birth_year: birthYear, ...(wantsPro ? { signup_plan: 'pro' } : {}) } },
+    options: { emailRedirectTo: `${origin}/auth/confirm?next=${wantsPro ? '/upgrade' : '/chat'}`, data: { birth_year: birthYear, ...(wantsPro ? { signup_plan: 'pro' } : {}) } },
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
