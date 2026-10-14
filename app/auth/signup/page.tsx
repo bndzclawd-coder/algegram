@@ -137,6 +137,9 @@ function SignupForm() {
           We sent a consent link to <strong style={{ color: 'var(--text)' }}>{parentEmail}</strong>.<br />
           Your parent needs to approve your account before you can start.
         </p>
+        <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginTop: '0.75rem' }}>
+          Once they approve, you get 7 days of Pro free. No card needed.
+        </p>
       </div>
     </div>
   )
