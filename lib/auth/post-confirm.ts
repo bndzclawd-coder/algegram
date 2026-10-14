@@ -2,7 +2,8 @@ import type { User } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail as sendLegacyWelcomeEmail } from '@/lib/emails/welcome'
 import { lifecycleEnabled, sendWelcomeEmail } from '@/lib/email/lifecycle'
-import { recordSignupAttribution } from '@/lib/attribution/server'
+import { recordSignupAttribution, readAttribution } from '@/lib/attribution/server'
+import { onAccountActivated } from '@/lib/referral'
 
 /** Same-site path only (no open redirect). Accepts a path, or a full URL on our own host
  *  (Supabase's {{ .RedirectTo }}), in which case its own `next` param or path is used. */
@@ -27,7 +28,13 @@ export async function afterConfirm(user: User | null, next: string): Promise<str
   if (user && !user.user_metadata?.onboarded && user.user_metadata?.signup_plan === 'pro' && next === '/chat') next = '/upgrade'
 
   if (user && !user.user_metadata?.onboarded) {
-    const attributionWrite = recordSignupAttribution(createServiceClient(), user.id)
+    const db = createServiceClient()
+    const attributionWrite = recordSignupAttribution(db, user.id)
+    // Pilot check uses the stored first-touch (saved at signup, works cross-device), else this request's cookie.
+    const { data: attrRow } = await db.from('user_attribution').select('signup_attribution').eq('user_id', user.id).maybeSingle()
+    const pilot = (attrRow?.signup_attribution?.utm_source ?? readAttribution()?.utm_source) === 'pilot'
+    // Email confirmed: grant the 7-day Pro bonus and credit the referrer. Awaited so /upgrade and /chat see it.
+    await onAccountActivated(db as any, user.id, { pilot })
     ;(async () => {
       await attributionWrite
       try {

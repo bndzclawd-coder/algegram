@@ -14,7 +14,7 @@ export async function GET() {
   const db = createServiceClient()
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: usageRow }, { isPro, comp, paid, compProUntil, sub }] = await Promise.all([
+  const [{ data: usageRow }, { isPro, comp, paid, compProUntil, sub, bonus, bonusProUntil, bonusEnded }] = await Promise.all([
     db.from('usage').select('count').eq('user_id', user.id).eq('day', today).single(),
     resolvePro(db, user.id),
   ])
@@ -29,10 +29,14 @@ export async function GET() {
     plan: isPro ? 'pro' : 'free',
     status: paid ? sub?.status : 'active',
     comp,
+    paid,
     compProUntil,
+    bonus,
+    bonusProUntil,
+    bonusEnded,
     used,
     limit,
     remaining: limit !== null ? Math.max(0, limit - used) : null,
-    periodEnd: paid ? (sub?.current_period_end ?? null) : comp ? compProUntil : null,
+    periodEnd: paid ? (sub?.current_period_end ?? null) : comp ? compProUntil : bonus ? bonusProUntil : null,
   })
 }

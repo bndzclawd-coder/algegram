@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { ReferralCard } from '@/app/components/ReferralCard'
 
 export default function Settings() {
   const [user, setUser] = useState<any>(null)
@@ -93,6 +94,11 @@ export default function Settings() {
             </label>
           </div>
         )}
+
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem', marginBottom: '1.25rem' }}>
+          <h2 style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '1rem' }}>Share Algegram</h2>
+          <ReferralCard />
+        </div>
 
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem', marginBottom: '1.25rem' }}>
           <h2 style={{ fontWeight: 600, marginBottom: '0.5rem', fontSize: '1rem' }}>Billing</h2>

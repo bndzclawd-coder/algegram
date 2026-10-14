@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { createServiceClient } from '@/lib/supabase/server'
 import { sendWelcomeEmail } from '@/lib/email/lifecycle'
 import { recordSignupAttribution, attributionFromToken } from '@/lib/attribution/server'
+import { cleanRefCode, isPilot, onAccountActivated } from '@/lib/referral'
 import { claimToken, releaseToken, USED_LINK_ERROR } from '@/lib/account/consent-token'
 
 export async function POST(req: NextRequest) {
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
   const secret = process.env.CONSENT_JWT_SECRET
   if (!secret) return NextResponse.json({ error: 'Server config error.' }, { status: 500 })
 
-  let payload: { childEmail: string; parentEmail: string; childBirthYear: number; type: string; attr?: string }
+  let payload: { childEmail: string; parentEmail: string; childBirthYear: number; type: string; attr?: string; ref?: string | null; iph?: string | null }
   try {
     payload = jwt.verify(token, secret) as any
     if (payload.type !== 'parental-consent') throw new Error('Wrong token type')
@@ -51,12 +52,16 @@ export async function POST(req: NextRequest) {
   if (newUser.user) {
     const { error: profErr } = await db.from('user_profiles').upsert({
       user_id: newUser.user.id, birth_year: payload.childBirthYear, age_verified: true, parental_consent: true,
+      pending_ref_code: cleanRefCode(payload.ref), signup_ip_hash: typeof payload.iph === 'string' ? payload.iph.slice(0, 64) : null,
     })
     if (profErr) console.error('[consent] profile write failed', { code: profErr.code })
   }
 
   // First-touch source from the child's signup browser (carried in the signed consent token).
-  if (newUser.user) await recordSignupAttribution(db, newUser.user.id, attributionFromToken(payload.attr))
+  const childAttr = attributionFromToken(payload.attr)
+  if (newUser.user) await recordSignupAttribution(db, newUser.user.id, childAttr)
+  // Parent has consented: the 7-day Pro bonus starts now, and the referrer (if any) is credited.
+  if (newUser.user) await onAccountActivated(db as any, newUser.user.id, { pilot: isPilot(childAttr) })
 
   // Account-only welcome to the PARENT (no promo). No-op unless LIFECYCLE_EMAILS_ENABLED=true.
   if (newUser.user) {
