@@ -1,13 +1,18 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { pageMetadata } from '@/lib/seo'
+import { GUEST_FREE_QUESTIONS, SITE_URL } from '@/lib/site-config'
 
 // Static list of supported topics and example Q&A pairs
 // Never render user input on these pages — SEO-safe static content only
 const TOPIC_DATA: Record<string, {
   title: string
   description: string
-  examples: { question: string; answer: string }[]
+  examples: { question: string; answer: string; steps?: string[] }[]
+  /** Optional richer SEO fields (seeded, hand-written content only). */
+  seoTitle?: string
+  intro?: string
+  faq?: { q: string; a: string }[]
 }> = {
   algebra: {
     title: 'Algebra',
@@ -47,16 +52,104 @@ const TOPIC_DATA: Record<string, {
   },
   fractions: {
     title: 'Fractions',
-    description: 'Add, subtract, multiply, and simplify fractions step by step.',
+    seoTitle: 'How to Add, Subtract, Multiply and Divide Fractions (Step by Step)',
+    description: 'Add, subtract, multiply, divide and simplify fractions step by step, with worked examples.',
+    intro: 'Fractions follow a few simple rules. To add or subtract, make the bottoms (denominators) the same. To multiply, multiply straight across. To divide, flip the second fraction and multiply. Always simplify at the end.',
     examples: [
-      {
-        question: 'Simplify 3/4 + 1/2',
-        answer: 'Convert to common denominator: 3/4 + 2/4 = 5/4 = 1¼.',
-      },
-      {
-        question: 'Multiply 2/3 × 3/5',
-        answer: 'Multiply numerators and denominators: 6/15 = 2/5.',
-      },
+      { question: 'Add 3/4 + 1/6', answer: '3/4 + 1/6 = 11/12',
+        steps: ['Find a common denominator: the least common multiple of 4 and 6 is 12.', 'Rewrite each fraction: 3/4 = 9/12 and 1/6 = 2/12.', 'Add the numerators: 9/12 + 2/12 = 11/12.', '11 and 12 share no common factor, so 11/12 is already simplified.'] },
+      { question: 'Subtract 5/6 − 1/4', answer: '5/6 − 1/4 = 7/12',
+        steps: ['The least common multiple of 6 and 4 is 12.', 'Rewrite: 5/6 = 10/12 and 1/4 = 3/12.', 'Subtract the numerators: 10/12 − 3/12 = 7/12.'] },
+      { question: 'Multiply 2/3 × 9/10', answer: '2/3 × 9/10 = 3/5',
+        steps: ['Multiply the numerators: 2 × 9 = 18.', 'Multiply the denominators: 3 × 10 = 30.', 'Simplify 18/30 by dividing top and bottom by 6: 3/5.'] },
+      { question: 'Divide 3/5 ÷ 9/10', answer: '3/5 ÷ 9/10 = 2/3',
+        steps: ['Keep the first fraction, change ÷ to ×, and flip the second: 3/5 × 10/9.', 'Multiply: (3 × 10)/(5 × 9) = 30/45.', 'Simplify by dividing top and bottom by 15: 2/3.'] },
+    ],
+    faq: [
+      { q: 'How do you add fractions with different denominators?', a: 'Find the least common multiple of the denominators, rewrite each fraction with that denominator, then add the numerators and keep the denominator. Simplify if you can.' },
+      { q: 'How do you divide fractions?', a: 'Keep the first fraction, change division to multiplication, and flip the second fraction (use its reciprocal). Then multiply across and simplify.' },
+      { q: 'How do you simplify a fraction?', a: 'Divide the numerator and denominator by their greatest common factor. For example, 18/30 has a greatest common factor of 6, so it simplifies to 3/5.' },
+    ],
+  },
+  'linear-equations': {
+    title: 'Linear Equations',
+    seoTitle: 'How to Solve Linear Equations Step by Step (with Examples)',
+    description: 'Solve one-step, two-step and multi-step linear equations, including variables on both sides.',
+    intro: 'A linear equation is solved by getting the variable alone on one side. Whatever you do to one side, do to the other: undo addition and subtraction first, then multiplication and division.',
+    examples: [
+      { question: 'Solve 3x + 7 = 22', answer: 'x = 5',
+        steps: ['Subtract 7 from both sides: 3x = 15.', 'Divide both sides by 3: x = 5.', 'Check: 3(5) + 7 = 15 + 7 = 22. ✓'] },
+      { question: 'Solve 5x − 4 = 2x + 11', answer: 'x = 5',
+        steps: ['Subtract 2x from both sides: 3x − 4 = 11.', 'Add 4 to both sides: 3x = 15.', 'Divide by 3: x = 5.', 'Check: 5(5) − 4 = 21 and 2(5) + 11 = 21. ✓'] },
+      { question: 'Solve 2(x + 3) = 4x − 8', answer: 'x = 7',
+        steps: ['Distribute the 2: 2x + 6 = 4x − 8.', 'Subtract 2x from both sides: 6 = 2x − 8.', 'Add 8 to both sides: 14 = 2x.', 'Divide by 2: x = 7.', 'Check: 2(7 + 3) = 20 and 4(7) − 8 = 20. ✓'] },
+      { question: 'Solve x/4 + 1 = 6', answer: 'x = 20',
+        steps: ['Subtract 1 from both sides: x/4 = 5.', 'Multiply both sides by 4: x = 20.', 'Check: 20/4 + 1 = 5 + 1 = 6. ✓'] },
+    ],
+    faq: [
+      { q: 'What is a linear equation?', a: 'An equation where the variable is only to the first power, like 3x + 7 = 22. Its graph is a straight line, which is where the name comes from.' },
+      { q: 'What do you do when there are variables on both sides?', a: 'Move all the variable terms to one side by adding or subtracting, move the numbers to the other side, then divide by the coefficient.' },
+      { q: 'How can I check my answer?', a: 'Substitute your value back into the original equation. If both sides come out equal, the answer is correct.' },
+    ],
+  },
+  percentages: {
+    title: 'Percentages',
+    seoTitle: 'How to Calculate Percentages Step by Step (Percent of, Change, Discount)',
+    description: 'Find a percent of a number, percent increase and decrease, discounts, and what percent one number is of another.',
+    intro: 'Percent means “out of 100”. To use a percent in a calculation, turn it into a decimal by dividing by 100 (for example 15% = 0.15), then multiply.',
+    examples: [
+      { question: 'What is 15% of 80?', answer: '12',
+        steps: ['Change 15% to a decimal: 15 ÷ 100 = 0.15.', 'Multiply: 0.15 × 80 = 12.'] },
+      { question: 'What percent of 50 is 18?', answer: '36%',
+        steps: ['Divide the part by the whole: 18 ÷ 50 = 0.36.', 'Multiply by 100 to get a percent: 0.36 × 100 = 36%.'] },
+      { question: 'A price goes from $40 to $50. What is the percent increase?', answer: '25% increase',
+        steps: ['Find the change: 50 − 40 = 10.', 'Divide by the original amount: 10 ÷ 40 = 0.25.', 'Convert to a percent: 0.25 × 100 = 25%.'] },
+      { question: 'A $60 jacket is 30% off. What is the sale price?', answer: '$42',
+        steps: ['Find the discount: 30% of 60 = 0.30 × 60 = 18.', 'Subtract it from the original price: 60 − 18 = 42.', 'Shortcut: paying 70% of the price gives 0.70 × 60 = 42 too.'] },
+    ],
+    faq: [
+      { q: 'How do you find a percentage of a number?', a: 'Divide the percent by 100 to make a decimal, then multiply by the number. For example, 15% of 80 is 0.15 × 80 = 12.' },
+      { q: 'How do you calculate percent change?', a: 'Subtract the old value from the new value, divide by the old value, and multiply by 100. A positive result is an increase and a negative one is a decrease.' },
+    ],
+  },
+  'order-of-operations': {
+    title: 'Order of Operations',
+    seoTitle: 'Order of Operations (PEMDAS) Explained with Step-by-Step Examples',
+    description: 'Use PEMDAS / BODMAS to evaluate expressions with parentheses, exponents, multiplication, division, addition and subtraction.',
+    intro: 'Work in this order: Parentheses, Exponents, Multiplication and Division (left to right), then Addition and Subtraction (left to right). Multiplication does not always come before division; whichever comes first from the left goes first.',
+    examples: [
+      { question: 'Evaluate 3 + 4 × 2', answer: '11',
+        steps: ['Multiplication comes before addition: 4 × 2 = 8.', 'Then add: 3 + 8 = 11.'] },
+      { question: 'Evaluate (6 + 2) × 3²', answer: '72',
+        steps: ['Parentheses first: 6 + 2 = 8.', 'Exponents next: 3² = 9.', 'Multiply: 8 × 9 = 72.'] },
+      { question: 'Evaluate 20 ÷ 4 × 5', answer: '25',
+        steps: ['Division and multiplication have equal priority, so go left to right.', '20 ÷ 4 = 5.', '5 × 5 = 25.'] },
+      { question: 'Evaluate 18 − 6 ÷ 3 + 2³', answer: '24',
+        steps: ['Exponents: 2³ = 8, giving 18 − 6 ÷ 3 + 8.', 'Division: 6 ÷ 3 = 2, giving 18 − 2 + 8.', 'Left to right: 18 − 2 = 16, then 16 + 8 = 24.'] },
+    ],
+    faq: [
+      { q: 'What does PEMDAS stand for?', a: 'Parentheses, Exponents, Multiplication and Division, Addition and Subtraction. In the UK and elsewhere the same rule is called BODMAS or BIDMAS.' },
+      { q: 'Does multiplication come before division?', a: 'No. Multiplication and division have the same priority and are done from left to right. The same goes for addition and subtraction.' },
+    ],
+  },
+  'word-problems': {
+    title: 'Math Word Problems',
+    seoTitle: 'How to Solve Math Word Problems Step by Step (Worked Examples)',
+    description: 'Turn word problems into equations and solve them: ages, money, speed and distance, and more.',
+    intro: 'Read the problem, decide what you are looking for and give it a letter, write an equation from the facts, solve it, then check the answer makes sense in the story.',
+    examples: [
+      { question: 'Maya has 3 times as many stickers as Leo. Together they have 48. How many does each have?', answer: 'Leo has 12 and Maya has 36.',
+        steps: ['Let Leo’s stickers be s. Then Maya has 3s.', 'Together: s + 3s = 48, so 4s = 48.', 'Divide by 4: s = 12. Maya has 3 × 12 = 36.', 'Check: 12 + 36 = 48. ✓'] },
+      { question: 'A train travels 180 miles in 3 hours. At the same speed, how far does it go in 5 hours?', answer: '300 miles',
+        steps: ['Speed = distance ÷ time = 180 ÷ 3 = 60 miles per hour.', 'Distance in 5 hours = 60 × 5 = 300 miles.'] },
+      { question: 'Tickets cost $8 for kids and $12 for adults. A group of 10 people paid $96. How many kids were there?', answer: '6 kids (and 4 adults)',
+        steps: ['Let k be the number of kids, so there are 10 − k adults.', 'Cost: 8k + 12(10 − k) = 96.', 'Simplify: 8k + 120 − 12k = 96, so −4k = −24.', 'Divide by −4: k = 6. Adults: 10 − 6 = 4.', 'Check: 6 × 8 + 4 × 12 = 48 + 48 = 96. ✓'] },
+      { question: 'The sum of two consecutive numbers is 37. What are they?', answer: '18 and 19',
+        steps: ['Let the smaller number be n, so the next one is n + 1.', 'n + (n + 1) = 37, so 2n + 1 = 37.', 'Subtract 1: 2n = 36. Divide by 2: n = 18.', 'The numbers are 18 and 19. Check: 18 + 19 = 37. ✓'] },
+    ],
+    faq: [
+      { q: 'What is the best way to start a word problem?', a: 'Work out exactly what the question asks for and call it a letter, such as x. Then list the facts the problem gives you and turn each one into math.' },
+      { q: 'How do I know if my answer is right?', a: 'Put it back into the story. If every fact in the problem still holds, for example the totals add up, the answer is right.' },
     ],
   },
   statistics: {
@@ -106,7 +199,7 @@ export async function generateMetadata({ params }: { params: { topic: string } }
   const data = TOPIC_DATA[params.topic]
   if (!data) return { title: 'Math Help', robots: { index: false } }
   return pageMetadata({
-    title: `${data.title} Help – Step-by-Step Examples | Algegram`,
+    title: data.seoTitle ? `${data.seoTitle} | Algegram` : `${data.title} Help – Step-by-Step Examples | Algegram`,
     description: `${data.description} See example problems and solutions. Ask your own question free.`,
     path: `/solve/${params.topic}`,
   })
@@ -143,16 +236,25 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
           <Link href="/" style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textDecoration: 'none' }}>← All topics</Link>
         </div>
         <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', marginBottom: '0.75rem' }}>{data.title} Help</h1>
-        <p style={{ color: 'var(--text-dim)', marginBottom: '2rem', lineHeight: 1.7 }}>{data.description}</p>
+        <p style={{ color: 'var(--text-dim)', marginBottom: data.intro ? '1rem' : '2rem', lineHeight: 1.7 }}>{data.description}</p>
+        {data.intro && <p style={{ lineHeight: 1.7, marginBottom: '2rem' }}>{data.intro}</p>}
+        {data.faq && (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            url: `${SITE_URL}/solve/${params.topic}`,
+            mainEntity: data.faq.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+          }).replace(/</g, '\\u003c') }} />
+        )}
 
         {/* CTA banner */}
         <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '12px', padding: '1.25rem', marginBottom: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Ask your own {data.title.toLowerCase()} question</div>
-            <div style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>This is an example page. Get AI step-by-step help for your specific problem.</div>
+            <div style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Type your own problem on the homepage and see every step. {GUEST_FREE_QUESTIONS} free questions, no sign-up.</div>
           </div>
-          <Link href="/#chat" style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Try it free →
+          <Link href={`/?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            Try {GUEST_FREE_QUESTIONS} free questions →
           </Link>
         </div>
 
@@ -167,17 +269,36 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(52,211,153,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: 'var(--green)', flexShrink: 0 }}>A</div>
-                <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, margin: 0 }}>{ex.answer}</p>
+                <div style={{ margin: 0 }}>
+                  {ex.steps && (
+                    <ol style={{ color: 'var(--text-dim)', lineHeight: 1.7, margin: '0 0 0.5rem', paddingLeft: '1.2rem', listStyle: 'decimal' }}>
+                      {ex.steps.map((st, j) => <li key={j}>{st}</li>)}
+                    </ol>
+                  )}
+                  <p style={{ color: ex.steps ? 'var(--text)' : 'var(--text-dim)', fontWeight: ex.steps ? 600 : 400, lineHeight: 1.7, margin: 0 }}>{ex.steps ? `Answer: ${ex.answer}` : ex.answer}</p>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
+        {data.faq && (
+          <section style={{ marginTop: '3rem' }}>
+            <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '1rem' }}>Frequently asked questions</h2>
+            {data.faq.map((f, i) => (
+              <div key={i} style={{ marginBottom: '1.25rem' }}>
+                <h3 style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.35rem' }}>{f.q}</h3>
+                <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, margin: 0 }}>{f.a}</p>
+              </div>
+            ))}
+          </section>
+        )}
+
         <div style={{ marginTop: '3rem', textAlign: 'center', padding: '2rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
           <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>
-            These are just examples. For your specific problem, ask Algegram — it's free to start.
+            Stuck on a different problem? Ask Algegram and get every step explained. Your first {GUEST_FREE_QUESTIONS} questions are free, no sign-up needed.
           </p>
-          <Link href="/#chat" style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>
+          <Link href={`/?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>
             Ask my math question →
           </Link>
         </div>
