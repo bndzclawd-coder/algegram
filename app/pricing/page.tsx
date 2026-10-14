@@ -69,7 +69,7 @@ export default function Pricing() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-16 sm:pb-24 text-center">
         <h1 className="pricing-h1" style={{ fontSize: 'clamp(1.6rem, 5vw, 2.5rem)', fontWeight: 800, marginBottom: '1rem' }}>Simple, transparent pricing</h1>
-        <p style={{ color: 'var(--text-dim)', marginBottom: '2.5rem', fontSize: 'clamp(0.9rem, 2.5vw, 1.05rem)' }}>Start free. Upgrade when you want more.</p>
+        <p style={{ color: 'var(--text-dim)', marginBottom: '2.5rem', fontSize: 'clamp(0.9rem, 2.5vw, 1.05rem)' }}>Sign up free, get 7 days of Pro. No card needed.</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: '1.5rem', textAlign: 'left' }}>
           {/* Free */}
@@ -79,7 +79,7 @@ export default function Pricing() {
             <div style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Forever free</div>
             <Link href="/auth/signup"
               style={{ display: 'block', textAlign: 'center', background: 'var(--surface)', border: '1.5px solid var(--border)', color: 'var(--text)', padding: '0.7rem', borderRadius: '10px', fontWeight: 600, marginBottom: '1.5rem', textDecoration: 'none' }}>
-              Get started
+              Sign up free, get 7 days of Pro
             </Link>
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {PLANS.free.features.map(f => (

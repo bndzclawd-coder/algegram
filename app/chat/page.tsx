@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Mode = 'math' | 'graph' | 'explain' | 'check'
-type Usage = { child?: boolean; plan: string; used: number; limit: number | null; remaining: number | null }
+type Usage = { child?: boolean; plan: string; used: number; limit: number | null; remaining: number | null; paid?: boolean; bonus?: boolean; bonusProUntil?: string | null; bonusEnded?: boolean }
 
 const MODES: { id: Mode; label: string; icon: string; hint: string }[] = [
   { id: 'math', label: 'Solve', icon: '∫', hint: 'Solve any math problem step by step' },
@@ -325,6 +325,16 @@ function ChatInner() {
           {isPro ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
               <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro</div>
+              {usage?.bonus && !usage?.paid && usage?.bonusProUntil && (
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
+                  Free Pro: {Math.max(1, Math.ceil((new Date(usage.bonusProUntil).getTime() - Date.now()) / 86400000))} days left
+                </div>
+              )}
+            </div>
+          ) : usage?.bonusEnded && !usage?.child ? (
+            <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.4rem' }}>Your free Pro days have ended. You&apos;re on Free, nothing was charged.</div>
+              <Link href='/upgrade' style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent2)' }}>Keep Pro for $12.99/month →</Link>
             </div>
           ) : null}
           {isPro ? (

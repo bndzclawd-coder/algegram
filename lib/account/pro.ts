@@ -14,9 +14,16 @@ export function isCompActive(compProUntil: string | null | undefined, now = Date
 export async function resolvePro(db: SupabaseClient, userId: string) {
   const [{ data: sub }, { data: prof }] = await Promise.all([
     db.from('subscriptions').select('plan, status, current_period_end').eq('user_id', userId).maybeSingle(),
-    db.from('user_profiles').select('comp_pro_until').eq('user_id', userId).maybeSingle(),
+    db.from('user_profiles').select('comp_pro_until, bonus_pro_until, signup_bonus_at').eq('user_id', userId).maybeSingle(),
   ])
   const paid = isPaidPro(sub)
   const comp = isCompActive(prof?.comp_pro_until)
-  return { isPro: paid || comp, paid, comp, compProUntil: (prof?.comp_pro_until as string | null) ?? null, sub }
+  // Free bonus Pro (signup bonus + referral days). No card, no Stripe; lapses back to Free on its own.
+  const bonus = isCompActive(prof?.bonus_pro_until)
+  const bonusProUntil = (prof?.bonus_pro_until as string | null) ?? null
+  return {
+    isPro: paid || comp || bonus, paid, comp, bonus, bonusProUntil,
+    bonusEnded: !paid && !comp && !bonus && !!bonusProUntil,
+    compProUntil: (prof?.comp_pro_until as string | null) ?? null, sub,
+  }
 }
