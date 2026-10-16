@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { QUIZZES, type QuizQ } from '@/lib/quiz/data'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
+import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
 
 type Acct = { signedIn: boolean; child: boolean; pro: boolean }
 
@@ -28,6 +29,7 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
   }, [topic])
   const others = Object.keys(QUIZZES).filter(k => k !== topic)
   // Score lives in page memory only. Nothing about the quiz is sent or saved.
+  const trial = useTrialEligible(acct.signedIn && !acct.pro && !acct.child)
   const score = picked.filter((p, i) => p === questions[i].answer).length
   const done = picked.every(p => p !== null)
 
@@ -89,7 +91,7 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
             {score === questions.length ? 'Perfect score. Nice work!' : score >= 3 ? 'Great effort. Check the explanations above for the ones you missed.' : 'Good try. Read the explanations above and give it another go.'}
           </p>
           {acct.signedIn && !acct.pro && !acct.child
-            ? <a data-testid='try-pro' href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Try Pro free for 7 days →</a>
+            ? <a data-testid='try-pro' href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>{proButtonText(trial)} →</a>
             : acct.signedIn
             ? <a href='/chat' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Keep practicing with Layla →</a>
             : <>
@@ -110,8 +112,8 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
               <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Ask a parent about Pro for more help today.</p>
               <a href='/chat?askparent=1' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Ask a parent →</a>
             </> : <>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Pro gives you more help every day. Start with a 7-day free trial.</p>
-              <a href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Try Pro free for 7 days →</a>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Pro gives you more help every day.{trial === false ? '' : ' Start with a 7-day free trial.'}</p>
+              <a href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>{proButtonText(trial)} →</a>
             </>}
             <button onClick={() => setLimit(false)} style={{ marginTop: '0.75rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.8rem', cursor: 'pointer' }}>Not now</button>
           </div>

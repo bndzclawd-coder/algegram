@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { PLANS } from '@/lib/plans'
-import { PRO_CTA_TEXT, PRO_OFFER_TEXT } from '@/lib/site-config'
+import { PRO_OFFER_TEXT } from '@/lib/site-config'
+import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
 import { createClient } from '@/lib/supabase/client'
 
 
@@ -14,6 +15,7 @@ export default function Pricing() {
   const [child, setChild] = useState(false)
   const [askMsg, setAskMsg] = useState('')
   const router = useRouter()
+  const trial = useTrialEligible()
 
   useEffect(() => {
     const supabase = createClient()
@@ -103,7 +105,7 @@ export default function Pricing() {
             <div style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>Billed monthly &middot; Cancel anytime</div>
 
             {/* Offer badge: shown only once PRO_OFFER_TEXT is set in lib/site-config.ts */}
-            {PRO_OFFER_TEXT && <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(52,211,153,.12)', border: '1px solid rgba(52,211,153,.3)', borderRadius: '999px', padding: '0.25rem 0.75rem', fontSize: '0.75rem', color: 'var(--green)', fontWeight: 600, marginBottom: '1.25rem' }}>
+            {PRO_OFFER_TEXT && trial !== false && !subscribed && <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(52,211,153,.12)', border: '1px solid rgba(52,211,153,.3)', borderRadius: '999px', padding: '0.25rem 0.75rem', fontSize: '0.75rem', color: 'var(--green)', fontWeight: 600, marginBottom: '1.25rem' }}>
               🎁 {PRO_OFFER_TEXT}
             </div>}
 
@@ -111,10 +113,10 @@ export default function Pricing() {
               onClick={handleUpgrade}
               disabled={loading}
               style={{ display: 'block', width: '100%', textAlign: 'center', background: loading ? '#555' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.7rem', borderRadius: '10px', fontWeight: 700, marginBottom: '0.5rem', boxShadow: '0 0 20px rgba(108,99,255,.35)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem' }}>
-              {loading ? 'Loading...' : child ? 'Ask a parent about Pro' : subscribed ? 'Manage billing →' : `${PRO_CTA_TEXT} →`}
+              {loading ? 'Loading...' : child ? 'Ask a parent about Pro' : subscribed ? 'Manage billing →' : `${proButtonText(trial)} →`}
             </button>
             <p style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '1.25rem' }}>
-              {child ? (askMsg || 'We\'ll send your grown-up a short note.') : 'then $12.99/month, cancel anytime'}
+              {child ? (askMsg || 'We\'ll send your grown-up a short note.') : trial === false ? 'Billed monthly, cancel anytime' : 'then $12.99/month, cancel anytime'}
             </p>
 
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>

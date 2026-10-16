@@ -63,3 +63,4 @@ pre, code { font-family: var(--font-mono), 'JetBrains Mono', monospace; }
     font-size: clamp(1.6rem, 6vw, 2.5rem) !important;
   }
 }
+.quiz-auth{color:var(--text);font-size:.9rem;text-decoration:none}
