@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Mode = 'math' | 'graph' | 'explain' | 'check'
-type Usage = { child?: boolean; plan: string; used: number; limit: number | null; remaining: number | null; paid?: boolean; bonus?: boolean; bonusProUntil?: string | null; bonusEnded?: boolean; center?: 'active' | 'ended' | null }
+type Usage = { child?: boolean; plan: string; used: number; limit: number | null; remaining: number | null; paid?: boolean; bonus?: boolean; bonusProUntil?: string | null; bonusEnded?: boolean; center?: 'active' | 'ended' | null; centerName?: string | null; centerFull?: boolean; compProUntil?: string | null }
 
 const MODES: { id: Mode; label: string; icon: string; hint: string }[] = [
   { id: 'math', label: 'Solve', icon: '∫', hint: 'Solve any math problem step by step' },
@@ -298,7 +298,9 @@ function ChatInner() {
           {isPro ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
               <div data-testid='plan-label' style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>
-                {usage?.bonus && !usage?.paid && usage?.bonusProUntil
+                {usage?.center === 'active' && usage?.centerName
+                  ? `⭐ Pro through ${usage.centerName}${usage.compProUntil && !usage.paid ? `, until ${new Date(usage.compProUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : ''}`
+                  : usage?.bonus && !usage?.paid && usage?.bonusProUntil
                   ? (() => { const n = Math.max(1, Math.ceil((new Date(usage.bonusProUntil!).getTime() - Date.now()) / 86400000)); return `⭐ Free Pro: ${n} day${n === 1 ? '' : 's'} left` })()
                   : '⭐ Pro'}
               </div>
@@ -308,7 +310,11 @@ function ChatInner() {
                 </a>
               )}
             </div>
-          ) : usage?.center === 'ended' ? (
+          ) : null}
+          {!isPro && usage?.centerFull && (
+            <div data-testid='center-full' style={{ background: 'rgba(251,191,36,.1)', border: '1px solid rgba(251,191,36,.35)', borderRadius: '10px', padding: '0.6rem', textAlign: 'center', marginBottom: '0.75rem', fontSize: '0.75rem' }}>Your center&apos;s seats are full. Ask your teacher.</div>
+          )}
+          {isPro ? null : usage?.center === 'ended' ? (
             <div data-testid='center-ended' style={{ background: 'rgba(255,255,255,.04)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem', fontSize: '0.75rem', color: 'var(--text-dim)' }}>Your center&apos;s trial has ended. Ask your teacher.</div>
           ) : usage?.bonusEnded && !usage?.child ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>

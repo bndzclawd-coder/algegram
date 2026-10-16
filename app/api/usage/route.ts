@@ -1,4 +1,5 @@
 import { resolvePro } from '@/lib/account/pro'
+import { centerDisplayName } from '@/lib/center/display'
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/plans'
@@ -19,6 +20,20 @@ export async function GET() {
     resolvePro(db, user.id),
   ])
   const child = await isChildAccount(db, user)
+  // Center seat label ("Pro through <center>, until <date>") and overflow notice (seats were full at signup).
+  let centerName: string | null = null, centerFull = false
+  {
+    const [{ data: prof }, { data: seat }] = await Promise.all([
+      db.from('user_profiles').select('comp_reason, center_overflow').eq('user_id', user.id).maybeSingle(),
+      db.from('center_seats').select('center_slug').eq('user_id', user.id).maybeSingle(),
+    ])
+    const slug = seat?.center_slug ?? /^pilot:([a-z0-9_-]{1,64})$/.exec(prof?.comp_reason ?? '')?.[1] ?? null
+    if (slug && center) {
+      const { data: cp } = await db.from('center_pilots').select('display_name').eq('center_slug', slug.replace(/-/g, '_')).maybeSingle()
+      centerName = centerDisplayName(slug.replace(/-/g, '_'), cp?.display_name)
+    }
+    centerFull = !center && !!prof?.center_overflow
+  }
   const used = usageRow?.count ?? 0
   const limit = isPro ? null : PLANS.free.messagesPerDay
 
@@ -35,6 +50,8 @@ export async function GET() {
     bonusProUntil,
     bonusEnded,
     center,
+    centerName,
+    centerFull,
     used,
     limit,
     remaining: limit !== null ? Math.max(0, limit - used) : null,
