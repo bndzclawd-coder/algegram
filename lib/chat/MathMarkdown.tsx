@@ -52,7 +52,7 @@ function Text({ c, k }: { c: string; k: string }) {
   })}</>
 }
 
-function MathRun({ text, k, katex, keyp }: { text: string; k: Katex | null; keyp: string }) {
+function MathRun({ text, k, keyp }: { text: string; k: Katex | null; keyp: string }) {
   const parts = splitMath(text)
   return <>{parts.map((p, i) => {
     if (p.t === 'text') return <Text key={i} c={p.c} k={`${keyp}t${i}`} />
