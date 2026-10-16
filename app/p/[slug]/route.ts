@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { centerSeatStatus, setCenterCookie } from '@/lib/center/link'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 
 const SLUG = /^[a-z0-9_-]{1,40}$/
 
