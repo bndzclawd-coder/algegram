@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { readCenterCookie } from '@/lib/center/link'
 import jwt from 'jsonwebtoken'
 import { attributionForToken } from '@/lib/attribution/server'
 import { ipHash, readRefCookie } from '@/lib/referral'
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
   if (limited) return NextResponse.json({ error: limited.error }, { status: limited.status })
 
-  const token = jwt.sign({ childEmail, parentEmail, childBirthYear, type: 'parental-consent', attr: attributionForToken(), ref: readRefCookie(), iph: ipHash(req) }, secret, { expiresIn: '1h' })
+  const token = jwt.sign({ childEmail, parentEmail, childBirthYear, type: 'parental-consent', attr: attributionForToken(), ref: readRefCookie(), iph: ipHash(req), ctr: readCenterCookie() }, secret, { expiresIn: '1h' })
   const sent = await sendConsentEmail({ parentEmail, childEmail, childBirthYear, token })
   if (!sent) return NextResponse.json({ error: KID_SEND_ERROR }, { status: 502 })
 

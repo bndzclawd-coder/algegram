@@ -1,4 +1,5 @@
 // Signup bonus + referrals. Server-only. No names/emails in codes; IPs are only stored as salted hash prefixes.
+import { enrollCenter } from '@/lib/center/link'
 import { createHash, randomBytes } from 'crypto'
 import type { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
@@ -41,11 +42,19 @@ export function isPilot(attr: Attribution | null | undefined): boolean {
 /** Called once an account is real (email confirmed, or parent consent given). Never throws. */
 export async function onAccountActivated(db: Db, userId: string, opts: { pilot: boolean }) {
   try {
-    if (!opts.pilot) {
+    const { data: prof } = await db.from('user_profiles').select('pending_ref_code, signup_ip_hash, pending_center').eq('user_id', userId).maybeSingle()
+    // Center link (signed cookie / consent token): enroll into a seat with pilot Pro, no individual bonus.
+    // If the center is full, the account follows the normal non-center flow (gets the signup bonus).
+    let pilot = opts.pilot
+    if (prof?.pending_center) {
+      const r = await enrollCenter(db as any, userId, prof.pending_center)
+      pilot = r === 'enrolled' ? true : r === 'full' ? false : opts.pilot
+      console.log('[center] enrollment', { outcome: r })
+    }
+    if (!pilot) {
       const { error } = await db.rpc('grant_signup_bonus', { p_user_id: userId, p_days: BONUS_DAYS })
       if (error) console.error('[bonus] grant failed', { code: error.code })
     }
-    const { data: prof } = await db.from('user_profiles').select('pending_ref_code, signup_ip_hash').eq('user_id', userId).maybeSingle()
     if (prof?.pending_ref_code) {
       const { data, error } = await db.rpc('award_referral', { p_referred: userId, p_code: prof.pending_ref_code, p_ip_hash: prof.signup_ip_hash ?? null })
       if (error) console.error('[referral] award failed', { code: error.code })

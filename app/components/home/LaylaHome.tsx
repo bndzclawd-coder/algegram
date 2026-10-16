@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import CenterFullNotice from '@/app/components/CenterFullNotice'
 import HeaderAuth from './HeaderAuth'
 import HomepageChat from '@/app/components/HomepageChat'
 import { GUEST_FREE_QUESTIONS, FREE_DAILY_QUESTIONS, PRO_CTA_TEXT } from '@/lib/site-config'
@@ -27,6 +28,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
         </nav>
 
         <main>
+          <CenterFullNotice />
           <header className='hero solo'>
             <h1 className='h1s'>Solve any math problem, step by step</h1>
             <div className='askwrap'>
