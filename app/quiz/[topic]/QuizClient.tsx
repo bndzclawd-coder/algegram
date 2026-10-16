@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { QUIZZES, type QuizQ } from '@/lib/quiz/data'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
@@ -32,6 +32,13 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
   const trial = useTrialEligible(acct.signedIn && !acct.pro && !acct.child)
   const score = picked.filter((p, i) => p === questions[i].answer).length
   const done = picked.every(p => p !== null)
+  // Signed-in only: save topic + score once when the quiz is finished. Guests: nothing is sent.
+  const savedRef = useRef(false)
+  useEffect(() => {
+    if (!done || !acct.signedIn || savedRef.current) return
+    savedRef.current = true
+    fetch('/api/quiz/result', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ topic, score }) }).catch(() => {})
+  }, [done, acct.signedIn, topic, score])
 
   // "Ask Layla why" uses the normal chat endpoint, so each tap counts against the guest/free limit.
   async function askWhy(i: number) {
