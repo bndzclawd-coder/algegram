@@ -25,6 +25,10 @@ export function createServiceClient() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { getAll: () => [], setAll: () => {} } }
+    {
+      cookies: { getAll: () => [], setAll: () => {} },
+      // Never let Next's data cache reuse a service-role DB response (stale seat counts etc.).
+      global: { fetch: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, { ...init, cache: 'no-store' }) },
+    }
   )
 }

@@ -4,6 +4,7 @@ import { centerSeatStatus, readCenterCookie } from '@/lib/center/link'
 import { centerDisplayName } from '@/lib/center/display'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 
 // For visitors who came through a center link (signed cookie): seat status + center display name only.
 export async function GET() {

@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { CENTER_PLAN } from '@/lib/center'
 
 export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
 // Existing Center Starter price ($59/mo, 10 seats). No price changes here.
 const CENTER_STARTER_PRICE = process.env.STRIPE_CENTER_STARTER_PRICE_ID || 'price_1UQaZm1lk3QGVovbRzbwQxLx'
 const H = { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' }
