@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase/server'
 import type Stripe from 'stripe'
+import { isCenterSub, syncCenterSubscription } from '@/lib/center'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
       const custId = session.customer as string
       if (!subId) break
       const sub = await stripe.subscriptions.retrieve(subId)
+      if (isCenterSub(sub, session)) { await syncCenterSubscription(db as any, sub, session); break }
       const userId = sub.metadata.supabase_user_id
       if (!userId) break
       const { error } = await db.from('subscriptions').upsert({
@@ -44,6 +46,7 @@ export async function POST(req: NextRequest) {
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription
+      if (isCenterSub(sub)) { await syncCenterSubscription(db as any, sub); break }
       const userId = sub.metadata.supabase_user_id
       if (!userId) break
       const { error } = await db.from('subscriptions').upsert({
@@ -59,6 +62,7 @@ export async function POST(req: NextRequest) {
     }
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription
+      if (isCenterSub(sub)) { await syncCenterSubscription(db as any, sub); break }
       const custId = sub.customer as string
       const { error } = await db.from('subscriptions').update({
         plan: 'free',
