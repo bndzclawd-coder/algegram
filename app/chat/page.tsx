@@ -1,4 +1,5 @@
 'use client'
+import { renderTextWithLinks } from '@/lib/chat/links'
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
@@ -79,7 +80,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         fontSize: '0.9rem', lineHeight: 1.75,
       }}>
         {parts.map((p, i) => {
-          if (p.type === 'text') return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{p.content}</span>
+          if (p.type === 'text') return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{renderTextWithLinks(p.content, `t${i}-`)}</span>
           if (p.type === 'math-display') return (
             <div key={i} data-math-pending="1" data-raw={p.content} data-display="1"
               style={{ padding: '0.5rem 0', overflowX: 'auto', fontFamily: 'serif', color: 'var(--accent2)' }}>

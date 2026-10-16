@@ -7,6 +7,7 @@ import { maybeSendDailyLimitEmail } from '@/lib/email/lifecycle'
 import { resolveModel, FREE_MODEL, type PlanKind } from '@/lib/models'
 import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
+import { readGuestAge } from '@/lib/guest-age'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
 const AI_UNAVAILABLE = 'The tutor is having trouble answering right now. Please try again in a moment.'
@@ -23,7 +24,7 @@ const SYSTEM_PROMPTS: Record<string, string> = {
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 
-function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mode: string } | null {
+function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mode: string; surface?: string } | null {
   if (!raw || typeof raw !== 'object') return null
   const b = raw as Record<string, unknown>
   if (!Array.isArray(b.messages)) return null
@@ -35,7 +36,7 @@ function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mod
     .map(m => ({ role: m.role, content: m.content }))
   if (messages.length === 0) return null
   const mode = typeof b.mode === 'string' && b.mode in SYSTEM_PROMPTS ? b.mode : 'math'
-  return { messages, model: b.model, mode }
+  return { messages, model: b.model, mode, surface: b.surface === 'home' ? 'home' : undefined }
 }
 
 // Every OpenRouter request goes through here, so data_collection: 'deny' is always set.
@@ -77,19 +78,25 @@ function streamHeaders(plan: PlanKind) {
   return { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'X-Plan': plan }
 }
 
-async function handleGuest(req: NextRequest) {
+const GUEST_AGE_REQUIRED = { error: 'Choose your birth year to continue.', ageRequired: true, guestAge: true }
+
+async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parseBody>) {
   const secret = guestSecret()
   if (!secret) {
     console.error('[chat] GUEST_COOKIE_SECRET missing; refusing guest requests')
     return NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
   }
 
+  // Neutral age screen first (session cookie, band only). Both bands get answers; nothing is stored.
+  const band = readGuestAge(req, secret)
+  if (!band) return NextResponse.json(GUEST_AGE_REQUIRED, { status: 403 })
+
   const used = readGuestCount(req, secret)
   if (used >= GUEST_LIMIT) {
-    return NextResponse.json({ error: 'You have used your 5 free questions. Sign up to continue.', signup: true }, { status: 429 })
+    return NextResponse.json({ error: 'You have used your 5 free questions. Sign up to continue.', signup: true, ...(band === 'c' ? { parent: true } : {}) }, { status: 429 })
   }
 
-  const parsed = parseBody(await req.json().catch(() => null))
+  const parsed = preParsed ?? parseBody(await req.json().catch(() => null))
   if (!parsed) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
 
   const ipCheck = await consumeIpQuota(req)
@@ -129,6 +136,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 503 })
   }
   if (!profile?.age_verified) {
+    // Signed in but no verified age (older accounts) asking from the homepage box: serve it like a
+    // guest question (5-question counter, guest age screen, no DB writes) instead of a dead end.
+    if (parsed.surface === 'home') return handleGuest(req, parsed)
     return NextResponse.json(
       profile
         ? { error: "Algegram needs a parent's OK for users under 13. Your account is safe! Ask a grown-up to help: [Get a parent's OK →](/auth/age)", ageRequired: true }

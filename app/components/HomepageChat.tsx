@@ -1,4 +1,5 @@
 'use client'
+import { renderTextWithLinks } from '@/lib/chat/links'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
 
@@ -71,7 +72,7 @@ function MessageBubble({ msg }: { msg: Message }) {
         wordBreak: 'break-word', overflowWrap: 'break-word',
       }}>
         {parts.map((p, i) => {
-          if (p.type === 'text') return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{p.content}</span>
+          if (p.type === 'text') return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{renderTextWithLinks(p.content, `t${i}-`)}</span>
           if (p.type === 'math-display') return (
             <div key={i} data-math-pending='1' data-raw={p.content} data-display='1'
               style={{ padding: '0.4rem 0', overflowX: 'auto', fontFamily: 'serif', color: 'var(--accent2)' }}>
@@ -90,7 +91,18 @@ function MessageBubble({ msg }: { msg: Message }) {
   )
 }
 
-function SignupWall({ onClose, proPitch = 'or go Pro for unlimited math tutoring.' }: { onClose: () => void; proPitch?: string }) {
+function SignupWall({ onClose, proPitch = 'or go Pro for more.', parent = false }: { onClose: () => void; proPitch?: string; parent?: boolean }) {
+  if (parent) return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid rgba(108,99,255,.4)', borderRadius: '24px', padding: '2rem', maxWidth: 440, width: '100%', textAlign: 'center' }}>
+        <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>👪</div>
+        <h2 style={{ fontWeight: 800, fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', marginBottom: '0.5rem' }}>You’ve used your 5 free questions!</h2>
+        <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, fontSize: '0.9rem' }}>To keep going, ask a parent or guardian to help you set up an account. We’ll email them for permission first.</p>
+        <a href='/auth/signup?parent=1' style={{ display: 'block', marginTop: '1.5rem', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.9rem', borderRadius: '12px', fontWeight: 700, textDecoration: 'none' }}>Ask a parent to sign me up →</a>
+        <button onClick={onClose} style={{ marginTop: '1.25rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.75rem', cursor: 'pointer' }}>Maybe later</button>
+      </div>
+    </div>
+  )
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
       <div style={{ background: 'var(--surface)', border: '1px solid rgba(108,99,255,.4)', borderRadius: '24px', padding: '2rem', maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 0 60px rgba(108,99,255,.2)' }}>
@@ -132,6 +144,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
   const [guestRemaining, setGuestRemaining] = useState(5)
   const [guestTotal] = useState(5)
   const [showSignupWall, setShowSignupWall] = useState(false)
+  const [parentWall, setParentWall] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const messagesBoxRef = useRef<HTMLDivElement>(null)
@@ -169,19 +182,31 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
+    await run(newMessages)
+  }, [input, streaming, messages, guestRemaining])
+
+  const run = useCallback(async (newMessages: Message[]) => {
     setStreaming(true)
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: newMessages, mode: 'math' }),
-    })
+    let res: Response
+    try {
+      res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages, mode: 'math', surface: 'home' }),
+      })
+    } catch {
+      setMessages(m => [...m, { role: 'assistant', content: '⚠️ Something went wrong. Please try again.' }])
+      setStreaming(false)
+      return
+    }
     // /api/chat checks and counts the guest limit itself and reports what's left.
     const left = res.headers.get('X-Guest-Remaining')
     if (left !== null) setGuestRemaining(Math.max(0, parseInt(left, 10) || 0))
     if (!res.ok) {
       if (res.status === 429) setGuestRemaining(0)
       const err = await res.json().catch(() => ({ error: 'Something went wrong' }))
-      if (err.signup) { setShowSignupWall(true); setStreaming(false); return }
+      if (res.status === 403 && err.ageRequired && err.guestAge) { setPendingAge(newMessages); setStreaming(false); return }
+      if (err.signup) { if (err.parent) setParentWall(true); setShowSignupWall(true); setStreaming(false); return }
       setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}` }])
       setStreaming(false)
       return
@@ -211,13 +236,30 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
       }
     }
     setStreaming(false)
-  }, [input, streaming, messages, guestRemaining])
+  }, [])
+
+  const [pendingAge, setPendingAge] = useState<Message[] | null>(null)
+  const [ageYear, setAgeYear] = useState('')
+  const [ageBusy, setAgeBusy] = useState(false)
+  const [ageError, setAgeError] = useState('')
+  const thisYear = new Date().getFullYear()
+  const submitAge = useCallback(async () => {
+    if (!ageYear || !pendingAge) { setAgeError('Please choose a year.'); return }
+    setAgeBusy(true); setAgeError('')
+    try {
+      const r = await fetch('/api/guest-age', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ birthYear: Number(ageYear) }) })
+      if (!r.ok) { setAgeError('Something went wrong. Please try again.'); return }
+      const pending = pendingAge
+      setPendingAge(null); setAgeYear('')
+      await run(pending)
+    } catch { setAgeError('Something went wrong. Please try again.') } finally { setAgeBusy(false) }
+  }, [ageYear, pendingAge, run])
 
   const hasMessages = messages.length > 0
 
   return (
     <section id='try' aria-label='Try a free question' className='hero-section' style={{ maxWidth: 760, margin: '0 auto', padding: '1.5rem 1rem 1rem', scrollMarginTop: '5rem' }}>
-      {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} proPitch={proPitch} />}
+      {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} proPitch={proPitch} parent={parentWall} />}
       {!hasMessages && (
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-block', background: 'rgba(108,99,255,.12)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent2)', marginBottom: '1.25rem' }}>
@@ -242,6 +284,22 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
               <span>Algegram is thinking…</span>
             </div>
           )}
+          {pendingAge && (
+            <form onSubmit={e => { e.preventDefault(); submitAge() }} data-testid='guest-age'
+              style={{ margin: '0 0 0.85rem 2.25rem', padding: '0.85rem 1rem', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.6rem' }}>
+              <label htmlFor='guest-birth-year' style={{ fontSize: '0.9rem' }}>Before we answer, what year were you born?</label>
+              <select id='guest-birth-year' value={ageYear} onChange={e => setAgeYear(e.target.value)} required
+                style={{ background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.4rem 0.6rem', fontSize: '0.9rem' }}>
+                <option value='' disabled>Year</option>
+                {Array.from({ length: 100 }, (_, k) => thisYear - k).map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <button type='submit' disabled={ageBusy || !ageYear}
+                style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.45rem 1rem', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', opacity: ageBusy || !ageYear ? 0.6 : 1 }}>
+                {ageBusy ? '…' : 'Continue'}
+              </button>
+              {ageError && <span style={{ color: 'var(--red)', fontSize: '0.8rem', width: '100%' }}>{ageError}</span>}
+            </form>
+          )}
           <div ref={bottomRef} />
         </div>
       )}
@@ -255,7 +313,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
             {guestRemaining > 0 ? `${guestRemaining} free question${guestRemaining !== 1 ? 's' : ''} remaining · ` : 'Free limit reached · '}
             <a href='/auth/signup' style={{ color: 'var(--accent2)', textDecoration: 'none', fontWeight: 600 }}>Sign up for more →</a>
           </span>
-          <button onClick={() => send()} disabled={streaming || !input.trim()}
+          <button onClick={() => send()} disabled={streaming || !input.trim() || !!pendingAge}
             style={{ background: streaming || !input.trim() ? 'rgba(108,99,255,.3)' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.6rem 1.4rem', cursor: streaming || !input.trim() ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0, minWidth: 80 }}>
             {streaming ? '…' : 'Solve →'}
           </button>
