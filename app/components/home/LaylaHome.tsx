@@ -140,7 +140,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
 
       <footer>
         <div className='w'>
-          <div><a href='/learn'>Free practice</a><a href='/pricing'>Pricing</a><a href='/help'>Help</a><a href='/ai-math-tutor-for-kids-under-13'>For kids under 13</a><a href='/terms'>Terms</a><a href='/privacy'>Privacy</a><a href='/contact'>Contact</a></div>
+          <div><a href='/learn'>Free practice</a><a href='/pricing'>Pricing</a><a href='/help'>Help</a><a href='/how-algegram-works-for-kids'>For kids under 13</a><a href='/terms'>Terms</a><a href='/privacy'>Privacy</a><a href='/contact'>Contact</a></div>
           <span>© 2026 Algegram</span>
         </div>
       </footer>
