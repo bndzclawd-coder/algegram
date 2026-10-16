@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export const dynamic = 'force-dynamic'
@@ -12,9 +12,9 @@ function LoginForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [resetSent, setResetSent] = useState(false)
-  const router = useRouter()
   const params = useSearchParams()
-  const next = params.get('next') || '/chat'
+  const rawNext = params.get('next') || '/chat'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') && !rawNext.startsWith('/\\') ? rawNext : '/chat'
 
   const [supabase] = useState(() => typeof window === 'undefined' ? null : createClient())
 
@@ -22,10 +22,13 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    if (!supabase) return
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false) }
-    else router.push(next)
+    const client = supabase ?? createClient()
+    // Guard against a stuck first attempt (auth lock / slow network): never leave the button on "Signing in…".
+    const timeout = new Promise<{ error: { message: string } }>(r => setTimeout(() => r({ error: { message: 'Sign-in is taking too long. Please try again.' } }), 15000))
+    const { error } = await Promise.race([client.auth.signInWithPassword({ email, password }), timeout])
+    if (error) { setError(error.message); setLoading(false); return }
+    // Full page load (not client routing) so the server sees the fresh session cookie on the first try.
+    window.location.assign(next)
   }
 
   async function handleForgotPassword() {
