@@ -2,7 +2,7 @@
 // signature check + webhook branch logic + center matching, against an in-memory fake DB.
 // No network writes, no prod rows. Run: npx tsx scripts/qa/center-webhook-test.ts
 import Stripe from 'stripe'
-import { isCenterSub, syncCenterSubscription, subscriptionFromSession, CENTER_PLAN, centerSeatActive } from '../../lib/center'
+import { isCenterSub, syncCenterSubscription, subscriptionFromSession, CENTER_PLAN, centerSeatActive, centerState } from '../../lib/center'
 
 const secret = 'whsec_local_qa_only'
 const stripe = new Stripe('sk_test_local_invalid', { apiVersion: '2024-06-20' as any })
@@ -13,7 +13,10 @@ const tables: Record<string, any[]> = {
     { user_id: 'u1', comp_reason: 'pilot:test_center_qa', created_at: '2026-10-01' },
     { user_id: 'u2', comp_reason: 'pilot:test_center_qa', created_at: '2026-10-02' },
     { user_id: 'u3', comp_reason: 'pilot:other', created_at: '2026-10-03' },
+    { user_id: 'u4', comp_reason: 'pilot:pay_center_qa', comp_pro_until: '2026-10-01T00:00:00Z', created_at: '2026-10-04' },
   ],
+  center_pilots: [{ center_slug: 'pay_center_qa', active: true, seat_cap: 10 }],
+  center_seats: [],
   center_subscriptions: [],
 }
 function q(t: string) {
@@ -74,6 +77,26 @@ const base = (id: string, name: string | null, email: string | null) => ({
 
   const plain = { ...base('d', null, null), metadata: {} }
   check('non-center session ignored', await handle(signed(plain)) === 'not-center')
+  // Per-center pay link: slug from client_reference_id + subscription metadata, validated against center_pilots
+  const u4 = tables.user_profiles.find(r => r.user_id === 'u4')
+  check('pay-link center: ended pilot before payment', await centerState(db, 'u4', u4, await centerSeatActive(db, 'u4', u4.comp_reason)) === 'ended')
+  await handle(signed({ ...base('e', null, null), client_reference_id: 'pay_center_qa', metadata: { plan: 'center_starter', seats: '10', center_slug: 'pay_center_qa' } }))
+  const e = tables.center_subscriptions.find(r => r.stripe_subscription_id === 'sub_qa_e')
+  check('pay link matched by slug (pay_link)', e?.center_slug === 'pay_center_qa' && e?.match_method === 'pay_link' && e?.status === 'active')
+  check('paid center: seat Pro past day 14 (active)', await centerSeatActive(db, 'u4', u4.comp_reason) && await centerState(db, 'u4', u4, true) === 'active')
+  const subE = { id: 'sub_qa_e', object: 'subscription', customer: 'cus_qa', status: 'canceled', current_period_end: Math.floor(Date.now() / 1000) + 86400, metadata: { plan: 'center_starter', seats: '10', center_slug: 'pay_center_qa' } }
+  const pl = JSON.stringify({ id: 'evt_qa2', object: 'event', type: 'customer.subscription.deleted', data: { object: subE } })
+  const ev2 = stripe.webhooks.constructEvent(pl, stripe.webhooks.generateTestHeaderString({ payload: pl, secret }), secret)
+  const s2 = ev2.data.object as Stripe.Subscription
+  if (isCenterSub(s2)) await syncCenterSubscription(db, s2)
+  const paidAfter = await centerSeatActive(db, 'u4', u4.comp_reason)
+  check('cancel -> reverts to ended-pilot rule', !paidAfter && await centerState(db, 'u4', u4, paidAfter) === 'ended')
+  for (const st of ['unpaid', 'past_due']) {
+    await syncCenterSubscription(db, { ...subE, status: st } as any)
+    check(`${st} -> not paid`, !(await centerSeatActive(db, 'u4', u4.comp_reason)))
+  }
+  await handle(signed({ ...base('f', null, null), client_reference_id: 'no_such_center', metadata: { plan: 'center_starter', center_slug: 'no_such_center' } }))
+  check('slug without pilot record -> unmatched', tables.center_subscriptions.find(r => r.stripe_subscription_id === 'sub_qa_f')?.matched === false)
   check('isCenterSub via subscription metadata', isCenterSub({ metadata: { plan: 'center_starter' } } as any))
   console.log(ok ? 'ALL PASS' : 'SOME FAILED'); process.exit(ok ? 0 : 1)
 })()

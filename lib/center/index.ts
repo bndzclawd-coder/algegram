@@ -45,6 +45,14 @@ async function slugFromPayerEmail(db: Db, email: string | null): Promise<string 
   return null
 }
 
+/** Per-center pay link (/center/pay/<slug>): slug in subscription metadata / client_reference_id, must have a center_pilots record. */
+async function slugFromPayLink(db: Db, sub: Stripe.Subscription, session?: Stripe.Checkout.Session | null): Promise<string | null> {
+  const raw = sub.metadata?.center_slug ?? session?.metadata?.center_slug ?? session?.client_reference_id ?? null
+  if (!raw || !/^[a-z0-9_]{1,40}$/.test(raw)) return null
+  const { data } = await db.from('center_pilots').select('center_slug').eq('center_slug', raw).maybeSingle()
+  return data?.center_slug ?? null
+}
+
 /** Minimal subscription view from the session alone, used when Stripe can't return the subscription
  *  (not yet visible, or not found). Paid sessions count as active for one period; otherwise incomplete. */
 export function subscriptionFromSession(s: Stripe.Checkout.Session): Stripe.Subscription {
@@ -68,6 +76,7 @@ export async function syncCenterSubscription(db: Db, sub: Stripe.Subscription, s
   const { data: existing } = await db.from('center_subscriptions').select('center_slug, matched').eq('stripe_subscription_id', sub.id).maybeSingle()
   let slug: string | null = existing?.center_slug ?? null
   let method: string | null = null
+  if (!slug) { slug = await slugFromPayLink(db, sub, session); if (slug) method = 'pay_link' }
   if (!slug) { slug = await slugFromCenterName(db, centerName); if (slug) method = 'center_name' }
   if (!slug) { slug = await slugFromPayerEmail(db, payerEmail); if (slug) method = 'payer_email' }
   const seats = Math.max(1, Math.min(500, parseInt(String(sub.metadata?.seats ?? session?.metadata?.seats ?? '10'), 10) || 10))
