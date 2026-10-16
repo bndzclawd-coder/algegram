@@ -1,3 +1,4 @@
+import { WHAT_IS_ALGEGRAM } from '@/lib/about'
 import LaylaHome from '@/app/components/home/LaylaHome'
 import type { Example } from '@/components/WorkedExample'
 import { JsonLd } from '@/components/JsonLd'
@@ -27,6 +28,23 @@ const JSON_LD = {
       '@id': `${SITE_URL}/#website`,
       url: SITE_URL,
       name: 'Algegram',
+      publisher: { '@id': `${SITE_URL}/#org` },
+    },
+    {
+      '@type': ['WebApplication', 'EducationalApplication'],
+      '@id': `${SITE_URL}/#app`,
+      name: 'Algegram',
+      url: SITE_URL,
+      description: WHAT_IS_ALGEGRAM,
+      applicationCategory: 'EducationalApplication',
+      operatingSystem: 'Web browser',
+      educationalUse: 'Homework help, practice',
+      audience: { '@type': 'EducationalAudience', educationalRole: 'student' },
+      isAccessibleForFree: true,
+      offers: [
+        { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'USD' },
+        { '@type': 'Offer', name: 'Pro', price: '12.99', priceCurrency: 'USD', description: 'Monthly subscription with a 7-day free trial' },
+      ],
       publisher: { '@id': `${SITE_URL}/#org` },
     },
   ],

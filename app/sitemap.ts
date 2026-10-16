@@ -1,5 +1,6 @@
 import { LEGAL_PAGES_REVIEWED } from '@/lib/site-config'
 import type { MetadataRoute } from 'next'
+import { LEARN_SLUGS } from '@/lib/learn/data'
 import { SITE_URL as BASE } from '@/lib/site-config'
 
 // Only indexable, ready pages. /ai-math-tutor-for-kids is deliberately left out (noindex) until
@@ -29,5 +30,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const quizPages: MetadataRoute.Sitemap = ['fractions', 'linear-equations', 'percentages', 'order-of-operations', 'word-problems']
     .map(t => ({ url: `${BASE}/quiz/${t}`, lastModified: today, changeFrequency: 'monthly' as const, priority: 0.6 }))
 
-  return [...pages, ...topicPages, ...quizPages]
+  const learnPages: MetadataRoute.Sitemap = ['', ...LEARN_SLUGS.map(s => `/${s}`)]
+    .map(s => ({ url: `${BASE}/learn${s}`, lastModified: today, changeFrequency: 'monthly' as const, priority: 0.7 }))
+
+  return [...pages, ...topicPages, ...quizPages, ...learnPages]
 }
