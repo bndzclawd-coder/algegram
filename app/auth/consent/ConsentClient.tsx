@@ -12,6 +12,7 @@ export default function ConsentContent({ token, action, initial }: { token: stri
   const [step, setStep] = useState<'confirm' | 'password' | 'done'>('confirm')
   const [payload, setPayload] = useState<{ childEmail: string; parentEmail: string; childBirthYear: number; existingAccount?: boolean } | null>(initial.ok ? (initial as any).data : null)
   const [loading, setLoading] = useState(false)
+  const [centerFull, setCenterFull] = useState(false)
   const [used, setUsed] = useState(!initial.ok && !!(initial as any).used)
 
   // Re-check when the page is restored from the back/forward cache or the tab regains focus,
@@ -40,7 +41,7 @@ export default function ConsentContent({ token, action, initial }: { token: stri
       body: JSON.stringify({ token, password }),
     })
     const data = await res.json()
-    if (res.ok) setStep('done')
+    if (res.ok) { setCenterFull(!!data.centerFull); setStep('done') }
     else if (data.used) { setUsed(true); setMessage(data.error); setStatus('error') }
     else { setMessage(data.error || 'Failed to create account.'); setLoading(false) }
   }
@@ -106,6 +107,7 @@ export default function ConsentContent({ token, action, initial }: { token: stri
           ? `${payload.childEmail} can sign in and keep learning. Thank you!`
           : `${payload?.childEmail} can now sign in. A confirmation email has been sent to them.`}
       </p>
+      {centerFull && <p data-testid='center-full' style={{ margin: '0 auto 1.5rem', maxWidth: 420, padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid rgba(251,191,36,.45)', background: 'rgba(251,191,36,.1)' }}>Your center&apos;s seats are full. Ask your teacher. The account was created as a regular free account.</p>}
       <Link href="/auth/login" style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem 2rem', borderRadius: '10px', fontWeight: 700, textDecoration: 'none' }}>
         Go to sign in
       </Link>

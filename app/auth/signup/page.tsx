@@ -1,6 +1,5 @@
 'use client'
 import { useCenterLink } from '@/lib/center/useCenterLink'
-import CenterFullNotice from '@/app/components/CenterFullNotice'
 import { PRO_CTA_TEXT, PRO_PRICE_TEXT, PRO_OFFER_TEXT } from '@/lib/site-config'
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
@@ -181,7 +180,6 @@ function SignupForm() {
         <Link href="/" style={{ display: 'block', textAlign: 'center', fontWeight: 800, fontSize: '1.4rem', background: 'linear-gradient(135deg,#6c63ff,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '2rem', textDecoration: 'none' }}>
           Algegram
         </Link>
-        <CenterFullNotice />
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '2rem' }}>
           <h1 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.4rem' }}>
             {plan === 'pro' && !centerLink.center ? `${PRO_CTA_TEXT}: create your account` : 'Create your free account'}

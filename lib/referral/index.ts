@@ -40,7 +40,8 @@ export function isPilot(attr: Attribution | null | undefined): boolean {
 }
 
 /** Called once an account is real (email confirmed, or parent consent given). Never throws. */
-export async function onAccountActivated(db: Db, userId: string, opts: { pilot: boolean }) {
+export async function onAccountActivated(db: Db, userId: string, opts: { pilot: boolean }): Promise<{ center: 'enrolled' | 'full' | 'none' | null }> {
+  let centerOutcome: 'enrolled' | 'full' | 'none' | null = null
   try {
     const { data: prof } = await db.from('user_profiles').select('pending_ref_code, signup_ip_hash, pending_center').eq('user_id', userId).maybeSingle()
     // Center link (signed cookie / consent token): enroll into a seat with pilot Pro, no individual bonus.
@@ -49,6 +50,7 @@ export async function onAccountActivated(db: Db, userId: string, opts: { pilot: 
     if (prof?.pending_center) {
       const r = await enrollCenter(db as any, userId, prof.pending_center)
       pilot = r === 'enrolled' ? true : r === 'full' ? false : opts.pilot
+      centerOutcome = r
       console.log('[center] enrollment', { outcome: r })
     }
     if (!pilot) {
@@ -63,4 +65,5 @@ export async function onAccountActivated(db: Db, userId: string, opts: { pilot: 
   } catch (e) {
     console.error('[bonus] activation threw', { name: (e as Error)?.name })
   }
+  return { center: centerOutcome }
 }

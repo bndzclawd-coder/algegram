@@ -40,6 +40,7 @@ export async function enrollCenter(db: Db, userId: string, slug: string): Promis
   const { data, error } = await db.rpc('enroll_center_seat', { p_user: userId, p_slug: slug })
   if (error) { console.error('[center] enroll failed', { code: error.code }); return 'none' }
   const status = data?.status as 'enrolled' | 'full' | 'none'
+  if (status === 'full') await db.rpc('mark_center_overflow', { p_user: userId, p_slug: slug })
   if (data?.filled || status === 'full') {
     const { data: claimed } = await db.rpc('claim_center_full_alert', { p_slug: slug })
     if (claimed === true) await sendCenterFullAlert(slug)

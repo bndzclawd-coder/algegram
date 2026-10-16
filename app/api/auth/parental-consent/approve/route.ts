@@ -63,12 +63,12 @@ export async function POST(req: NextRequest) {
   const childAttr = attributionFromToken(payload.attr)
   if (newUser.user) await recordSignupAttribution(db, newUser.user.id, childAttr)
   // Parent has consented: the 7-day Pro bonus starts now, and the referrer (if any) is credited.
-  if (newUser.user) await onAccountActivated(db as any, newUser.user.id, { pilot: isPilot(childAttr) })
+  const act = newUser.user ? await onAccountActivated(db as any, newUser.user.id, { pilot: isPilot(childAttr) }) : null
 
   // Account-only welcome to the PARENT (no promo). No-op unless LIFECYCLE_EMAILS_ENABLED=true.
   if (newUser.user) {
     try { await sendWelcomeEmail(newUser.user) } catch (e) { console.error('[consent] welcome email threw', { name: (e as Error)?.name }) }
   }
 
-  return NextResponse.json({ ok: true, userId: newUser.user?.id })
+  return NextResponse.json({ ok: true, userId: newUser.user?.id, centerFull: act?.center === 'full' })
 }

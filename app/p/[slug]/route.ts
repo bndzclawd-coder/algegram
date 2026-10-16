@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   const center = slug.replace(/-/g, '_')
   // Only centers with a center_pilots record get the signed enrollment cookie; others = attribution only.
   const status = await centerSeatStatus(createServiceClient() as any, center)
-  if (status === 'full') url.searchParams.set('center', 'full')
+  if (status !== 'none') url.searchParams.set('center', status) // 'open' | 'full': lets the landing show the banner at once
   const res = NextResponse.redirect(url, 307)
   if (status !== 'none') setCenterCookie(res, center)
   res.headers.set('X-Robots-Tag', 'noindex, nofollow')
