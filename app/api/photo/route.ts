@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: PHOTO_MODEL, stream: true, temperature: 0.2, max_tokens: 2048,
-        provider: { data_collection: 'deny', zdr: true },
+        provider: { data_collection: 'deny', zdr: true, only: ['google-vertex'] },
         messages: [
           { role: 'system', content: PROMPT },
           { role: 'user', content: [

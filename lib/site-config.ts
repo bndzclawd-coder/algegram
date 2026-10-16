@@ -24,4 +24,6 @@ export const TRIAL_DAYS = 7
 export const LEGAL_PAGES_REVIEWED = process.env.NEXT_PUBLIC_LEGAL_PAGES_REVIEWED === 'true'
 
 /** Pro fair use: premium-model messages per account per UTC day. After this, Pro falls back to FREE_MODEL (not blocked). */
-export const PRO_FAIR_USE_DAILY = 200
+// Premium picker models (Claude Sonnet 4.5, GPT-4o) per Pro account per day, incl. center pilot / Center Starter seats.
+// After this, answers fall back to the default model. Stored as a daily count only.
+export const PRO_FAIR_USE_DAILY = 30

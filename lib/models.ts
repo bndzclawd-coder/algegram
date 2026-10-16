@@ -10,8 +10,16 @@ export const PRO_MODELS = [
   { id: 'openai/gpt-4o', label: 'GPT-4o' },
   { id: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet' },
   { id: 'google/gemini-2.5-flash', label: 'Gemini Flash' },
-  { id: 'deepseek/deepseek-r1', label: 'DeepSeek R1' },
 ] as const
+
+// Provider allowlist per model: only zero-data-retention, no-training endpoints (checked on OpenRouter's ZDR list).
+// Requests also set zdr: true and data_collection: 'deny', and fallbacks outside this list are disabled.
+export const MODEL_PROVIDERS: Record<string, string[]> = {
+  'google/gemini-2.5-flash': ['google-vertex'],
+  'google/gemini-2.5-flash-lite': ['google-vertex'],
+  'anthropic/claude-sonnet-4.5': ['amazon-bedrock', 'google-vertex'],
+  'openai/gpt-4o': ['azure'],
+}
 
 const PRO_MODEL_IDS: ReadonlySet<string> = new Set(PRO_MODELS.map(m => m.id))
 

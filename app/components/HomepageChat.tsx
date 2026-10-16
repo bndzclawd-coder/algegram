@@ -1,6 +1,6 @@
 'use client'
-import { renderTextWithLinks } from '@/lib/chat/links'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { MathMarkdown } from '@/lib/chat/MathMarkdown'
+import { memo, useState, useEffect, useRef, useCallback } from 'react'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
 
 type Message = { role: 'user' | 'assistant'; content: string }
@@ -12,52 +12,9 @@ const EXAMPLE_QUESTIONS = [
   '∫ x² sin(x) dx',
 ]
 
-function useMathRenderer(dep: any) {
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const render = () => {
-      // @ts-ignore
-      if (!window.katex) return
-      document.querySelectorAll('[data-math-pending]').forEach((el) => {
-        el.removeAttribute('data-math-pending')
-        const raw = el.getAttribute('data-raw') || ''
-        const displayMode = el.getAttribute('data-display') === '1'
-        try {
-          // @ts-ignore
-          el.innerHTML = window.katex.renderToString(raw, { displayMode, throwOnError: false })
-        } catch {}
-      })
-    }
-    const t = setTimeout(render, 200)
-    return () => clearTimeout(t)
-  }, [dep])
-}
-
-function MessageBubble({ msg }: { msg: Message }) {
+// Memoized: typing in the box re-renders the parent, but finished messages never re-parse or re-render.
+const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user'
-  const parts: { type: 'text' | 'math-inline' | 'math-display'; content: string }[] = []
-  const remaining = msg.content
-  const allMatches: { idx: number; end: number; raw: string; display: boolean }[] = []
-  let m
-  const dRe = /\$\$([\s\S]*?)\$\$/g
-  while ((m = dRe.exec(remaining)) !== null)
-    allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: true })
-  const bracketRe = /\\\[([\s\S]*?)\\\]/g
-  while ((m = bracketRe.exec(remaining)) !== null)
-    allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: true })
-  const iRe = /\$(?!\$)((?:[^$\\]|\\.)*?)\$/g
-  while ((m = iRe.exec(remaining)) !== null) {
-    const overlap = allMatches.some(d => m!.index >= d.idx && m!.index < d.end)
-    if (!overlap) allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: false })
-  }
-  allMatches.sort((a, b) => a.idx - b.idx)
-  let cursor = 0
-  for (const match of allMatches) {
-    if (match.idx > cursor) parts.push({ type: 'text', content: remaining.slice(cursor, match.idx) })
-    parts.push({ type: match.display ? 'math-display' : 'math-inline', content: match.raw })
-    cursor = match.end
-  }
-  if (cursor < remaining.length) parts.push({ type: 'text', content: remaining.slice(cursor) })
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: '0.85rem' }}>
       {!isUser && (
@@ -71,25 +28,13 @@ function MessageBubble({ msg }: { msg: Message }) {
         fontSize: '0.9rem', lineHeight: 1.75,
         wordBreak: 'break-word', overflowWrap: 'break-word',
       }}>
-        {parts.map((p, i) => {
-          if (p.type === 'text') return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{renderTextWithLinks(p.content, `t${i}-`)}</span>
-          if (p.type === 'math-display') return (
-            <div key={i} data-math-pending='1' data-raw={p.content} data-display='1'
-              style={{ padding: '0.4rem 0', overflowX: 'auto', fontFamily: 'serif', color: 'var(--accent2)' }}>
-              $${p.content}$$
-            </div>
-          )
-          return (
-            <span key={i} data-math-pending='1' data-raw={p.content}
-              style={{ fontFamily: 'serif', color: 'var(--accent2)', padding: '0 2px' }}>
-              ${p.content}$
-            </span>
-          )
-        })}
+        {isUser ? <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span> : <MathMarkdown text={msg.content} />}
       </div>
     </div>
   )
-}
+})
+
+const MemoWatchLayla = memo(WatchLaylaButton)
 
 function SignupWall({ onClose, proPitch = 'or go Pro for more.' }: { onClose: () => void; proPitch?: string }) {
   return (
@@ -133,11 +78,10 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
   const [guestRemaining, setGuestRemaining] = useState(5)
   const [guestTotal] = useState(5)
   const [showSignupWall, setShowSignupWall] = useState(false)
+  const acctRef = useRef<{ signedIn: boolean } | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const messagesBoxRef = useRef<HTMLDivElement>(null)
-
-  useMathRenderer(messages)
 
   useEffect(() => {
     fetch('/api/guest-limit')
@@ -166,7 +110,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
   const send = useCallback(async (overrideText?: string) => {
     const text = (overrideText ?? input).trim()
     if (!text || streaming) return
-    if (guestRemaining <= 0) { setShowSignupWall(true); return }
+    if (!acctRef.current?.signedIn && guestRemaining <= 0) { setShowSignupWall(true); return }
     setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
@@ -190,6 +134,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
     // /api/chat checks and counts the guest limit itself and reports what's left.
     const left = res.headers.get('X-Guest-Remaining')
     if (left !== null) setGuestRemaining(Math.max(0, parseInt(left, 10) || 0))
+    else if (res.ok) setAcct(a => (a && a.left !== null ? { ...a, left: Math.max(0, a.left - 1) } : a))
     if (!res.ok) {
       if (res.status === 429) setGuestRemaining(0)
       const err = await res.json().catch(() => ({ error: 'Something went wrong' }))
@@ -229,14 +174,16 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
   // ---- Photo help (Pro) ----
   const fileRef = useRef<HTMLInputElement>(null)
   const [photoGate, setPhotoGate] = useState<null | 'guest' | 'child'>(null)
-  const [acct, setAcct] = useState<null | { signedIn: boolean; pro: boolean; child: boolean }>(null)
+  const [acct, setAcct] = useState<null | { signedIn: boolean; pro: boolean; child: boolean; left: number | null }>(null)
   useEffect(() => {
     fetch('/api/usage', { cache: 'no-store' }).then(async r => {
-      if (r.status === 401) return setAcct({ signedIn: false, pro: false, child: false })
+      if (r.status === 401) return setAcct({ signedIn: false, pro: false, child: false, left: null })
       const d = await r.json().catch(() => null)
-      setAcct({ signedIn: true, pro: d?.plan === 'pro', child: !!d?.child })
-    }).catch(() => setAcct({ signedIn: false, pro: false, child: false }))
+      const pro = d?.plan === 'pro'
+      setAcct({ signedIn: true, pro, child: !!d?.child, left: pro || typeof d?.limit !== 'number' ? null : Math.max(0, d.limit - (d.used ?? 0)) })
+    }).catch(() => setAcct({ signedIn: false, pro: false, child: false, left: null }))
   }, [])
+  acctRef.current = acct
   const onCamera = useCallback(() => {
     if (streaming) return
     if (!acct?.signedIn) return setPhotoGate('guest')
@@ -279,6 +226,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
   }, [])
 
   const hasMessages = messages.length > 0
+  const firstAssistant = messages.findIndex(x => x.role === 'assistant')
 
   return (
     <section id='try' aria-label='Try a free question' className='hero-section' style={{ maxWidth: 760, margin: '0 auto', padding: '1.5rem 1rem 1rem', scrollMarginTop: '5rem' }}>
@@ -301,7 +249,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
         </div>
       )}
       {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} proPitch={proPitch} />}
-      {!hasMessages && (
+      {!hasMessages && acct && !acct.signedIn && (
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-block', background: 'rgba(108,99,255,.12)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent2)', marginBottom: '1.25rem' }}>
             ✨ No sign-up needed · {guestRemaining} free question{guestRemaining !== 1 ? 's' : ''} left
@@ -312,11 +260,11 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
         <div ref={messagesBoxRef} style={{ marginBottom: '1rem', maxHeight: '55vh', overflowY: 'auto', paddingRight: '0.25rem' }}>
           {messages.map((m, i) => (
             <div key={i}>
-              {intro && m.role === 'assistant' && i === messages.findIndex(x => x.role === 'assistant') && (
+              {intro && m.role === 'assistant' && i === firstAssistant && (
                 <div data-testid='tutor-intro' style={{ fontWeight: 700, fontSize: '0.9rem', margin: '0 0 0.35rem 2.25rem' }}>{intro}</div>
               )}
               <MessageBubble msg={m} />
-              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <WatchLaylaButton answer={m.content} />}
+              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <MemoWatchLayla answer={m.content} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
@@ -334,10 +282,16 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
           placeholder={placeholders?.length ? `Try: ${placeholders[phIdx]}` : 'Type any math problem… e.g. 3/4 + 1/6 or 2x + 5 = 17'} rows={3} aria-label='Type a math question'
           style={{ width: '100%', background: 'none', border: 'none', outline: 'none', resize: 'none', color: 'var(--text)', fontSize: '1rem', lineHeight: 1.65, fontFamily: 'inherit', display: 'block', boxSizing: 'border-box' }} />
         <div className='input-bottom-row' style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {acct?.signedIn ? (
           <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', flexShrink: 1, minWidth: 0 }}>
+            {acct.pro ? '' : acct.left !== null ? `${acct.left} question${acct.left !== 1 ? 's' : ''} left today` : ''}
+          </span>
+          ) : (
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', flexShrink: 1, minWidth: 0, visibility: acct ? 'visible' : 'hidden' }}>
             {guestRemaining > 0 ? `${guestRemaining} free question${guestRemaining !== 1 ? 's' : ''} remaining · ` : 'Free limit reached · '}
             <a href='/auth/signup' style={{ color: 'var(--accent2)', textDecoration: 'none', fontWeight: 600 }}>Sign up for more →</a>
           </span>
+          )}
           <span style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <input ref={fileRef} type='file' accept='image/*' capture='environment' hidden onChange={e => { const f = e.target.files?.[0]; if (f) sendPhoto(f) }} />
           <button type='button' onClick={onCamera} aria-label='Solve from a photo (Pro)' title='Snap just the problem, not your name.'
@@ -359,7 +313,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
           ))}
         </div>
       )}
-      {guestRemaining < guestTotal && (
+      {!acct?.signedIn && guestRemaining < guestTotal && (
         <div style={{ marginTop: '1rem' }}>
           <div style={{ height: 3, background: 'var(--border)', borderRadius: 99 }}>
             <div style={{ height: '100%', width: `${Math.min(100, ((guestTotal - guestRemaining) / guestTotal) * 100)}%`, background: guestRemaining <= 0 ? '#ef4444' : 'var(--accent)', borderRadius: 99, transition: 'width .4s' }} />

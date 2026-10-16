@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import HeaderAuth from './HeaderAuth'
 import HomepageChat from '@/app/components/HomepageChat'
 import { GUEST_FREE_QUESTIONS, FREE_DAILY_QUESTIONS, PRO_CTA_TEXT } from '@/lib/site-config'
 import { PLANS } from '@/lib/plans'
@@ -22,7 +23,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
       <div className='w'>
         <nav aria-label='Main'>
           <Link className='logo' href='/'>alge<b>gram</b></Link>
-          <Link href='/auth/login' className='signin'>Sign in</Link>
+          <HeaderAuth className='signin' />
         </nav>
 
         <main>
