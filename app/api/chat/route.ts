@@ -55,6 +55,8 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
     stream: true,
     temperature: 0.3,
     max_tokens: 2048,
+    // Free default model: skip hidden 'thinking' so the first word shows quickly.
+    ...(model === FREE_MODEL ? { reasoning: { enabled: false } } : {}),
     provider: model === FAST_MODEL ? { data_collection: 'deny', zdr: true } : { data_collection: 'deny' },
   }
   return fetch('https://openrouter.ai/api/v1/chat/completions', {
