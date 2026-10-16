@@ -8,6 +8,10 @@ export function parseBirthYear(v: unknown): number | null {
 export function minAge(birthYear: number): number {
   return new Date().getUTCFullYear() - birthYear - 1
 }
+/** Needs a parent's approval under this country's consent age (13 to 16; 13 = COPPA default). */
+export function needsParent(birthYear: number, consentAge = 13): boolean {
+  return minAge(birthYear) < consentAge
+}
 export function isUnder13(birthYear: number): boolean {
   return minAge(birthYear) < 13
 }
