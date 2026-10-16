@@ -7,13 +7,12 @@ import { maybeSendDailyLimitEmail } from '@/lib/email/lifecycle'
 import { resolveModel, FREE_MODEL, type PlanKind } from '@/lib/models'
 import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
-import { readGuestAge } from '@/lib/guest-age'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
 const AI_UNAVAILABLE = 'The tutor is having trouble answering right now. Please try again in a moment.'
 
 // Hard identity rule: the tutor never claims or implies being human.
-const AI_IDENTITY_RULE = ` If anyone asks whether you are real, human or a person, always say clearly that you are an AI tutor. You have no human backstory: never claim an age, family, body, feelings or personal life.`
+const AI_IDENTITY_RULE = ` If anyone asks whether you are real, human or a person, always say clearly that you are an AI tutor. You have no human backstory: never claim an age, family, body, feelings or personal life. Privacy (users may be children): never ask for the user's name, school, email, age, location or any other personal details. If they share any, do not repeat it back, do not use it, and do not ask follow-up questions about it; gently say they don't need to share personal details and continue with the math.`
 
 const SYSTEM_PROMPTS: Record<string, string> = {
   math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.${AI_IDENTITY_RULE}`,
@@ -78,8 +77,6 @@ function streamHeaders(plan: PlanKind) {
   return { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'X-Plan': plan }
 }
 
-const GUEST_AGE_REQUIRED = { error: 'Choose your birth year to continue.', ageRequired: true, guestAge: true }
-
 async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parseBody>) {
   const secret = guestSecret()
   if (!secret) {
@@ -87,13 +84,11 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
     return NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
   }
 
-  // Neutral age screen first (session cookie, band only). Both bands get answers; nothing is stored.
-  const band = readGuestAge(req, secret)
-  if (!band) return NextResponse.json(GUEST_AGE_REQUIRED, { status: 403 })
-
+  // No age question for guests: every guest is treated as possibly under 13, so nothing identifying
+  // is stored (no email, no question text, no age). Age is asked only at sign-up.
   const used = readGuestCount(req, secret)
   if (used >= GUEST_LIMIT) {
-    return NextResponse.json({ error: 'You have used your 5 free questions. Sign up to continue.', signup: true, ...(band === 'c' ? { parent: true } : {}) }, { status: 429 })
+    return NextResponse.json({ error: 'You have used your 5 free questions. Sign up to continue.', signup: true }, { status: 429 })
   }
 
   const parsed = preParsed ?? parseBody(await req.json().catch(() => null))
@@ -115,6 +110,7 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
     ? new NextResponse(ai.body, { status: 200, headers: { ...streamHeaders('guest'), 'X-Guest-Remaining': String(GUEST_LIMIT - nextUsed) } })
     : ai.res
   setGuestCount(res, secret, nextUsed)
+  if (req.cookies.get('ga')) res.cookies.set('ga', '', { path: '/', maxAge: 0 }) // drop the retired #24 age cookie
   return res
 }
 

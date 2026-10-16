@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createServiceClient } from '@/lib/supabase/server'
 import type Stripe from 'stripe'
-import { isCenterSub, syncCenterSubscription } from '@/lib/center'
+import { isCenterSub, syncCenterSubscription, subscriptionFromSession, CENTER_PLAN } from '@/lib/center'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +28,15 @@ export async function POST(req: NextRequest) {
       const subId = session.subscription as string
       const custId = session.customer as string
       if (!subId) break
+      // Center Starter (Managed Payments checkout): the plan may only be on the session metadata.
+      if (session.metadata?.plan === CENTER_PLAN) {
+        const sub = await stripe.subscriptions.retrieve(subId).catch((e: any) => {
+          console.error('[webhook] center subscription retrieve failed', { code: e?.code, type: e?.type })
+          return null
+        })
+        await syncCenterSubscription(db as any, sub ?? subscriptionFromSession(session), session)
+        break
+      }
       const sub = await stripe.subscriptions.retrieve(subId)
       if (isCenterSub(sub, session)) { await syncCenterSubscription(db as any, sub, session); break }
       const userId = sub.metadata.supabase_user_id
