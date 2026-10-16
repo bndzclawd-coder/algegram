@@ -308,6 +308,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
         <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
           <Link href="/terms" style={{ color: 'var(--text-dim)' }}>Terms</Link>
           <Link href="/privacy" style={{ color: 'var(--text-dim)' }}>Privacy</Link>
+          <Link href="/help" style={{ color: 'var(--text-dim)' }}>Help</Link>
           <Link href="/contact" style={{ color: 'var(--text-dim)' }}>Contact</Link>
         </div>
         © {new Date().getFullYear()} Algegram

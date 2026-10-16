@@ -16,6 +16,7 @@
 ## Key pages
 - [Home: ask a math question](https://www.algegram.xyz/)
 - [Pricing](https://www.algegram.xyz/pricing)
+- [Help and FAQ](https://www.algegram.xyz/help)
 - [Free math practice pages](https://www.algegram.xyz/learn)
 - [Fractions practice for 5th grade](https://www.algegram.xyz/learn/fractions-practice-5th-grade)
 - [Solve a quadratic equation step by step](https://www.algegram.xyz/learn/solve-quadratic-equation-step-by-step)
