@@ -52,21 +52,33 @@ function Text({ c, k }: { c: string; k: string }) {
   })}</>
 }
 
+function MathRun({ text, k, keyp }: { text: string; k: Katex | null; keyp: string }) {
+  const parts = splitMath(text)
+  return <>{parts.map((p, i) => {
+    if (p.t === 'text') return <Text key={i} c={p.c} k={`${keyp}t${i}`} />
+    const display = p.t === 'dm'
+    if (!k) return <span key={i} style={{ fontFamily: 'serif', color: 'var(--accent2)' }}>{p.c.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2').replace(/\\(times|cdot)/g, '×').replace(/\\div/g, '÷').replace(/[{}\\]/g, '')}</span>
+    const html = k.renderToString(p.c, { displayMode: display, throwOnError: false })
+    return display
+      ? <div key={i} style={{ overflowX: 'auto', padding: '0.3rem 0', whiteSpace: 'normal' }} dangerouslySetInnerHTML={{ __html: html }} />
+      : <span key={i} style={{ whiteSpace: 'normal' }} dangerouslySetInnerHTML={{ __html: html }} />
+  })}</>
+}
+
 function MathMarkdownImpl({ text }: { text: string }) {
   const [k, setK] = useState<Katex | null>(katexMod)
-  const parts = splitMath(text)
-  const hasMath = parts.some(p => p.t !== 'text')
+  const hasMath = /\$|\\\(|\\\[/.test(text)
   useEffect(() => { if (hasMath && !k) loadKatex().then(setK).catch(() => {}) }, [hasMath, k])
+  // Bold first (it may wrap math, e.g. **answer is $x=6$**), then math inside each piece.
+  const pieces: { b: boolean; c: string }[] = []
+  const re = /\*\*([\s\S]+?)\*\*/g; let last = 0, m: RegExpExecArray | null
+  while ((m = re.exec(text))) { if (m.index > last) pieces.push({ b: false, c: text.slice(last, m.index) }); pieces.push({ b: true, c: m[1] }); last = re.lastIndex }
+  if (last < text.length) pieces.push({ b: false, c: text.slice(last) })
   return (
     <span style={{ whiteSpace: 'pre-wrap' }}>
-      {parts.map((p, i) => {
-        if (p.t === 'text') return <Text key={i} c={p.c} k={`t${i}`} />
-        const display = p.t === 'dm'
-        if (!k) return <span key={i} style={{ fontFamily: 'serif', color: 'var(--accent2)' }}>{p.c.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2').replace(/\\(times|cdot)/g, '×').replace(/\\div/g, '÷').replace(/[{}\\]/g, '')}</span>
-        const html = k.renderToString(p.c, { displayMode: display, throwOnError: false })
-        return display
-          ? <div key={i} style={{ overflowX: 'auto', padding: '0.3rem 0', whiteSpace: 'normal' }} dangerouslySetInnerHTML={{ __html: html }} />
-          : <span key={i} style={{ whiteSpace: 'normal' }} dangerouslySetInnerHTML={{ __html: html }} />
+      {pieces.map((p, i) => {
+        const c = p.b ? p.c : p.c.replace(/\*\*/g, '') // drop a stray unmatched ** (e.g. mid-stream)
+        return p.b ? <strong key={i}><MathRun text={c} k={k} keyp={`b${i}`} /></strong> : <MathRun key={i} text={c} k={k} keyp={`n${i}`} />
       })}
     </span>
   )
