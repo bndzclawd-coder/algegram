@@ -8,7 +8,6 @@ import './home.css'
 
 
 const EXAMPLES = ['2x + 5 = 17', '3/4 + 1/6', 'x² − 5x + 6 = 0', 'derivative of x³', '∫ x² dx']
-const SYMBOLS = [['∫', 8, 12], ['√', 82, 18], ['π', 14, 62], ['Σ', 70, 70], ['∞', 45, 40], ['θ', 90, 88], ['Δ', 30, 92]] as const
 const CLIPS = [
   ['layla-15s-1', 'clip-1', '2x + 5 = 17'],
   ['layla-15s-2', 'clip-2', '3x − 4 = 11'],
@@ -20,49 +19,45 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
   return (
     <div className='pv'>
       <HomeFx />
-      <div className='glow g1' aria-hidden /><div className='glow g2' aria-hidden /><div className='glow g3' aria-hidden />
-      <div className='sym' aria-hidden>
-        {SYMBOLS.map(([s, x, y], i) => <span key={i} style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${-i * 3}s` }}>{s}</span>)}
-      </div>
-
       <div className='w'>
         <nav aria-label='Main'>
           <Link className='logo' href='/'>alge<b>gram</b></Link>
-          <div className='nl'><a href='#why'>Why Layla</a><a href='#clips'>Lessons</a><a href='#pricing'>Pricing</a><Link href='/auth/login'>Sign in</Link><Link href='/auth/signup' className='btn' style={{ padding: '6px 14px' }}>Sign up free, get 7 days of Pro</Link></div>
+          <Link href='/auth/login' className='signin'>Sign in</Link>
         </nav>
 
         <main>
-          <header className='hero'>
-            <div>
-              <span className='pill'>✦ AI math tutor · arithmetic to calculus</span>
-              <h1><span className='ln'><span>Math, explained</span></span><span className='ln'><span>by <em>Layla</em>.</span></span></h1>
-              <p className='sub'>Type any problem. Layla walks you through it, one step at a time.</p>
-              <div className='askwrap'>
-                <div className='askin'>
-                  <span className='ai-note' role='note'>🤖 Layla is an AI tutor, not a real person</span>
-                  <div className='ask-live'>
-                    <HomepageChat intro="Hi, I'm Layla, an AI tutor." placeholders={EXAMPLES} proPitch='or go Pro for more.' />
-                  </div>
+          <header className='hero solo'>
+            <h1 className='h1s'>Solve any math problem, step by step</h1>
+            <div className='askwrap'>
+              <div className='askin'>
+                <div className='ask-live'>
+                  <HomepageChat intro="Hi, I'm Layla, an AI tutor." placeholders={EXAMPLES} />
                 </div>
               </div>
             </div>
-            <div className='phone-wrap'>
-              <div className='phone' data-parallax>
+            <p className='quizlink'><Link href='/quiz/fractions'>Take a free quiz →</Link></p>
+            <p className='ai-line' role='note'>Layla is an AI tutor, not a real person. Snap just the problem, not your name.</p>
+          </header>
+
+          <section id='watch' aria-labelledby='watch-h'>
+            <h2 id='watch-h' data-reveal>Watch Layla solve one</h2>
+            <div className='phone-wrap' data-reveal>
+              <div className='phone'>
                 <video src='/preview/layla-2x5-voice.mp4' poster='/preview/hero-poster.jpg' controls playsInline preload='none' aria-label='Layla, an AI tutor, solves 2x + 5 = 17' />
                 <span className='vbadge'>AI tutor · voiced by AI</span>
               </div>
             </div>
-          </header>
+          </section>
 
           <section id='why' aria-labelledby='why-h'>
-            <h2 id='why-h' data-reveal>Built to teach, not to cheat.</h2>
-            <p className='lead' data-reveal>Hints first, full answers when you ask. The goal is that you understand it.</p>
+            <h2 id='why-h' data-reveal>Help first, then practice.</h2>
+            <p className='lead' data-reveal>Full worked steps right away, short and clear. Then try the next one yourself.</p>
             <div className='bento'>
               <article className='card c1' data-reveal>
                 <div className='ic' aria-hidden>🧠</div>
-                <h3>Teach, don’t cheat</h3>
-                <p>Layla nudges with a hint first, so students do the thinking. The full worked solution comes when they ask for it.</p>
-                <div className='steps3'><span>1 · Nudge</span><span>2 · Guide</span><span>3 · Reveal</span></div>
+                <h3>Steps first, no quizzing</h3>
+                <p>Layla shows every step of the solution straight away, then invites you to try the next step yourself.</p>
+                <div className='steps3'><span>1 · Solve</span><span>2 · Explain</span><span>3 · Your turn</span></div>
               </article>
               <article className='card c2' data-reveal>
                 <div className='ic' aria-hidden>✍️</div>

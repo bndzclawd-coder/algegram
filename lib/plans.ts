@@ -27,7 +27,7 @@ export const PLANS = {
       'Practice questions on any topic',
       'Quizzes and timed tests',
       'Weak-spot practice built from your mistakes',
-      'Unlimited Layla whiteboard lessons that explain each step',
+      'Layla whiteboard lessons that explain each step',
       'Weekly progress report by email',
     ],
   },

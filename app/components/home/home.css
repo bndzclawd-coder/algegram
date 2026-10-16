@@ -89,3 +89,15 @@
 .pv .foot{margin:14px 0 0;font-size:.78rem;color:var(--dim)}
 
 .pv .topics a:hover{background:rgba(139,123,255,.25)}
+
+/* Minimal, mobile-first hero (math-gpt style) */
+.pv nav .signin{color:var(--text);text-decoration:none;font-weight:600;font-size:.9rem;padding:6px 12px;border:1px solid var(--line);border-radius:999px}
+.pv .hero.solo{display:block;max-width:760px;margin:0 auto;padding:28px 0 40px;text-align:center}
+.pv .hero.solo .h1s{font-size:clamp(1.5rem,4.5vw,2.4rem);line-height:1.15;letter-spacing:-.02em;margin:6px 0 18px;font-weight:800}
+.pv .hero.solo .askwrap::before{display:none}
+.pv .hero.solo .askwrap{text-align:left}
+.pv .hero.solo textarea{font-size:1.1rem!important;min-height:96px}
+.pv .ai-line{color:var(--dim);font-size:.75rem;margin:10px 0 0}
+.pv #watch .phone-wrap{margin-top:12px}
+@media(max-width:900px){.pv .hero.solo{padding:12px 0 28px}}
+.pv .quizlink{margin:12px 0 0}.pv .quizlink a{color:var(--text);font-weight:600;font-size:.9rem;border:1px solid var(--line);border-radius:999px;padding:6px 14px;text-decoration:none}

@@ -67,7 +67,7 @@ export function welcomeEmailHtml(): string {
           <div class="plan-title">Your current plan</div>
           <div class="plan-row"><span class="plan-label">Plan</span><span class="plan-value">Free</span></div>
           <div class="plan-row"><span class="plan-label">Daily messages</span><span class="plan-value">20 / day</span></div>
-          <div class="plan-row"><span class="plan-label">Want unlimited?</span><a href="https://algegram.xyz/pricing" class="upgrade-link">Upgrade to Pro &rarr;</a></div>
+          <div class="plan-row"><span class="plan-label">Want more help?</span><a href="https://algegram.xyz/pricing" class="upgrade-link">Upgrade to Pro &rarr;</a></div>
         </div>
         <p class="text" style="margin-bottom:0;">Questions? Just reply to this email &mdash; we're happy to help.</p>
       </div>

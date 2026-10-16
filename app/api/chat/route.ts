@@ -15,7 +15,7 @@ const AI_UNAVAILABLE = 'The tutor is having trouble answering right now. Please 
 const AI_IDENTITY_RULE = ` If anyone asks whether you are real, human or a person, always say clearly that you are an AI tutor. You have no human backstory: never claim an age, family, body, feelings or personal life. Privacy (users may be children): never ask for the user's name, school, email, age, location or any other personal details. If they share any, do not repeat it back, do not use it, and do not ask follow-up questions about it; gently say they don't need to share personal details and continue with the math.`
 
 const SYSTEM_PROMPTS: Record<string, string> = {
-  math: `You are Algegram, an expert math tutor. Solve problems step by step with clear explanations. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.${AI_IDENTITY_RULE}`,
+  math: `You are Layla, Algegram's AI math tutor. Help first: give the full worked solution right away, with short, clear numbered steps and the final answer stated plainly. Never quiz the user or hold back steps before helping. Keep it brief: no long introductions. After the answer you may add one optional line inviting them to try a similar next step themselves. Wrap all LaTeX math in $...$ for inline and $$...$$ for display.${AI_IDENTITY_RULE}`,
   graph: `You are Algegram. Describe and render functions with LaTeX. Wrap math in $...$ and $$...$$.${AI_IDENTITY_RULE}`,
   explain: `You are Algegram. Explain mathematical concepts clearly. Use examples. Wrap math in $...$ and $$...$$.${AI_IDENTITY_RULE}`,
   check: `You are Algegram. Check the user's math work. Identify errors. Wrap math in $...$ and $$...$$.${AI_IDENTITY_RULE}`,
@@ -39,6 +39,15 @@ function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mod
 }
 
 // Every OpenRouter request goes through here, so data_collection: 'deny' is always set.
+// Simple problems (short arithmetic / one-variable algebra / percent & fraction work) go to a fast model.
+// Same provider (OpenRouter) and the same privacy settings: data_collection 'deny' + zero-data-retention routing.
+const FAST_MODEL = 'google/gemini-2.5-flash-lite'
+const HARD = /(integra|∫|deriv|d\/dx|limit|lim|matri|eigen|vector|prove|proof|series|sum of|Σ|log|ln|sin|cos|tan|probab|statistic|differential)/i
+function isSimpleProblem(text: string): boolean {
+  const t = text.trim()
+  return t.length > 0 && t.length <= 160 && !HARD.test(t)
+}
+
 async function callOpenRouter(model: string, messages: ChatMessage[], mode: string) {
   const body = {
     model,
@@ -46,7 +55,9 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
     stream: true,
     temperature: 0.3,
     max_tokens: 2048,
-    provider: { data_collection: 'deny' },
+    // Free default model: skip hidden 'thinking' so the first word shows quickly.
+    ...(model === FREE_MODEL ? { reasoning: { enabled: false } } : {}),
+    provider: model === FAST_MODEL ? { data_collection: 'deny', zdr: true } : { data_collection: 'deny' },
   }
   return fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -94,18 +105,21 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
   const parsed = preParsed ?? parseBody(await req.json().catch(() => null))
   if (!parsed) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
 
-  const ipCheck = await consumeIpQuota(req)
-  if (ipCheck === 'error') {
-    return NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
-  }
-  if (ipCheck === 'limited') {
-    return NextResponse.json({ error: 'Too many free questions from this network. Sign up to continue.', signup: true }, { status: 429 })
-  }
-
-  // Count the question before calling the AI, so concurrent/failed calls can't be used to dodge the limit.
+  // Count the question before the answer is returned, so failed calls can't be used to dodge the limit.
+  // The network quota check and the AI request start together (speed); a refused quota discards the AI stream.
   const nextUsed = used + 1
   const lastUser = [...parsed.messages].reverse().find(m => m.role === 'user')
-  const ai = await aiStream('guest', resolveModel('guest', parsed.model), lastUser ? [lastUser] : parsed.messages.slice(-1), parsed.mode)
+  const model = lastUser && parsed.mode === 'math' && isSimpleProblem(lastUser.content) ? FAST_MODEL : resolveModel('guest', parsed.model)
+  const [ipCheck, ai] = await Promise.all([
+    consumeIpQuota(req),
+    aiStream('guest', model, lastUser ? [lastUser] : parsed.messages.slice(-1), parsed.mode),
+  ])
+  if (ipCheck !== 'ok') {
+    if (ai.ok) ai.body.cancel().catch(() => {})
+    return ipCheck === 'error'
+      ? NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
+      : NextResponse.json({ error: 'Too many free questions from this network. Sign up to continue.', signup: true }, { status: 429 })
+  }
   const res = ai.ok
     ? new NextResponse(ai.body, { status: 200, headers: { ...streamHeaders('guest'), 'X-Guest-Remaining': String(GUEST_LIMIT - nextUsed) } })
     : ai.res
@@ -115,6 +129,8 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
 }
 
 export async function POST(req: NextRequest) {
+  // No Supabase session cookie at all: definitely a guest, skip the auth round trip.
+  if (!req.cookies.getAll().some(c => c.name.startsWith('sb-') && c.name.includes('auth-token'))) return handleGuest(req)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return handleGuest(req)
@@ -157,7 +173,7 @@ export async function POST(req: NextRequest) {
     }
     if (data === null || data === undefined) {
       return NextResponse.json(
-        { error: `Free limit reached (${FREE_LIMIT}/day). Upgrade to Pro for unlimited messages.`, upgrade: true },
+        { error: `Free limit reached (${FREE_LIMIT}/day). Try Pro free for 7 days for more help.`, upgrade: true },
         { status: 429 }
       )
     }
@@ -178,6 +194,9 @@ export async function POST(req: NextRequest) {
     if (error || data === null || data === undefined) { model = FREE_MODEL; fairUseFallback = true }
   }
 
+  // Free plan (or Pro on the default model): simple problems use the fast model.
+  const lastAsk = [...parsed.messages].reverse().find(m => m.role === 'user')
+  if (model === FREE_MODEL && parsed.mode === 'math' && lastAsk && isSimpleProblem(lastAsk.content) && parsed.messages.length <= 2) model = FAST_MODEL
   const ai = await aiStream(plan, model, parsed.messages, parsed.mode)
   if (!ai.ok) return ai.res
 

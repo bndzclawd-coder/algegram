@@ -31,7 +31,7 @@ export function dailyLimitEmail(o: { firstName?: string | null; resetTimeText: s
   const subject = `You hit today's ${FREE_DAILY_QUESTIONS} free questions`;
   const l1 = `You used all ${FREE_DAILY_QUESTIONS} of today's free questions, so you're clearly putting in the work. Your questions reset ${o.resetTimeText}.`;
   const offer = PRO_OFFER_TEXT ? ` ${PRO_OFFER_TEXT}.` : "";
-  const l2 = `Don't want to wait? Pro gives you unlimited questions, stronger AI models, and saved history for ${PRO_PRICE_TEXT}.${offer} Cancel anytime.`;
+  const l2 = `Don't want to wait? Pro gives you more questions every day, stronger AI models, and saved history for ${PRO_PRICE_TEXT}.${offer} Cancel anytime.`;
   const text = [hi(o.firstName), "", l1, "", l2, "", `${PRO_CTA_TEXT}: ${proUrl}`, "", "The Algegram team", `Help: support@algegram.xyz · Unsubscribe from tips: ${o.unsubscribeUrl}`].join("\n");
   const html = wrap(
     p(esc(hi(o.firstName))) + p(esc(l1)) + p(esc(l2)) + p(a(proUrl, PRO_CTA_TEXT)) + p("The Algegram team") +

@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import type { NextRequest, NextResponse } from 'next/server'
 
-// Free whiteboard lessons per UTC day for guests and Free accounts. Pro is unlimited.
+// Free whiteboard lessons per UTC day for guests and Free accounts. Pro has a higher fair-use allowance.
 export const FREE_LESSONS_PER_DAY = 1
 // Guest counter cookie: "<UTC day>:<count>.<hmac>". No identifiers, no question text.
 export const LESSON_COOKIE = 'wl'
