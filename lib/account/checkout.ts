@@ -3,6 +3,7 @@ import { TRIAL_DAYS } from '@/lib/site-config'
 import { hasLiveSubscription, portalUrl } from '@/lib/account/subscription-status'
 import { attributionLabel, readAttribution } from '@/lib/attribution/server'
 import { isChildAccount } from '@/lib/account/age-gate'
+import { hadStripeSubscription } from '@/lib/account/trial'
 
 type Db = { from: (t: string) => any }
 export type CheckoutResult =
@@ -10,7 +11,7 @@ export type CheckoutResult =
   | { kind: 'child' }
   | { kind: 'error'; status: number; error: string }
 
-/** Single source of truth for starting Pro: STRIPE_PRO_PRICE_ID ($12.99/mo) with TRIAL_DAYS trial. */
+/** Single source of truth for starting Pro: STRIPE_PRO_PRICE_ID ($12.99/mo). TRIAL_DAYS trial only if the person never had a Stripe subscription. */
 export async function startProCheckout(db: Db, user: { id: string; email?: string | null; user_metadata?: any }): Promise<CheckoutResult> {
   // Under-13 accounts can never open Stripe checkout.
   if (await isChildAccount(db, user)) return { kind: 'child' }
@@ -26,6 +27,14 @@ export async function startProCheckout(db: Db, user: { id: string; email?: strin
     }
   } catch (err: any) {
     console.error('[checkout] subscription check failed', { type: err?.type, code: err?.code })
+    return { kind: 'error', status: 503, error: 'Could not check your subscription. Please try again.' }
+  }
+
+  let trial = true
+  try {
+    trial = !(await hadStripeSubscription([sub?.stripe_customer_id], user.email))
+  } catch (err: any) {
+    console.error('[checkout] trial check failed', { type: err?.type, code: err?.code })
     return { kind: 'error', status: 503, error: 'Could not check your subscription. Please try again.' }
   }
 
@@ -51,7 +60,7 @@ export async function startProCheckout(db: Db, user: { id: string; email?: strin
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/chat?upgraded=1`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
     allow_promotion_codes: true,
-    subscription_data: { trial_period_days: TRIAL_DAYS, metadata: { supabase_user_id: user.id, ...refMeta } },
+    subscription_data: { ...(trial ? { trial_period_days: TRIAL_DAYS } : {}), metadata: { supabase_user_id: user.id, ...refMeta } },
     managed_payments: { enabled: false },
   } as any)
   return { kind: 'checkout', url: session.url! }

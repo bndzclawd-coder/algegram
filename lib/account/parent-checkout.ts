@@ -3,6 +3,7 @@
 import jwt from 'jsonwebtoken'
 import { stripe } from '@/lib/stripe'
 import { TRIAL_DAYS, SITE_URL } from '@/lib/site-config'
+import { hadStripeSubscription } from '@/lib/account/trial'
 import { hasLiveSubscription } from '@/lib/account/subscription-status'
 
 type Db = { from: (t: string) => any; auth: { admin: { getUserById: (id: string) => Promise<any> } } }
@@ -41,6 +42,9 @@ export async function startParentCheckout(db: Db, token: string): Promise<{ url:
     const { error } = await db.from('subscriptions').upsert({ user_id: child.id, stripe_customer_id: customerId }, { onConflict: 'user_id' })
     if (error) { console.error('[parent-checkout] customer upsert failed', { code: error.code }); return { error: 'db' } }
   }
+  let trial = true
+  try { trial = !(await hadStripeSubscription([sub?.stripe_customer_id, customerId], p.p)) }
+  catch (err: any) { console.error('[parent-checkout] trial check failed', { type: err?.type }); return { error: 'db' } }
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     client_reference_id: child.id,
@@ -50,7 +54,7 @@ export async function startParentCheckout(db: Db, token: string): Promise<{ url:
     success_url: `${SITE_URL}/parent/pro/done`,
     cancel_url: `${SITE_URL}/pricing`,
     allow_promotion_codes: true,
-    subscription_data: { trial_period_days: TRIAL_DAYS, metadata: { supabase_user_id: child.id, payer: 'parent' } },
+    subscription_data: { ...(trial ? { trial_period_days: TRIAL_DAYS } : {}), metadata: { supabase_user_id: child.id, payer: 'parent' } },
     managed_payments: { enabled: false },
   } as any)
   return { url: session.url! }

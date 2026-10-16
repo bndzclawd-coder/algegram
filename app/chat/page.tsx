@@ -1,6 +1,7 @@
 'use client'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { solvePhoto } from '@/lib/chat/photo'
+import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
 import { memo, useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
@@ -100,6 +101,7 @@ function ChatInner() {
   const [askState, setAskState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [askError, setAskError] = useState('')
   const childRef = useRef(false)
+  const trial = useTrialEligible(!!usage && usage.plan !== 'pro' && !usage.child)
   useEffect(() => { childRef.current = !!usage?.child }, [usage])
   useEffect(() => { fetchUsage().finally(() => setAuthResolved(true)) }, [])
 
@@ -292,12 +294,11 @@ function ChatInner() {
         <div style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
           {isPro ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>⭐ Pro</div>
-              {usage?.bonus && !usage?.paid && usage?.bonusProUntil && (
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.25rem' }}>
-                  Free Pro: {Math.max(1, Math.ceil((new Date(usage.bonusProUntil).getTime() - Date.now()) / 86400000))} days left
-                </div>
-              )}
+              <div data-testid='plan-label' style={{ fontSize: '0.75rem', color: 'var(--accent2)', fontWeight: 600 }}>
+                {usage?.bonus && !usage?.paid && usage?.bonusProUntil
+                  ? (() => { const n = Math.max(1, Math.ceil((new Date(usage.bonusProUntil!).getTime() - Date.now()) / 86400000)); return `⭐ Free Pro: ${n} day${n === 1 ? '' : 's'} left` })()
+                  : '⭐ Pro'}
+              </div>
             </div>
           ) : usage?.bonusEnded && !usage?.child ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
@@ -312,6 +313,7 @@ function ChatInner() {
             </div>
           ) : !authResolved ? null : (
             <div style={{ marginBottom: '0.75rem' }}>
+              {user && <div data-testid='plan-label' style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.4rem' }}>Free</div>}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '0.35rem' }}>
                 <span>Daily messages</span>
                 <span>{usage?.used ?? 0}/{usage?.limit ?? 20}</span>
@@ -334,7 +336,7 @@ function ChatInner() {
               ) : user && (
                 <button onClick={upgradeToPro}
                   style={{ marginTop: '0.75rem', width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
-                  Upgrade to Pro →
+                  {proButtonText(trial)} →
                 </button>
               )}
             </div>
