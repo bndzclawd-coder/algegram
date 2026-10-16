@@ -115,7 +115,7 @@ function SignupWall({ onClose }: { onClose: () => void }) {
         <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎉</div>
         <h2 style={{ fontWeight: 800, fontSize: '1.4rem', marginBottom: '0.5rem' }}>You've used your 5 free questions!</h2>
         <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '1.75rem', fontSize: '0.9rem' }}>
-          Sign up free to get <strong style={{ color: 'var(--text)' }}>20 questions/day</strong>, or go Pro for unlimited math tutoring.
+          Sign up free to get <strong style={{ color: 'var(--text)' }}>20 questions/day</strong>, or go Pro for more math help every day.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <a href="/auth/signup" style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>

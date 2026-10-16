@@ -115,7 +115,7 @@ export default function KidsTutorPage() {
       <Ul>
         <li><strong>Guest:</strong> {GUEST_FREE_QUESTIONS} free questions, no sign-up.</li>
         <li><strong>Free account:</strong> {FREE_DAILY_QUESTIONS} questions a day, with step-by-step explanations.</li>
-        <li><strong>Pro:</strong> {PRO_PRICE_TEXT} for unlimited questions and saved history. Cancel anytime.{PRO_OFFER_TEXT ? ` ${PRO_OFFER_TEXT}.` : ""}</li>
+        <li><strong>Pro:</strong> {PRO_PRICE_TEXT} for more questions every day and saved history. Cancel anytime.{PRO_OFFER_TEXT ? ` ${PRO_OFFER_TEXT}.` : ""}</li>
       </Ul>
       <P>
         Working on a specific topic? See the <Link href="/fraction-calculator" style={{ color: "var(--accent2)" }}>fraction

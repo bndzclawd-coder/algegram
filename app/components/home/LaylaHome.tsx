@@ -35,6 +35,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
                 </div>
               </div>
             </div>
+            <p className='quizlink'><Link href='/quiz/fractions'>Take a free quiz →</Link></p>
             <p className='ai-line' role='note'>Layla is an AI tutor, not a real person. Snap just the problem, not your name.</p>
           </header>
 

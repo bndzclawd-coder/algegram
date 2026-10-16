@@ -25,5 +25,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
-  return [...pages, ...topicPages]
+  const quizPages: MetadataRoute.Sitemap = ['fractions', 'linear-equations', 'percentages', 'order-of-operations', 'word-problems']
+    .map(t => ({ url: `${BASE}/quiz/${t}`, lastModified: today, changeFrequency: 'monthly' as const, priority: 0.6 }))
+
+  return [...pages, ...topicPages, ...quizPages]
 }
