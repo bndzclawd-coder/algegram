@@ -1,7 +1,7 @@
 'use client'
 import { useCenterLink } from '@/lib/center/useCenterLink'
 import { PRO_CTA_TEXT, PRO_PRICE_TEXT, PRO_OFFER_TEXT } from '@/lib/site-config'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -30,7 +30,10 @@ function SignupForm() {
 
   const currentYear = new Date().getFullYear()
   const age = birthYear ? currentYear - parseInt(birthYear, 10) - 1 : null // youngest possible age, matches server
-  const isUnder13 = age !== null && age < 13
+  // Parental-consent age for the visitor's country (13 to 16), from the server. Default 13.
+  const [consentAge, setConsentAge] = useState(13)
+  useEffect(() => { fetch('/api/auth/consent-age', { cache: 'no-store' }).then(r => r.json()).then(d => { if (d?.age >= 13 && d?.age <= 16) setConsentAge(d.age) }).catch(() => {}) }, [])
+  const isUnder13 = age !== null && age < consentAge // "needs a parent" (name kept for the existing flow)
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -91,6 +94,7 @@ function SignupForm() {
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) {
+        if (d.consentRequired && d.consentAge) { setConsentAge(d.consentAge); setError("A parent or guardian needs to approve this account. Please add a grown-up's email below."); return }
         const msg: string = d.error || 'Sign-up failed. Please try again.'
         const m = msg.match(/(\d+)\s*seconds?/i)
         if (m) startCooldown(parseInt(m[1], 10))
@@ -212,7 +216,7 @@ function SignupForm() {
             {isUnder13 && (
               <div style={{ background: 'rgba(167,139,250,.08)', border: '1px solid rgba(167,139,250,.3)', borderRadius: '10px', padding: '1rem' }}>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '0.75rem' }}>
-                  Kids under 13 need a grown-up's permission. Grown-up: enter your email so we can ask for your permission. We'll send you one email with a link to approve or decline.
+                  {`Kids under ${consentAge} need a grown-up's permission.`} Grown-up: enter your email so we can ask for your permission. We'll send you one email with a link to approve or decline.
                 </p>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-dim)', display: 'block', marginBottom: '0.4rem' }}>Grown-up's email (parent or guardian)</label>
                 <input type="email" required={isUnder13} value={parentEmail} onChange={e => setParentEmail(e.target.value)}

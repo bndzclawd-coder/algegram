@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/quadratic-equation-solver`, lastModified: today, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/fraction-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/pricing`, lastModified: today, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE}/ai-math-tutor-for-kids-under-13`, lastModified: today, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/help`, lastModified: today, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE}/contact`, lastModified: today, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE}/privacy`, lastModified: today, changeFrequency: "monthly" as const, priority: 0.3 },

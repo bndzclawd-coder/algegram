@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { EMAIL_RE, isUnder13, parseBirthYear } from '@/lib/age'
+import { EMAIL_RE, needsParent, parseBirthYear } from '@/lib/age'
+import { consentAgeFromHeaders } from '@/lib/consent-age'
 import { consume, clientIp } from '@/lib/rate-limit'
 import { recordSignupAttribution } from '@/lib/attribution/server'
 import { ipHash, readRefCookie } from '@/lib/referral'
@@ -20,8 +21,9 @@ export async function POST(req: NextRequest) {
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: 'Please enter a valid email.' }, { status: 400 })
   if (password.length < 8 || password.length > 200) return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 })
   if (!birthYear) return NextResponse.json({ error: 'Please enter a valid birth year.' }, { status: 400 })
-  if (isUnder13(birthYear)) {
-    return NextResponse.json({ error: 'Users under 13 need a parent or guardian to approve the account.', consentRequired: true }, { status: 403 })
+  const consentAge = consentAgeFromHeaders(req.headers)
+  if (needsParent(birthYear, consentAge)) {
+    return NextResponse.json({ error: `Users under ${consentAge} need a parent or guardian to approve the account.`, consentRequired: true, consentAge }, { status: 403 })
   }
 
   const rl = await consume('signup-ip', clientIp(req), 10, 60 * 60)
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
   const user = data.user
   if (user && (user.identities?.length ?? 0) > 0) {
     const { error: profErr } = await createServiceClient().from('user_profiles')
-      .upsert({ user_id: user.id, birth_year: birthYear, age_verified: true, pending_ref_code: readRefCookie(), signup_ip_hash: ipHash(req), pending_center: readCenterCookie() }, { onConflict: 'user_id', ignoreDuplicates: true })
+      .upsert({ user_id: user.id, birth_year: birthYear, age_verified: true, consent_age: consentAge, pending_ref_code: readRefCookie(), signup_ip_hash: ipHash(req), pending_center: readCenterCookie() }, { onConflict: 'user_id', ignoreDuplicates: true })
     if (profErr) {
       console.error('[signup] profile write failed', { code: profErr.code })
       // The user can still confirm their year later at /auth/age; chat stays locked until then.

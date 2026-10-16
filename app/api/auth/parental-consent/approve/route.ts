@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   const secret = process.env.CONSENT_JWT_SECRET
   if (!secret) return NextResponse.json({ error: 'Server config error.' }, { status: 500 })
 
-  let payload: { childEmail: string; parentEmail: string; childBirthYear: number; type: string; attr?: string; ref?: string | null; iph?: string | null; ctr?: string | null }
+  let payload: { childEmail: string; parentEmail: string; childBirthYear: number; type: string; attr?: string; ref?: string | null; iph?: string | null; ctr?: string | null; ca?: number }
   try {
     payload = jwt.verify(token, secret) as any
     if (payload.type !== 'parental-consent') throw new Error('Wrong token type')
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       user_id: newUser.user.id, birth_year: payload.childBirthYear, age_verified: true, parental_consent: true,
       pending_ref_code: cleanRefCode(payload.ref), signup_ip_hash: typeof payload.iph === 'string' ? payload.iph.slice(0, 64) : null,
       pending_center: cleanCenterSlug(payload.ctr),
+      consent_age: Number.isInteger(payload.ca) && payload.ca! >= 13 && payload.ca! <= 16 ? payload.ca : 13,
     })
     if (profErr) console.error('[consent] profile write failed', { code: profErr.code })
   }

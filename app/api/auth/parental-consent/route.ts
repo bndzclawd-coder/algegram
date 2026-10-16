@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { consentAgeFromHeaders } from '@/lib/consent-age'
 import { readCenterCookie, centerSeatStatus } from '@/lib/center/link'
 import { centerDisplayName } from '@/lib/center/display'
 import { createServiceClient } from '@/lib/supabase/server'
 import jwt from 'jsonwebtoken'
 import { attributionForToken } from '@/lib/attribution/server'
 import { ipHash, readRefCookie } from '@/lib/referral'
-import { EMAIL_RE, isUnder13, parseBirthYear } from '@/lib/age'
+import { EMAIL_RE, needsParent, parseBirthYear } from '@/lib/age'
 import { checkConsentLimits, sendConsentEmail, withTimeout, KID_SEND_ERROR, LIMITS_TIMEOUT_MS } from '@/lib/account/consent-email'
 
 export const dynamic = 'force-dynamic'
@@ -23,8 +24,9 @@ export async function POST(req: NextRequest) {
   if (childEmail === parentEmail) {
     return NextResponse.json({ error: 'The parent email must be different from the child email.' }, { status: 400 })
   }
-  if (!isUnder13(childBirthYear)) {
-    return NextResponse.json({ error: 'Parental consent is only needed for users under 13.' }, { status: 400 })
+  const consentAge = consentAgeFromHeaders(req.headers)
+  if (!needsParent(childBirthYear, consentAge)) {
+    return NextResponse.json({ error: `Parental consent is only needed for users under ${consentAge}.` }, { status: 400 })
   }
 
   const secret = process.env.CONSENT_JWT_SECRET
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
   if (limited) return NextResponse.json({ error: limited.error }, { status: limited.status })
 
-  const token = jwt.sign({ childEmail, parentEmail, childBirthYear, type: 'parental-consent', attr: attributionForToken(), ref: readRefCookie(), iph: ipHash(req), ctr: readCenterCookie() }, secret, { expiresIn: '1h' })
+  const token = jwt.sign({ childEmail, parentEmail, childBirthYear, type: 'parental-consent', attr: attributionForToken(), ref: readRefCookie(), iph: ipHash(req), ctr: readCenterCookie(), ca: consentAge }, secret, { expiresIn: '1h' })
   // Center-link signup (open seats): the email says the center's Pro starts at approval, no free-week text.
   const ctr = readCenterCookie()
   let centerName: string | null = null
