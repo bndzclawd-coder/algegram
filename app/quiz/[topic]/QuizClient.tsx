@@ -1,4 +1,5 @@
 'use client'
+import OfferText from '@/app/components/OfferText'
 import { useEffect, useRef, useState } from 'react'
 import { QUIZZES, type QuizQ } from '@/lib/quiz/data'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
@@ -104,8 +105,8 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
             : acct.signedIn
             ? <a href='/chat' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Keep practicing with Layla →</a>
             : <>
-                <a data-testid='pro-week' href={`/auth/signup${utm ? `?${utm}` : ''}`} style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Start your free Pro week →</a>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.4rem' }}>Sign up free, get 7 days of Pro. No card needed.</p>
+                <a data-testid='pro-week' href={`/auth/signup${utm ? `?${utm}` : ''}`} style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}><OfferText normal='Start your free Pro week →' center='Sign up free →' /></a>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.4rem' }}><OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center.' /></p>
               </>}
           <a href={`/quiz/${others[(others.length + Object.keys(QUIZZES).indexOf(topic)) % others.length]}${utm && !acct.signedIn ? `?${utm}` : ''}`} style={{ display: 'block', marginTop: '0.75rem', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.7rem', borderRadius: 12, fontWeight: 600, textDecoration: 'none' }}>Try another quiz →</a>
         </section>
@@ -115,7 +116,7 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 18, padding: '1.5rem', maxWidth: 380, width: '100%', textAlign: 'center', border: '1px solid rgba(108,99,255,.4)' }}>
             <p style={{ fontWeight: 700, marginBottom: '0.5rem' }}>You’ve used today’s free questions.</p>
             {!acct.signedIn ? <>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Sign up free and get 7 days of Pro. No card needed.</p>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}><OfferText normal='Sign up free and get 7 days of Pro. No card needed.' center='Sign up free with your center to keep going.' /></p>
               <a href={`/auth/signup?utm_source=quiz&utm_campaign=${topic.replace(/-/g, '_')}`} style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Sign up free, get 7 days of Pro →</a>
             </> : acct.center ? <>
               <p data-testid='limit-center' style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{acct.center === 'ended' ? "Your center's trial has ended. Ask your teacher." : 'Come back tomorrow for more.'}</p>

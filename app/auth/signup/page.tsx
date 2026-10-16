@@ -1,4 +1,5 @@
 'use client'
+import { useCenterLink } from '@/lib/center/useCenterLink'
 import CenterFullNotice from '@/app/components/CenterFullNotice'
 import { PRO_CTA_TEXT, PRO_PRICE_TEXT, PRO_OFFER_TEXT } from '@/lib/site-config'
 import { useState, Suspense } from 'react'
@@ -17,6 +18,7 @@ function SignupForm() {
   const [parentEmail, setParentEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const centerLink = useCenterLink()
   const [cooldown, setCooldown] = useState(0)
   const [done, setDone] = useState(false)
   const [parentalConsentSent, setParentalConsentSent] = useState(false)
@@ -139,7 +141,9 @@ function SignupForm() {
           Your parent needs to approve your account before you can start.
         </p>
         <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginTop: '0.75rem' }}>
-          Once they approve, you get 7 days of Pro free. No card needed.
+          {centerLink.center
+            ? `Pro through ${centerLink.center} starts after a parent approves.`
+            : 'Once they approve, you get 7 days of Pro free. No card needed.'}
         </p>
       </div>
     </div>
@@ -154,7 +158,7 @@ function SignupForm() {
           We sent a confirmation link to <strong style={{ color: 'var(--text)' }}>{email}</strong>.
           Click it to activate your account.
         </p>
-        {plan === 'pro' && (
+        {plan === 'pro' && !centerLink.center && (
           <p style={{ marginTop: '1rem', color: 'var(--accent2)', fontSize: '0.875rem' }}>
             After confirming, you'll be taken straight to Pro checkout.
           </p>
@@ -180,10 +184,11 @@ function SignupForm() {
         <CenterFullNotice />
         <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '2rem' }}>
           <h1 style={{ fontWeight: 700, fontSize: '1.4rem', marginBottom: '0.4rem' }}>
-            {plan === 'pro' ? `${PRO_CTA_TEXT}: create your account` : 'Create your free account'}
+            {plan === 'pro' && !centerLink.center ? `${PRO_CTA_TEXT}: create your account` : 'Create your free account'}
           </h1>
           <p style={{ color: 'var(--text-dim)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-            {plan === 'pro'
+            {centerLink.center ? `Create your account to get Pro through ${centerLink.center}.`
+              : plan === 'pro'
               ? `Create your account, then upgrade to Pro (${PRO_PRICE_TEXT}${PRO_OFFER_TEXT ? `, ${PRO_OFFER_TEXT}` : ''}). Cancel anytime.`
               : '20 free messages per day. No credit card.'}
           </p>

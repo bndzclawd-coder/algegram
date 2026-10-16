@@ -1,4 +1,5 @@
 'use client'
+import OfferText from '@/app/components/OfferText'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { memo, useState, useEffect, useRef, useCallback } from 'react'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
@@ -43,11 +44,11 @@ function SignupWall({ onClose, proPitch = 'or go Pro for more.' }: { onClose: ()
         <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎉</div>
         <h2 style={{ fontWeight: 800, fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', marginBottom: '0.5rem' }}>You’ve used your 5 free questions!</h2>
         <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '0.75rem', fontSize: '0.9rem' }}>
-          Sign up free to get <strong style={{ color: 'var(--text)' }}>7 days of Pro</strong>, then 20 questions a day on Free. No card needed.
+          <OfferText normal='Sign up free to get 7 days of Pro, then 20 questions a day on Free. No card needed.' center='Sign up free with your center to keep going with Pro.' />
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
           <a href='/auth/signup' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.9rem', borderRadius: '12px', fontWeight: 700, fontSize: '1rem', textDecoration: 'none' }}>
-            Sign up free, get 7 days of Pro →
+            <OfferText normal='Sign up free, get 7 days of Pro →' center='Sign up free →' />
           </a>
           <a href='/pricing' style={{ display: 'block', background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.75rem', borderRadius: '12px', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
             See Pro plans
@@ -236,7 +237,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📷</div>
             {photoGate === 'guest' ? (<>
               <p style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Photo help is part of Pro.</p>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Sign up free to try it for 7 days. No card needed.</p>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}><OfferText normal='Sign up free to try it for 7 days. No card needed.' center='Sign up free with your center to use it.' /></p>
               <a href='/auth/signup' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: '10px', fontWeight: 700, textDecoration: 'none' }}>Sign up free →</a>
             </>) : (<>
               <p style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Photo help is part of Pro.</p>

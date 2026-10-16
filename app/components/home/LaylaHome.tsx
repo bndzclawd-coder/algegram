@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import OfferText from '@/app/components/OfferText'
 import CenterFullNotice from '@/app/components/CenterFullNotice'
 import HeaderAuth from './HeaderAuth'
 import HomepageChat from '@/app/components/HomepageChat'
@@ -101,7 +102,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
 
           <section id='pricing' aria-labelledby='pricing-h'>
             <h2 id='pricing-h' data-reveal>Simple pricing</h2>
-            <p className='lead' data-reveal>Sign up free, get 7 days of Pro. No card needed.</p>
+            <p className='lead' data-reveal><OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' /></p>
             <div className='prices'>
               <div className='price' data-reveal>
                 <h3>{PLANS.free.name}</h3>
@@ -112,7 +113,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
                   <li>Algebra &amp; calculus help</li>
                   <li>Step-by-step answers</li>
                 </ul>
-                <a className='btn ghost' href='/auth/signup'>Sign up free, get 7 days of Pro</a>
+                <a className='btn ghost' href='/auth/signup'><OfferText normal='Sign up free, get 7 days of Pro' center='Sign up free' /></a>
               </div>
               <div className='price pro' data-reveal>
                 <h3>{PLANS.pro.name}</h3>
