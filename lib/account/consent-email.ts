@@ -36,6 +36,7 @@ export async function checkConsentLimits(req: NextRequest, parentEmail: string):
 
 /** The parental consent email. Every interpolated value is HTML-escaped here. */
 export async function sendConsentEmail(opts: {
+  centerName?: string | null
   parentEmail: string; childEmail: string; childBirthYear: number; token: string; existingAccount?: boolean
 }): Promise<boolean> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
@@ -66,7 +67,7 @@ export async function sendConsentEmail(opts: {
           <p>Hello,</p>
           <p>${intro} Algegram is an AI-powered math tutor.</p>
           <p>As a parent or guardian, your permission is required for users under 13 (COPPA compliance).</p>
-          <p>If you approve, the account starts with 7 days of Algegram Pro free. No card is needed, nothing is charged, and it goes back to the Free plan on its own afterwards.</p>
+          <p>${opts.centerName ? `Your child is joining through ${escapeHtml(opts.centerName)}. If you approve, the center's Algegram Pro starts then. No card is needed and nothing is charged.` : 'If you approve, the account starts with 7 days of Algegram Pro free. No card is needed, nothing is charged, and it goes back to the Free plan on its own afterwards.'}</p>
           <p>
             <strong>What we store for an under-13 account:</strong>
           </p>

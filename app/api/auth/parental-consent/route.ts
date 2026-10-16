@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readCenterCookie } from '@/lib/center/link'
+import { readCenterCookie, centerSeatStatus } from '@/lib/center/link'
+import { centerDisplayName } from '@/lib/center/display'
+import { createServiceClient } from '@/lib/supabase/server'
 import jwt from 'jsonwebtoken'
 import { attributionForToken } from '@/lib/attribution/server'
 import { ipHash, readRefCookie } from '@/lib/referral'
@@ -38,7 +40,14 @@ export async function POST(req: NextRequest) {
   if (limited) return NextResponse.json({ error: limited.error }, { status: limited.status })
 
   const token = jwt.sign({ childEmail, parentEmail, childBirthYear, type: 'parental-consent', attr: attributionForToken(), ref: readRefCookie(), iph: ipHash(req), ctr: readCenterCookie() }, secret, { expiresIn: '1h' })
-  const sent = await sendConsentEmail({ parentEmail, childEmail, childBirthYear, token })
+  // Center-link signup (open seats): the email says the center's Pro starts at approval, no free-week text.
+  const ctr = readCenterCookie()
+  let centerName: string | null = null
+  if (ctr && (await centerSeatStatus(createServiceClient() as any, ctr)) === 'open') {
+    const { data } = await (createServiceClient() as any).from('center_pilots').select('display_name').eq('center_slug', ctr).maybeSingle()
+    centerName = centerDisplayName(ctr, data?.display_name)
+  }
+  const sent = await sendConsentEmail({ parentEmail, childEmail, childBirthYear, token, centerName })
   if (!sent) return NextResponse.json({ error: KID_SEND_ERROR }, { status: 502 })
 
   return NextResponse.json({ ok: true })

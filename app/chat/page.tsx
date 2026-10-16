@@ -1,4 +1,5 @@
 'use client'
+import OfferText from '@/app/components/OfferText'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { solvePhoto } from '@/lib/chat/photo'
 import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
@@ -451,7 +452,7 @@ function ChatInner() {
               <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>{trial === false ? 'Get Pro to solve problems from a photo.' : 'Start your 7-day free trial to solve problems from a photo.'}</p>
               <a data-testid='photo-pro-cta' href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>{proButtonText(trial)} →</a>
             </> : photoGate === 'guest' ? <>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Sign up free and get 7 days of Pro. No card needed.</p>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}><OfferText normal='Sign up free and get 7 days of Pro. No card needed.' center='Sign up free with your center to use it.' /></p>
               <a href='/auth/signup' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Sign up free, get 7 days of Pro →</a>
             </> : <>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Ask a parent about Pro.</p>
