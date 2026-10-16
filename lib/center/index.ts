@@ -97,3 +97,31 @@ export async function centerSeatActive(db: { from: (t: string) => any }, userId:
   const { data: members } = await db.from('user_profiles').select('user_id').eq('comp_reason', compReason).order('created_at', { ascending: true }).limit(seats)
   return (members ?? []).some((r: any) => r.user_id === userId)
 }
+
+/**
+ * Center seat state for the buy-button rules.
+ * Detection: a seat came via a center if user_profiles.comp_reason = 'pilot:<slug>' (center pilot link)
+ * or the account has a row in public.center_seats. 'active' = pilot Pro still running (comp_pro_until > now)
+ * or the center pays Center Starter and this account holds one of its seats. Otherwise 'ended'.
+ */
+export async function centerState(
+  db: { from: (t: string) => any }, userId: string,
+  prof: { comp_reason?: string | null; comp_pro_until?: string | null } | null | undefined,
+  paidSeat: boolean,
+): Promise<'active' | 'ended' | null> {
+  const pilot = /^pilot:([a-z0-9_-]{1,64})$/.exec(prof?.comp_reason ?? '')
+  let seatSlug: string | null = null
+  if (!pilot) {
+    const { data } = await db.from('center_seats').select('center_slug').eq('user_id', userId).maybeSingle()
+    seatSlug = data?.center_slug ?? null
+    if (!seatSlug) return null
+  }
+  if (paidSeat) return 'active'
+  if (prof?.comp_pro_until && new Date(prof.comp_pro_until).getTime() > Date.now()) return 'active'
+  if (seatSlug) {
+    const { data: subs } = await db.from('center_subscriptions').select('seats')
+      .eq('center_slug', seatSlug).in('status', ['active', 'trialing']).gt('current_period_end', new Date().toISOString())
+    if ((subs ?? []).some((s: any) => (s.seats ?? 0) > 0)) return 'active'
+  }
+  return 'ended'
+}

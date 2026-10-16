@@ -3,18 +3,23 @@ import { TRIAL_DAYS } from '@/lib/site-config'
 import { hasLiveSubscription, portalUrl } from '@/lib/account/subscription-status'
 import { attributionLabel, readAttribution } from '@/lib/attribution/server'
 import { isChildAccount } from '@/lib/account/age-gate'
+import { resolvePro } from '@/lib/account/pro'
 import { hadStripeSubscription } from '@/lib/account/trial'
 
 type Db = { from: (t: string) => any }
 export type CheckoutResult =
   | { kind: 'checkout' | 'portal'; url: string }
   | { kind: 'child' }
+  | { kind: 'center'; state: 'active' | 'ended' }
   | { kind: 'error'; status: number; error: string }
 
 /** Single source of truth for starting Pro: STRIPE_PRO_PRICE_ID ($12.99/mo). TRIAL_DAYS trial only if the person never had a Stripe subscription. */
 export async function startProCheckout(db: Db, user: { id: string; email?: string | null; user_metadata?: any }): Promise<CheckoutResult> {
   // Under-13 accounts can never open Stripe checkout.
   if (await isChildAccount(db, user)) return { kind: 'child' }
+  // Center seats never buy individually: active seats have Pro via the center; ended pilots ask their teacher.
+  const center = (await resolvePro(db as any, user.id)).center
+  if (center) return { kind: 'center', state: center }
 
   const { data: sub, error: subError } = await db.from('subscriptions').select('stripe_customer_id, status').eq('user_id', user.id).single()
   if (subError && subError.code !== 'PGRST116') {

@@ -14,7 +14,7 @@ export async function GET() {
   const db = createServiceClient()
   const today = new Date().toISOString().split('T')[0]
 
-  const [{ data: usageRow }, { isPro, comp, paid, compProUntil, sub, bonus, bonusProUntil, bonusEnded }] = await Promise.all([
+  const [{ data: usageRow }, { isPro, comp, paid, compProUntil, sub, bonus, bonusProUntil, bonusEnded, center }] = await Promise.all([
     db.from('usage').select('count').eq('user_id', user.id).eq('day', today).single(),
     resolvePro(db, user.id),
   ])
@@ -34,6 +34,7 @@ export async function GET() {
     bonus,
     bonusProUntil,
     bonusEnded,
+    center,
     used,
     limit,
     remaining: limit !== null ? Math.max(0, limit - used) : null,

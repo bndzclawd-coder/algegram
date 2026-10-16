@@ -4,7 +4,7 @@ import { QUIZZES, type QuizQ } from '@/lib/quiz/data'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
 
-type Acct = { signedIn: boolean; child: boolean; pro: boolean }
+type Acct = { signedIn: boolean; child: boolean; pro: boolean; center?: 'active' | 'ended' | null }
 
 export default function QuizClient({ topic, questions }: { topic: string; questions: QuizQ[] }) {
   const [picked, setPicked] = useState<(number | null)[]>(questions.map(() => null))
@@ -16,7 +16,7 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
     fetch('/api/usage', { cache: 'no-store' }).then(async r => {
       if (r.status === 401) return
       const d = await r.json().catch(() => null)
-      setAcct({ signedIn: true, child: !!d?.child, pro: d?.plan === 'pro' })
+      setAcct({ signedIn: true, child: !!d?.child, pro: d?.plan === 'pro', center: d?.center ?? null })
     }).catch(() => {})
   }, [])
   // Carry the landing page's UTM tags to signup (first-touch cookie is also set by middleware on this visit).
@@ -29,7 +29,7 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
   }, [topic])
   const others = Object.keys(QUIZZES).filter(k => k !== topic)
   // Score lives in page memory only. Nothing about the quiz is sent or saved.
-  const trial = useTrialEligible(acct.signedIn && !acct.pro && !acct.child)
+  const trial = useTrialEligible(acct.signedIn && !acct.pro && !acct.child && !acct.center)
   const score = picked.filter((p, i) => p === questions[i].answer).length
   const done = picked.every(p => p !== null)
   // Signed-in only: save topic + score once when the quiz is finished. Guests: nothing is sent.
@@ -97,7 +97,9 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
           <p style={{ color: 'var(--text-dim)', fontSize: '0.92rem', marginBottom: '1.1rem' }}>
             {score === questions.length ? 'Perfect score. Nice work!' : score >= 3 ? 'Great effort. Check the explanations above for the ones you missed.' : 'Good try. Read the explanations above and give it another go.'}
           </p>
-          {acct.signedIn && !acct.pro && !acct.child
+          {acct.center === 'ended'
+            ? <p data-testid='center-ended' style={{ fontSize: '0.9rem', color: 'var(--text-dim)' }}>Your center&apos;s trial has ended. Ask your teacher.</p>
+            : acct.signedIn && !acct.pro && !acct.child && !acct.center
             ? <a data-testid='try-pro' href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>{proButtonText(trial)} →</a>
             : acct.signedIn
             ? <a href='/chat' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Keep practicing with Layla →</a>
@@ -115,6 +117,8 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
             {!acct.signedIn ? <>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Sign up free and get 7 days of Pro. No card needed.</p>
               <a href={`/auth/signup?utm_source=quiz&utm_campaign=${topic.replace(/-/g, '_')}`} style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Sign up free, get 7 days of Pro →</a>
+            </> : acct.center ? <>
+              <p data-testid='limit-center' style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{acct.center === 'ended' ? "Your center's trial has ended. Ask your teacher." : 'Come back tomorrow for more.'}</p>
             </> : acct.child ? <>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Ask a parent about Pro for more help today.</p>
               <a href='/chat?askparent=1' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Ask a parent →</a>
