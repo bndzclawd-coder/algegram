@@ -9,6 +9,7 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const r = await startProCheckout(createServiceClient(), user)
+  if (r.kind === 'center') return NextResponse.json({ error: (r as any).state === 'ended' ? "Your center's trial has ended. Ask your teacher." : 'You already have Pro through your center.', center: true }, { status: 403 })
   if (r.kind === 'child') return NextResponse.json({ error: 'Ask a parent about Pro.', child: true }, { status: 403 })
   if (r.kind === 'error') return NextResponse.json({ error: (r as any).error }, { status: (r as any).status })
   return NextResponse.json({ url: (r as any).url, ...(r.kind === 'portal' ? { portal: true } : {}) })

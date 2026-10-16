@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   try {
     const r = await startProCheckout(createServiceClient(), user)
     if (r.kind === 'child') return to('/chat?askparent=1')
+    if (r.kind === 'center') return to('/chat')
     if (r.kind === 'error') return to('/pricing')
     return NextResponse.redirect((r as any).url, 303)
   } catch (e) {

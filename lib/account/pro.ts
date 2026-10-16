@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { centerSeatActive } from '@/lib/center'
+import { centerSeatActive, centerState } from '@/lib/center'
 
 export type SubRow = { plan?: string | null; status?: string | null } | null | undefined
 
@@ -18,7 +18,9 @@ export async function resolvePro(db: SupabaseClient, userId: string) {
     db.from('user_profiles').select('comp_pro_until, comp_reason, bonus_pro_until, signup_bonus_at').eq('user_id', userId).maybeSingle(),
   ])
   // A center's paid Center Starter seat counts as paid Pro for its pilot accounts.
-  const paid = isPaidPro(sub) || await centerSeatActive(db, userId, prof?.comp_reason as string | null)
+  const paidSeat = await centerSeatActive(db, userId, prof?.comp_reason as string | null)
+  const paid = isPaidPro(sub) || paidSeat
+  const center = await centerState(db, userId, prof as any, paidSeat)
   const comp = isCompActive(prof?.comp_pro_until)
   // Free bonus Pro (signup bonus + referral days). No card, no Stripe; lapses back to Free on its own.
   const bonus = isCompActive(prof?.bonus_pro_until)
@@ -27,5 +29,7 @@ export async function resolvePro(db: SupabaseClient, userId: string) {
     isPro: paid || comp || bonus, paid, comp, bonus, bonusProUntil,
     bonusEnded: !paid && !comp && !bonus && !!bonusProUntil,
     compProUntil: (prof?.comp_pro_until as string | null) ?? null, sub,
+    /** 'active' = Pro via center (no buy button); 'ended' = center trial over (no buy button, no free week). */
+    center,
   }
 }

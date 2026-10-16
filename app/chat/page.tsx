@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 type Mode = 'math' | 'graph' | 'explain' | 'check'
-type Usage = { child?: boolean; plan: string; used: number; limit: number | null; remaining: number | null; paid?: boolean; bonus?: boolean; bonusProUntil?: string | null; bonusEnded?: boolean }
+type Usage = { child?: boolean; plan: string; used: number; limit: number | null; remaining: number | null; paid?: boolean; bonus?: boolean; bonusProUntil?: string | null; bonusEnded?: boolean; center?: 'active' | 'ended' | null }
 
 const MODES: { id: Mode; label: string; icon: string; hint: string }[] = [
   { id: 'math', label: 'Solve', icon: '∫', hint: 'Solve any math problem step by step' },
@@ -101,8 +101,9 @@ function ChatInner() {
   const [askState, setAskState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [askError, setAskError] = useState('')
   const childRef = useRef(false)
-  const trial = useTrialEligible(!!usage && usage.plan !== 'pro' && !usage.child)
-  useEffect(() => { childRef.current = !!usage?.child }, [usage])
+  const trial = useTrialEligible(!!usage && !usage.child && !usage.center && (usage.plan !== 'pro' || (!!usage.bonus && !usage.paid)))
+  const centerRef = useRef<string | null>(null)
+  useEffect(() => { childRef.current = !!usage?.child; centerRef.current = usage?.center ?? null }, [usage])
   useEffect(() => { fetchUsage().finally(() => setAuthResolved(true)) }, [])
 
   useEffect(() => {
@@ -124,11 +125,12 @@ function ChatInner() {
 
   // ---- Photo help: same rules as the homepage box ----
   const fileRef = useRef<HTMLInputElement>(null)
-  const [photoGate, setPhotoGate] = useState<null | 'guest' | 'child'>(null)
+  const [photoGate, setPhotoGate] = useState<null | 'guest' | 'child' | 'free' | 'center'>(null)
   function onCamera() {
     if (streaming) return
-    if (!user) return setPhotoGate('guest')
-    if (usage?.plan !== 'pro') { if (usage?.child) return setPhotoGate('child'); upgradeToPro(); return }
+    const signedIn = !!(usage || user)
+    if (!signedIn) return setPhotoGate(authResolved ? 'guest' : null)
+    if (usage?.plan !== 'pro') return setPhotoGate(usage?.center ? 'center' : usage?.child ? 'child' : 'free')
     fileRef.current?.click()
   }
   async function sendPhoto(file: File) {
@@ -136,7 +138,7 @@ function ChatInner() {
     setStreaming(true)
     const r = await solvePhoto(file, t => setMessages(m => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: t }; return c }))
     if ('error' in r) {
-      if (r.guest) setPhotoGate('guest'); else if (r.child) setPhotoGate('child')
+      if (r.guest && !(usage || user)) setPhotoGate('guest'); else if (r.child) setPhotoGate('child'); else if (r.upgrade) setPhotoGate('free')
       setMessages(m => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: `⚠️ ${r.error}` }; return c })
     }
     setStreaming(false); if (fileRef.current) fileRef.current.value = ''
@@ -165,7 +167,7 @@ function ChatInner() {
         setStreaming(false)
         return
       }
-      setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}${err.upgrade ? (childRef.current ? '\n\nWant more? Tap "Ask a parent about Pro" below.' : '\n\n[Upgrade to Pro →](/upgrade)') : ''}` }])
+      setMessages(m => [...m, { role: 'assistant', content: `⚠️ ${err.error}${err.upgrade ? (centerRef.current === 'ended' ? "\n\nYour center's trial has ended. Ask your teacher." : childRef.current ? '\n\nWant more? Tap "Ask a parent about Pro" below.' : '\n\n[Upgrade to Pro →](/upgrade)') : ''}` }])
       setStreaming(false)
       fetchUsage()
       return
@@ -299,11 +301,17 @@ function ChatInner() {
                   ? (() => { const n = Math.max(1, Math.ceil((new Date(usage.bonusProUntil!).getTime() - Date.now()) / 86400000)); return `⭐ Free Pro: ${n} day${n === 1 ? '' : 's'} left` })()
                   : '⭐ Pro'}
               </div>
+              {usage?.bonus && !usage?.paid && !usage?.child && !usage?.center && (
+                <a data-testid='sidebar-pro-cta' href='/upgrade' style={{ display: 'block', marginTop: '0.6rem', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', borderRadius: 8, padding: '0.55rem', fontSize: '0.8rem', fontWeight: 700, textDecoration: 'none' }}>
+                  {trial === false ? 'Get Pro for $12.99/mo' : 'Keep Pro after your free week'} →
+                </a>
+              )}
             </div>
+          ) : usage?.center === 'ended' ? (
+            <div data-testid='center-ended' style={{ background: 'rgba(255,255,255,.04)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem', fontSize: '0.75rem', color: 'var(--text-dim)' }}>Your center&apos;s trial has ended. Ask your teacher.</div>
           ) : usage?.bonusEnded && !usage?.child ? (
             <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.25)', borderRadius: '10px', padding: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.4rem' }}>Your free Pro days have ended. You&apos;re on Free, nothing was charged.</div>
-              <Link href='/upgrade' style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent2)' }}>Keep Pro for $12.99/month →</Link>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Your free Pro days have ended. You&apos;re on Free, nothing was charged.</div>
             </div>
           ) : null}
           {isPro ? (
@@ -333,8 +341,8 @@ function ChatInner() {
                     {askState === 'error' && <p style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--red)' }}>{askError}</p>}
                   </>
                 )
-              ) : user && (
-                <button onClick={upgradeToPro}
+              ) : user && !usage?.center && (
+                <button data-testid='sidebar-pro-cta' onClick={upgradeToPro}
                   style={{ marginTop: '0.75rem', width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.6rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}>
                   {proButtonText(trial)} →
                 </button>
@@ -437,12 +445,17 @@ function ChatInner() {
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid rgba(108,99,255,.4)', borderRadius: 18, padding: '1.5rem', maxWidth: 380, width: '100%', textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📷</div>
             <p style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Photo help is part of Pro.</p>
-            {photoGate === 'guest' ? <>
+            {photoGate === 'center' ? <>
+              <p data-testid='photo-center-ended' style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Your center&apos;s trial has ended. Ask your teacher.</p>
+            </> : photoGate === 'free' ? <>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>{trial === false ? 'Get Pro to solve problems from a photo.' : 'Start your 7-day free trial to solve problems from a photo.'}</p>
+              <a data-testid='photo-pro-cta' href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>{proButtonText(trial)} →</a>
+            </> : photoGate === 'guest' ? <>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Sign up free and get 7 days of Pro. No card needed.</p>
               <a href='/auth/signup' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Sign up free, get 7 days of Pro →</a>
             </> : <>
               <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Ask a parent about Pro.</p>
-              <button onClick={() => { setPhotoGate(null); askParent() }} style={{ width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Ask a parent →</button>
+              <button data-testid='photo-ask-parent' onClick={() => { setPhotoGate(null); askParent() }} style={{ width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Ask a parent about Pro →</button>
             </>}
             <p style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginTop: '0.75rem' }}>Snap just the problem, not your name.</p>
             <button onClick={() => setPhotoGate(null)} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.75rem', cursor: 'pointer' }}>Not now</button>
