@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { centerSeatActive } from '@/lib/center'
 
 export type SubRow = { plan?: string | null; status?: string | null } | null | undefined
 
@@ -14,9 +15,10 @@ export function isCompActive(compProUntil: string | null | undefined, now = Date
 export async function resolvePro(db: SupabaseClient, userId: string) {
   const [{ data: sub }, { data: prof }] = await Promise.all([
     db.from('subscriptions').select('plan, status, current_period_end').eq('user_id', userId).maybeSingle(),
-    db.from('user_profiles').select('comp_pro_until, bonus_pro_until, signup_bonus_at').eq('user_id', userId).maybeSingle(),
+    db.from('user_profiles').select('comp_pro_until, comp_reason, bonus_pro_until, signup_bonus_at').eq('user_id', userId).maybeSingle(),
   ])
-  const paid = isPaidPro(sub)
+  // A center's paid Center Starter seat counts as paid Pro for its pilot accounts.
+  const paid = isPaidPro(sub) || await centerSeatActive(db, userId, prof?.comp_reason as string | null)
   const comp = isCompActive(prof?.comp_pro_until)
   // Free bonus Pro (signup bonus + referral days). No card, no Stripe; lapses back to Free on its own.
   const bonus = isCompActive(prof?.bonus_pro_until)

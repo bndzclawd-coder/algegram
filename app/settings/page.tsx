@@ -32,6 +32,10 @@ export default function Settings() {
 
   useEffect(() => {
     const supabase = createClient()
+    // Render from the local session immediately, then confirm with the auth server.
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) { setUser(data.session.user); setLoading(false) }
+    })
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push('/auth/login'); return }
       setUser(data.user)
@@ -59,7 +63,16 @@ export default function Settings() {
     }
   }
 
-  if (loading) return <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ color: 'var(--text-dim)' }}>Loading…</p></div>
+  if (loading) return (
+    <div aria-busy='true' aria-label='Loading settings' style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '3rem 1.5rem' }}>
+        <div style={{ height: 28, width: 140, borderRadius: 8, background: 'rgba(255,255,255,.07)', marginBottom: '2rem' }} />
+        {[88, 110, 96, 96].map((h, i) => (
+          <div key={i} style={{ height: h, borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', marginBottom: '1.25rem' }} />
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>

@@ -4,6 +4,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { resolvePro } from '@/lib/account/pro'
 import { weeklySummary } from '@/lib/practice/weakspots'
 import { sendWeeklyReport, weeklyEnabled } from '@/lib/email/weekly'
+import { runTrialEnding } from '@/lib/email/trial-ending-run'
+import { trialEndingEnabled } from '@/lib/email/trial-ending'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -20,7 +22,12 @@ export async function GET(req: NextRequest) {
   if (!secret || secret.length < 16 || got.length !== want.length || !timingSafeEqual(got, want)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  if (!weeklyEnabled()) return NextResponse.json({ ok: true, skipped: 'disabled' })
+  // Day-5 trial-ending emails ride on this daily cron (no extra cron slot needed).
+  let trialEnding: unknown = 'disabled'
+  if (trialEndingEnabled()) {
+    try { trialEnding = await runTrialEnding() } catch (e) { console.error('[trial-ending] run threw', { name: (e as Error)?.name }); trialEnding = 'error' }
+  }
+  if (!weeklyEnabled()) return NextResponse.json({ ok: true, skipped: 'disabled', trialEnding })
 
   const db = createServiceClient()
   const dueBefore = new Date(Date.now() - 6 * DAY).toISOString()
@@ -50,5 +57,5 @@ export async function GET(req: NextRequest) {
     else if ('error' in r) { failed++; console.error('[weekly] send failed') }
     else skipped++
   }
-  return NextResponse.json({ ok: failed === 0, sent, skipped, failed })
+  return NextResponse.json({ ok: failed === 0, sent, skipped, failed, trialEnding })
 }

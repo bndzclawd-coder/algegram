@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { isChildAccount } from '@/lib/account/age-gate'
 import { SITE_URL } from '@/lib/site-config'
+import { parentProLink } from '@/lib/account/parent-checkout'
 
 export const dynamic = 'force-dynamic'
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -26,13 +27,16 @@ export async function POST() {
   const { error: upErr } = await db.auth.admin.updateUserById(user.id, { app_metadata: { ...(user.app_metadata ?? {}), ask_parent_pro_at: new Date().toISOString() } })
   if (upErr) return NextResponse.json({ error: 'Please try again later.' }, { status: 503 })
 
+  const payLink = parentProLink(user.id, parent)
   const text = `Hi,
 
 Your child asked about Algegram Pro on the Algegram account you approved.
 
 Pro is $12.99/month with a 7-day free trial and adds practice questions, quizzes, weak-spot practice, Layla whiteboard lessons and a weekly progress report.
 
-See what's included: ${SITE_URL}/pricing
+See what's included: ${SITE_URL}/pricing${payLink ? `
+Start Pro for your child (7-day free trial, billed to you, cancel anytime): ${payLink}
+This link works for 7 days. Checkout uses only your email; we don't send your child's details to our payment provider.` : ''}
 Questions or want to set it up? Reply to this email or write to support@algegram.xyz.
 
 You're getting this because your child tapped "Ask a parent about Pro". We send at most one of these a day. No action is needed if you're not interested.
