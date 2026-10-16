@@ -13,7 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/fraction-calculator`, lastModified: today, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/pricing`, lastModified: today, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE}/contact`, lastModified: today, changeFrequency: 'monthly', priority: 0.4 },
-    ...(LEGAL_PAGES_REVIEWED ? [{ url: `${BASE}/privacy`, lastModified: today, changeFrequency: 'monthly' as const, priority: 0.3 }] : []),
+    { url: `${BASE}/privacy`, lastModified: today, changeFrequency: "monthly" as const, priority: 0.3 },
     ...(LEGAL_PAGES_REVIEWED ? [{ url: `${BASE}/terms`, lastModified: today, changeFrequency: 'monthly' as const, priority: 0.3 }] : []),
   ]
 

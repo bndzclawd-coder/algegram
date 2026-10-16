@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import type { QuizQ } from '@/lib/quiz/data'
+import { QUIZZES, type QuizQ } from '@/lib/quiz/data'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 
 type Acct = { signedIn: boolean; child: boolean; pro: boolean }
@@ -18,6 +18,16 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
       setAcct({ signedIn: true, child: !!d?.child, pro: d?.plan === 'pro' })
     }).catch(() => {})
   }, [])
+  // Carry the landing page's UTM tags to signup (first-touch cookie is also set by middleware on this visit).
+  const [utm, setUtm] = useState('')
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search), out = new URLSearchParams()
+    for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content']) { const v = p.get(k); if (v && /^[\w.-]{1,64}$/.test(v)) out.set(k, v) }
+    if (!out.has('utm_source')) { out.set('utm_source', 'quiz'); out.set('utm_medium', 'website'); out.set('utm_campaign', topic.replace(/-/g, '_')) }
+    setUtm(out.toString())
+  }, [topic])
+  const others = Object.keys(QUIZZES).filter(k => k !== topic)
+  // Score lives in page memory only. Nothing about the quiz is sent or saved.
   const score = picked.filter((p, i) => p === questions[i].answer).length
   const done = picked.every(p => p !== null)
 
@@ -61,16 +71,34 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
               })}
             </div>
             {p !== null && (p === q.answer
-              ? <p style={{ color: 'var(--green)', marginTop: '0.6rem', fontSize: '0.9rem' }}>✓ Correct. {q.why}</p>
+              ? <div style={{ color: 'var(--green)', marginTop: '0.6rem', fontSize: '0.9rem' }}>✓ Correct. <span style={{ color: 'var(--text)' }}><MathMarkdown text={q.why} /></span></div>
               : <div style={{ marginTop: '0.6rem' }}>
                   <p style={{ color: 'var(--red)', fontSize: '0.9rem' }}>Not quite. The answer is {q.choices[q.answer]}.</p>
+                  <div data-testid='free-why' style={{ fontSize: '0.92rem', lineHeight: 1.7, marginTop: '0.4rem' }}><MathMarkdown text={q.why} /></div>
                   {why[i] ? <div style={{ color: 'var(--text)', fontSize: '0.92rem', lineHeight: 1.7, marginTop: '0.5rem', background: 'rgba(255,255,255,.03)', borderRadius: 10, padding: '0.6rem 0.8rem' }}><MathMarkdown text={why[i]} /></div>
-                    : <button onClick={() => askWhy(i)} disabled={busy !== null} style={{ ...btn, marginTop: '0.5rem', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', fontWeight: 700 }}>{busy === i ? 'Layla is thinking…' : 'Ask Layla why'}</button>}
+                    : <button onClick={() => askWhy(i)} disabled={busy !== null} style={{ ...btn, marginTop: '0.5rem', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', fontWeight: 700 }}>{busy === i ? 'Layla is thinking…' : 'Ask Layla to explain more'}</button>}
                 </div>)}
           </section>
         )
       })}
-      {done && <p style={{ fontWeight: 700, fontSize: '1.1rem' }}>Score: {score}/{questions.length}</p>}
+      {done && (
+        <section data-testid='score-screen' style={{ background: 'linear-gradient(135deg,rgba(108,99,255,.18),rgba(139,92,246,.08))', border: '1px solid rgba(108,99,255,.45)', borderRadius: 18, padding: '1.5rem 1.25rem', textAlign: 'center', marginTop: '0.5rem' }}>
+          <div style={{ fontSize: '2.2rem' }}>{score === questions.length ? '🏆' : score >= 3 ? '🎉' : '💪'}</div>
+          <h2 style={{ fontWeight: 800, fontSize: '1.5rem', margin: '0.3rem 0' }}>You got {score}/{questions.length}!</h2>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.92rem', marginBottom: '1.1rem' }}>
+            {score === questions.length ? 'Perfect score. Nice work!' : score >= 3 ? 'Great effort. Check the explanations above for the ones you missed.' : 'Good try. Read the explanations above and give it another go.'}
+          </p>
+          {acct.signedIn && !acct.pro && !acct.child
+            ? <a data-testid='try-pro' href='/upgrade' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Try Pro free for 7 days →</a>
+            : acct.signedIn
+            ? <a href='/chat' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Keep practicing with Layla →</a>
+            : <>
+                <a data-testid='pro-week' href={`/auth/signup${utm ? `?${utm}` : ''}`} style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Start your free Pro week →</a>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.4rem' }}>Sign up free, get 7 days of Pro. No card needed.</p>
+              </>}
+          <a href={`/quiz/${others[(others.length + Object.keys(QUIZZES).indexOf(topic)) % others.length]}${utm && !acct.signedIn ? `?${utm}` : ''}`} style={{ display: 'block', marginTop: '0.75rem', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.7rem', borderRadius: 12, fontWeight: 600, textDecoration: 'none' }}>Try another quiz →</a>
+        </section>
+      )}
       {limit && (
         <div role='dialog' style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setLimit(false)}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: 18, padding: '1.5rem', maxWidth: 380, width: '100%', textAlign: 'center', border: '1px solid rgba(108,99,255,.4)' }}>
