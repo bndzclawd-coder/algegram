@@ -1,0 +1,34 @@
+# Algegram
+
+> Algegram is an AI math tutor for students from elementary school through college, and for the parents and tutors who help them. Type or snap a math problem and Layla, Algegram's AI tutor, explains it step by step, from first fractions to calculus.
+
+## Who it is for
+- Students in grades 3 to 12 and college learners who want worked, step-by-step math help
+- Parents and tutors checking homework
+- Kids under 13 can use it with a parent's permission (required at sign-up); guests are never asked for personal details
+
+## Plans
+- Guests: 5 free questions, no sign-up
+- Free account: 20 messages a day plus free topic quizzes
+- Pro: $12.99/month with a 7-day free trial (adds photo solving, more daily help and practice tools)
+- Learning centers: pilot programs are arranged directly; contact support@algegram.xyz
+
+## Key pages
+- [Home: ask a math question](https://www.algegram.xyz/)
+- [Pricing](https://www.algegram.xyz/pricing)
+- [Free math practice pages](https://www.algegram.xyz/learn)
+- [Fractions practice for 5th grade](https://www.algegram.xyz/learn/fractions-practice-5th-grade)
+- [Solve a quadratic equation step by step](https://www.algegram.xyz/learn/solve-quadratic-equation-step-by-step)
+- [Two-step equations](https://www.algegram.xyz/learn/two-step-equations)
+- [Percent word problems](https://www.algegram.xyz/learn/percent-word-problems)
+- [Free topic quizzes: fractions](https://www.algegram.xyz/quiz/fractions)
+- [Step-by-step topic guides: fractions](https://www.algegram.xyz/solve/fractions)
+- [Quadratic equation solver](https://www.algegram.xyz/quadratic-equation-solver)
+- [Fraction calculator](https://www.algegram.xyz/fraction-calculator)
+- [Privacy policy](https://www.algegram.xyz/privacy)
+- [Billing and refunds](https://www.algegram.xyz/billing)
+- [Contact](https://www.algegram.xyz/contact)
+
+## Notes
+- Algegram is clearly labeled as AI and shows no ads.
+- AI requests use zero-data-retention providers; photos are processed in memory and never saved.

@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { WHAT_IS_ALGEGRAM } from '@/lib/about'
+import { LEARN_PAGES, LEARN_SLUGS } from '@/lib/learn/data'
 import OfferText from '@/app/components/OfferText'
 import CenterFullNotice from '@/app/components/CenterFullNotice'
 import HeaderAuth from './HeaderAuth'
@@ -126,12 +128,19 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
               </div>
             </div>
           </section>
+
+          <section id='about' aria-labelledby='about-h'>
+            <h2 id='about-h'>What is Algegram?</h2>
+            <p className='lead' style={{ maxWidth: 760 }}>{WHAT_IS_ALGEGRAM}</p>
+            <h3 style={{ marginTop: '1.5rem' }}>Free math practice</h3>
+            <div className='topics'>{LEARN_SLUGS.map(s => <Link key={s} href={`/learn/${s}`}>{LEARN_PAGES[s].title}</Link>)}</div>
+          </section>
         </main>
       </div>
 
       <footer>
         <div className='w'>
-          <div><a href='/terms'>Terms</a><a href='/privacy'>Privacy</a><a href='/contact'>Contact</a></div>
+          <div><a href='/learn'>Free practice</a><a href='/pricing'>Pricing</a><a href='/terms'>Terms</a><a href='/privacy'>Privacy</a><a href='/contact'>Contact</a></div>
           <span>© 2026 Algegram</span>
         </div>
       </footer>
