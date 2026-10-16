@@ -18,18 +18,20 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   const origin = 'https://algegram.xyz'
   try {
     const meta = { plan: CENTER_PLAN, seats: '10', center_slug: slug }
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripe.checkout.sessions.create(({
       mode: 'subscription',
+      // The Center Starter product is sold with Stripe Managed Payments (same as the existing payment link).
+      managed_payments: { enabled: true },
       line_items: [{ price: CENTER_STARTER_PRICE, quantity: 1 }],
       client_reference_id: slug,
       metadata: meta,
       subscription_data: { metadata: meta },
       success_url: `${origin}/center/pay/done?status=ok`,
       cancel_url: `${origin}/center/pay/done?status=cancel`,
-    })
+    }) as any)
     return NextResponse.redirect(session.url!, { status: 303, headers: H })
   } catch (e: any) {
-    console.error('[center-pay] checkout failed', { type: e?.type, code: e?.code })
+    console.error('[center-pay] checkout failed', { type: e?.type, code: e?.code, param: e?.param, message: e?.message })
     return new NextResponse('Could not start checkout. Please try again.', { status: 503, headers: H })
   }
 }
