@@ -59,7 +59,7 @@ export async function generateQuestions(topic: TopicId, difficulty: Difficulty, 
           response_format: { type: 'json_object' },
           temperature: 0.4,
           max_tokens: 6000,
-          provider: { data_collection: 'deny' },
+          provider: { data_collection: 'deny', zdr: true },
         }),
       })
     } catch (e) {
