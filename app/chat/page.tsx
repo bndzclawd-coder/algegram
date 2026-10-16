@@ -235,6 +235,10 @@ function ChatInner() {
         } catch {}
       }
     }
+    if (res.headers.get('X-Fair-Use-Fallback') === '1') {
+      const note = assistantMsg + "\n\n_Today's premium-model answers are used up, so this one used Gemini Flash. They reset tomorrow._"
+      setMessages(m => { const copy = [...m]; copy[copy.length - 1] = { role: 'assistant', content: note }; return copy })
+    }
     setStreaming(false)
     fetchUsage()
   }, [input, streaming, messages, model, mode])

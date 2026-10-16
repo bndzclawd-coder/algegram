@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import type { QuizQ } from '@/lib/quiz/data'
-import { renderTextWithLinks } from '@/lib/chat/links'
+import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 
 type Acct = { signedIn: boolean; child: boolean; pro: boolean }
 
@@ -26,8 +26,8 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
     const q = questions[i]
     setBusy(i)
     try {
-      const content = `Quiz question: ${q.q}\nI chose: ${q.choices[picked[i]!]}\nThe correct answer is: ${q.choices[q.answer]}\nExplain briefly, step by step, why my answer is wrong and the correct one is right.`
-      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content }], mode: 'explain', surface: 'home' }) })
+      const content = `Quiz question: ${q.q}\nI chose: ${q.choices[picked[i]!]}\nThe correct answer is: ${q.choices[q.answer]}\nExplain simply why the correct answer is right and where my answer went wrong.`
+      const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content }], mode: 'quiz', surface: 'home' }) })
       if (!res.ok || !res.body) {
         const err = await res.json().catch(() => ({}))
         if (res.status === 429 || err.signup || err.limit || err.upgrade) { setLimit(true); return }
@@ -64,7 +64,7 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
               ? <p style={{ color: 'var(--green)', marginTop: '0.6rem', fontSize: '0.9rem' }}>✓ Correct. {q.why}</p>
               : <div style={{ marginTop: '0.6rem' }}>
                   <p style={{ color: 'var(--red)', fontSize: '0.9rem' }}>Not quite. The answer is {q.choices[q.answer]}.</p>
-                  {why[i] ? <p style={{ whiteSpace: 'pre-wrap', color: 'var(--text-dim)', fontSize: '0.9rem', marginTop: '0.4rem' }}>{renderTextWithLinks(why[i])}</p>
+                  {why[i] ? <div style={{ color: 'var(--text)', fontSize: '0.92rem', lineHeight: 1.7, marginTop: '0.5rem', background: 'rgba(255,255,255,.03)', borderRadius: 10, padding: '0.6rem 0.8rem' }}><MathMarkdown text={why[i]} /></div>
                     : <button onClick={() => askWhy(i)} disabled={busy !== null} style={{ ...btn, marginTop: '0.5rem', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', fontWeight: 700 }}>{busy === i ? 'Layla is thinking…' : 'Ask Layla why'}</button>}
                 </div>)}
           </section>

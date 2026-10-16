@@ -6,7 +6,10 @@ import type { NextRequest, NextResponse } from 'next/server'
 // Privacy: the IP is only ever used as a salted hash, stored in the database for a few hours,
 // never logged, and never stored with question text, analytics, or sent to the AI provider.
 export const GUEST_LIMIT = 5
-export const GUEST_COOKIE = 'gl'
+// v2 (Oct 2026): renamed so counters left over from older versions are ignored and everyone starts at 5.
+export const GUEST_COOKIE = 'gl2'
+const OLD_GUEST_COOKIES = ['gl']
+const COUNTER_VERSION = 'v2'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days
 const IP_WINDOW_S = 4 * 60 * 60 // 4 hours
 const IP_MAX = GUEST_LIMIT * 3 // generous: shared IPs (schools, homes) still work
@@ -27,14 +30,15 @@ export function readGuestCount(req: NextRequest, secret: string): number {
   if (i < 0) return GUEST_LIMIT // tampered cookie: treat as exhausted, not as fresh
   const value = raw.slice(0, i)
   const got = Buffer.from(raw.slice(i + 1))
-  const expected = Buffer.from(mac(secret, value))
+  const expected = Buffer.from(mac(secret, `${COUNTER_VERSION}:${value}`))
   if (got.length !== expected.length || !timingSafeEqual(got, expected)) return GUEST_LIMIT
   const n = parseInt(value, 10)
   return Number.isFinite(n) ? Math.max(0, n) : GUEST_LIMIT
 }
 
 export function setGuestCount(res: NextResponse, secret: string, n: number) {
-  res.cookies.set(GUEST_COOKIE, `${n}.${mac(secret, String(n))}`, {
+  for (const old of OLD_GUEST_COOKIES) res.cookies.set(old, '', { path: '/', maxAge: 0 })
+  res.cookies.set(GUEST_COOKIE, `${n}.${mac(secret, `${COUNTER_VERSION}:${n}`)}`, {
     httpOnly: true,
     sameSite: 'strict',
     path: '/',

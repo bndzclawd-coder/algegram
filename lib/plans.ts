@@ -19,7 +19,6 @@ export const PLANS = {
       'google/gemini-2.5-flash',
       'anthropic/claude-sonnet-4.5',
       'openai/gpt-4o',
-      'deepseek/deepseek-r1',
     ],
     features: [
       'Step-by-step solutions',
