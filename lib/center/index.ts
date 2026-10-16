@@ -45,6 +45,18 @@ async function slugFromPayerEmail(db: Db, email: string | null): Promise<string 
   return null
 }
 
+/** Minimal subscription view from the session alone, used when Stripe can't return the subscription
+ *  (not yet visible, or not found). Paid sessions count as active for one period; otherwise incomplete. */
+export function subscriptionFromSession(s: Stripe.Checkout.Session): Stripe.Subscription {
+  return {
+    id: String(s.subscription),
+    customer: s.customer as string,
+    status: s.payment_status === 'paid' || s.payment_status === 'no_payment_required' ? 'active' : 'incomplete',
+    current_period_end: Math.floor(Date.now() / 1000) + 31 * 24 * 3600,
+    metadata: { ...(s.metadata ?? {}) },
+  } as unknown as Stripe.Subscription
+}
+
 export function isCenterSub(sub: Stripe.Subscription | null | undefined, session?: Stripe.Checkout.Session | null) {
   return sub?.metadata?.plan === CENTER_PLAN || session?.metadata?.plan === CENTER_PLAN
 }
@@ -58,7 +70,7 @@ export async function syncCenterSubscription(db: Db, sub: Stripe.Subscription, s
   let method: string | null = null
   if (!slug) { slug = await slugFromCenterName(db, centerName); if (slug) method = 'center_name' }
   if (!slug) { slug = await slugFromPayerEmail(db, payerEmail); if (slug) method = 'payer_email' }
-  const seats = Math.max(1, Math.min(500, parseInt(String(sub.metadata?.seats ?? '10'), 10) || 10))
+  const seats = Math.max(1, Math.min(500, parseInt(String(sub.metadata?.seats ?? session?.metadata?.seats ?? '10'), 10) || 10))
   const row: Record<string, unknown> = {
     stripe_subscription_id: sub.id,
     stripe_customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
