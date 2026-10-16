@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/contact`, lastModified: today, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE}/privacy`, lastModified: today, changeFrequency: "monthly" as const, priority: 0.3 },
     ...(LEGAL_PAGES_REVIEWED ? [{ url: `${BASE}/terms`, lastModified: today, changeFrequency: 'monthly' as const, priority: 0.3 }] : []),
+    { url: `${BASE}/billing`, lastModified: today, changeFrequency: "monthly" as const, priority: 0.3 },
   ]
 
   const topics = ['fractions', 'linear-equations', 'percentages', 'order-of-operations', 'word-problems', 'algebra', 'calculus', 'statistics', 'linear-algebra', 'number-theory']
