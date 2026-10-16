@@ -3,37 +3,27 @@ import { pageMetadata } from '@/lib/seo'
 import { SITE_URL } from '@/lib/site-config'
 
 export const metadata = pageMetadata({
-  title: 'AI Math Tutor for Kids Under 13 (a MathGPT Alternative for Kids) | Algegram',
-  description: 'Looking for an AI math tutor your under-13 child is allowed to use? Algegram works with a parent’s approval. See what MathGPT sites’ own terms say about under-13 users.',
-  path: '/ai-math-tutor-for-kids-under-13',
+  title: 'How Algegram Works for Kids Under 13 | Algegram',
+  description: 'How Algegram works for kids under 13: every step shown, a parent approves first, little personal data, no ads. Free to start.',
+  path: '/how-algegram-works-for-kids',
 })
 
-// Quotes fetched Oct 15, 2026 from the linked pages. No quality claims or prices for other services.
 const FAQ = [
   { q: 'Can my child under 13 use Algegram?', a: 'Yes, with a parent’s approval. When a child under 13 signs up, we email the parent one link. The parent approves and sets the child’s password. Nothing starts until they do.' },
-  { q: 'Can kids under 13 use MathGPT?', a: 'Both sites named MathGPT that we checked say no in their own policies. math-gpt.org says children under 13 may not use the service, and mathgpt.ai says users under 13 are not permitted.' },
   { q: 'Is Algegram free?', a: 'Yes, it’s free to start. Pro is $12.99 a month, and new subscribers start with a 7-day free trial.' },
 ]
 
 export default function Page() {
-  const ld = { '@context': 'https://schema.org', '@type': 'FAQPage', url: `${SITE_URL}/ai-math-tutor-for-kids-under-13`, mainEntity: FAQ.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
+  const ld = { '@context': 'https://schema.org', '@type': 'FAQPage', url: `${SITE_URL}/how-algegram-works-for-kids`, mainEntity: FAQ.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) }
   const h2 = { fontWeight: 700, fontSize: '1.2rem', margin: '2rem 0 0.6rem' }
-  const quote = { borderLeft: '3px solid var(--accent)', padding: '0.4rem 0 0.4rem 1rem', margin: '0.6rem 0', color: 'var(--text-dim)', lineHeight: 1.7 }
-  return (
+    return (
     <main style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', maxWidth: 760, margin: '0 auto', padding: '2.5rem 1.25rem', lineHeight: 1.75 }}>
       <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, '\\u003c') }} />
       <p><Link href='/' style={{ color: 'var(--accent2)', fontWeight: 800 }}>Algegram</Link></p>
-      <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2.1rem)', margin: '1rem 0' }}>An AI math tutor for kids under 13</h1>
-      <p>Many AI homework tools aren’t open to children under 13. If you’re a parent looking for a MathGPT alternative your younger child is allowed to use, here’s what the MathGPT sites’ own policies say, and how Algegram handles kids.</p>
+      <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2.1rem)', margin: '1rem 0' }}>How Algegram works for kids under 13</h1>
+      <p>Kids learn math best when they see every step and understand why it works. Algegram shows each step, and children under 13 can use it with a parent’s approval. Here’s how it works for younger kids.</p>
 
-      <h2 style={h2}>What MathGPT sites say about under-13 users</h2>
-      <p>The <a href='https://math-gpt.org/privacy' rel='nofollow noopener' style={{ color: 'var(--accent2)' }}>math-gpt.org privacy policy</a> says:</p>
-      <blockquote style={quote}>“The Service is not intended for children under 13, and children under 13 may not use the Service or submit personal information to MathGPT.”</blockquote>
-      <p>The <a href='https://mathgpt.ai/terms' rel='nofollow noopener' style={{ color: 'var(--accent2)' }}>mathgpt.ai terms of use</a> say:</p>
-      <blockquote style={quote}>“If you are under 13 years old, you are not permitted to use the Got It! Inc.’s AI products and services (e.g., “MathGPT”, “MathGPT Account”, etc.)… If you are 13 years of age or older, but not of legal age to form a binding contract (in many places, this is 18 years old), then you must get your parent or guardian to read these Terms and agree to them for you, before you use the Service or provide any information to us.”</blockquote>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Quotes taken from those pages on October 15, 2026. Policies can change, so check the linked pages for the current wording.</p>
-
-      <h2 style={h2}>How Algegram works for kids under 13</h2>
+      <h2 style={h2}>What parents should know</h2>
       <ul style={{ paddingLeft: '1.2rem', listStyle: 'disc' }}>
         <li><strong>A parent approves first.</strong> When a child under 13 signs up, we email the parent one link. The parent approves and sets the child’s password. Nothing starts until they do.</li>
         <li><strong>Little personal data.</strong> We don’t ask for a child’s name, school, or location. For kids under 13 we don’t save their math questions, and photos of math problems aren’t saved.</li>
