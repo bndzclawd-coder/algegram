@@ -4,6 +4,7 @@ import { EMAIL_RE, isUnder13, parseBirthYear } from '@/lib/age'
 import { consume, clientIp } from '@/lib/rate-limit'
 import { recordSignupAttribution } from '@/lib/attribution/server'
 import { ipHash, readRefCookie } from '@/lib/referral'
+import { readCenterCookie } from '@/lib/center/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
   const user = data.user
   if (user && (user.identities?.length ?? 0) > 0) {
     const { error: profErr } = await createServiceClient().from('user_profiles')
-      .upsert({ user_id: user.id, birth_year: birthYear, age_verified: true, pending_ref_code: readRefCookie(), signup_ip_hash: ipHash(req) }, { onConflict: 'user_id', ignoreDuplicates: true })
+      .upsert({ user_id: user.id, birth_year: birthYear, age_verified: true, pending_ref_code: readRefCookie(), signup_ip_hash: ipHash(req), pending_center: readCenterCookie() }, { onConflict: 'user_id', ignoreDuplicates: true })
     if (profErr) {
       console.error('[signup] profile write failed', { code: profErr.code })
       // The user can still confirm their year later at /auth/age; chat stays locked until then.
