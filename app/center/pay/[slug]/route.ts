@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       subscription_data: { metadata: meta },
       success_url: `${origin}/center/pay/done?status=ok`,
       cancel_url: `${origin}/center/pay/done?status=cancel`,
-    }) as any)
+    }) as any, { apiVersion: '2025-03-31.basil' } as any) // Managed Payments needs basil+; per-request only
     return NextResponse.redirect(session.url!, { status: 303, headers: H })
   } catch (e: any) {
     console.error('[center-pay] checkout failed', { type: e?.type, code: e?.code, param: e?.param, message: e?.message })
