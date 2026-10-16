@@ -1,6 +1,7 @@
 'use client'
-import { renderTextWithLinks } from '@/lib/chat/links'
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+import { MathMarkdown } from '@/lib/chat/MathMarkdown'
+import { solvePhoto } from '@/lib/chat/photo'
+import { memo, useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -21,52 +22,8 @@ const MODES: { id: Mode; label: string; icon: string; hint: string }[] = [
 ]
 
 
-// KaTeX renderer hook
-function useMathRenderer() {
-  useEffect(() => {
-    const renderAll = async () => {
-      if (typeof window === 'undefined') return
-      // @ts-ignore
-      if (!window.katex) return
-      document.querySelectorAll('[data-math-pending]').forEach((el) => {
-        el.removeAttribute('data-math-pending')
-        const raw = el.getAttribute('data-raw') || ''
-        const displayMode = el.getAttribute('data-display') === '1'
-        try {
-          // @ts-ignore
-          el.innerHTML = window.katex.renderToString(raw, { displayMode, throwOnError: false })
-        } catch {}
-      })
-    }
-    const timer = setInterval(renderAll, 300)
-    return () => clearInterval(timer)
-  }, [])
-}
-
-function MessageBubble({ msg }: { msg: Message }) {
+const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user'
-  const parts: { type: 'text' | 'math-inline' | 'math-display'; content: string }[] = []
-  let remaining = msg.content
-  const allMatches: { idx: number; end: number; raw: string; display: boolean }[] = []
-  let m
-  const dRe = /\$\$([\s\S]*?)\$\$/g
-  while ((m = dRe.exec(remaining)) !== null) {
-    allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: true })
-  }
-  const iRe = /\$(?!\$)((?:[^$\\]|\\.)*?)\$/g
-  while ((m = iRe.exec(remaining)) !== null) {
-    const overlap = allMatches.some(d => m!.index >= d.idx && m!.index < d.end)
-    if (!overlap) allMatches.push({ idx: m.index, end: m.index + m[0].length, raw: m[1], display: false })
-  }
-  allMatches.sort((a, b) => a.idx - b.idx)
-  let cursor = 0
-  for (const match of allMatches) {
-    if (match.idx > cursor) parts.push({ type: 'text', content: remaining.slice(cursor, match.idx) })
-    parts.push({ type: match.display ? 'math-display' : 'math-inline', content: match.raw })
-    cursor = match.end
-  }
-  if (cursor < remaining.length) parts.push({ type: 'text', content: remaining.slice(cursor) })
-
   return (
     <div style={{ display: 'flex', justifyContent: isUser ? 'flex-end' : 'flex-start', marginBottom: '1rem' }}>
       {!isUser && (
@@ -77,27 +34,15 @@ function MessageBubble({ msg }: { msg: Message }) {
         background: isUser ? 'rgba(108,99,255,.2)' : 'rgba(255,255,255,.04)',
         border: `1px solid ${isUser ? 'rgba(108,99,255,.4)' : 'rgba(255,255,255,.08)'}`,
         borderRadius: isUser ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-        fontSize: '0.9rem', lineHeight: 1.75,
+        fontSize: '0.9rem', lineHeight: 1.75, wordBreak: 'break-word', overflowWrap: 'break-word',
       }}>
-        {parts.map((p, i) => {
-          if (p.type === 'text') return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{renderTextWithLinks(p.content, `t${i}-`)}</span>
-          if (p.type === 'math-display') return (
-            <div key={i} data-math-pending="1" data-raw={p.content} data-display="1"
-              style={{ padding: '0.5rem 0', overflowX: 'auto', fontFamily: 'serif', color: 'var(--accent2)' }}>
-              $${p.content}$$
-            </div>
-          )
-          return (
-            <span key={i} data-math-pending="1" data-raw={p.content}
-              style={{ fontFamily: 'serif', color: 'var(--accent2)', padding: '0 2px' }}>
-              ${p.content}$
-            </span>
-          )
-        })}
+        {isUser ? <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span> : <MathMarkdown text={msg.content} />}
       </div>
     </div>
   )
-}
+})
+
+const MemoWatchLayla = memo(WatchLaylaButton)
 
 function UpgradeWatcher({ onUpgraded }: { onUpgraded: () => void }) {
   const params = useSearchParams()
@@ -149,8 +94,6 @@ function ChatInner() {
 
   const [supabase] = useState(() => typeof window === 'undefined' ? null : createClient())
 
-  useMathRenderer()
-
   // Session + plan come from the server (/api/usage reads the auth cookies), not the browser
   // client, so a signed-in user is never shown as a guest. null = still loading.
   const [authResolved, setAuthResolved] = useState(false)
@@ -175,6 +118,26 @@ function ChatInner() {
         setUser(null); setUsage(null)
       }
     } catch {}
+  }
+
+  // ---- Photo help: same rules as the homepage box ----
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [photoGate, setPhotoGate] = useState<null | 'guest' | 'child'>(null)
+  function onCamera() {
+    if (streaming) return
+    if (!user) return setPhotoGate('guest')
+    if (usage?.plan !== 'pro') { if (usage?.child) return setPhotoGate('child'); upgradeToPro(); return }
+    fileRef.current?.click()
+  }
+  async function sendPhoto(file: File) {
+    setMessages(m => [...m, { role: 'user', content: '📷 Photo of a math problem' }, { role: 'assistant', content: '' }])
+    setStreaming(true)
+    const r = await solvePhoto(file, t => setMessages(m => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: t }; return c }))
+    if ('error' in r) {
+      if (r.guest) setPhotoGate('guest'); else if (r.child) setPhotoGate('child')
+      setMessages(m => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: `⚠️ ${r.error}` }; return c })
+    }
+    setStreaming(false); if (fileRef.current) fileRef.current.value = ''
   }
 
   const send = useCallback(async () => {
@@ -428,7 +391,7 @@ function ChatInner() {
           {messages.map((m, i) => (
             <div key={i}>
               <MessageBubble msg={m} />
-              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <WatchLaylaButton answer={m.content} />}
+              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <MemoWatchLayla answer={m.content} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
@@ -453,17 +416,37 @@ function ChatInner() {
               rows={1}
               style={{ flex: 1, background: 'none', border: 'none', outline: 'none', resize: 'none', color: 'var(--text)', fontSize: '0.925rem', lineHeight: 1.6, maxHeight: 160, overflowY: 'auto', fontFamily: 'inherit' }}
             />
+            <input ref={fileRef} type='file' accept='image/*' capture='environment' hidden onChange={e => { const f = e.target.files?.[0]; if (f) sendPhoto(f) }} />
+            <button type='button' onClick={onCamera} aria-label='Solve from a photo (Pro)' title='Snap just the problem, not your name.'
+              style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.5rem 0.7rem', cursor: 'pointer', fontSize: '0.95rem', color: 'var(--text)', flexShrink: 0 }}>📷</button>
             <button onClick={send} disabled={streaming || !input.trim()}
               style={{ background: streaming || !input.trim() ? 'rgba(108,99,255,.3)' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.55rem 1rem', cursor: streaming || !input.trim() ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.875rem', flexShrink: 0 }}>
               {streaming ? '…' : '→'}
             </button>
           </div>
           <div style={{ textAlign: 'center', marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--text-dim)' }}>
-            AI can make mistakes. Verify important results.
+            AI can make mistakes. Verify important results. 📷 Snap just the problem, not your name.
           </div>
         </div>
       </div>
 
+      {photoGate && (
+        <div role='dialog' aria-modal='true' onClick={() => setPhotoGate(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', border: '1px solid rgba(108,99,255,.4)', borderRadius: 18, padding: '1.5rem', maxWidth: 380, width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📷</div>
+            <p style={{ fontWeight: 700, marginBottom: '0.4rem' }}>Photo help is part of Pro.</p>
+            {photoGate === 'guest' ? <>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Sign up free and get 7 days of Pro. No card needed.</p>
+              <a href='/auth/signup' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Sign up free, get 7 days of Pro →</a>
+            </> : <>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginBottom: '1rem' }}>Ask a parent about Pro.</p>
+              <button onClick={() => { setPhotoGate(null); askParent() }} style={{ width: '100%', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem', borderRadius: 10, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Ask a parent →</button>
+            </>}
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.75rem', marginTop: '0.75rem' }}>Snap just the problem, not your name.</p>
+            <button onClick={() => setPhotoGate(null)} style={{ marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--text-dim)', fontSize: '0.75rem', cursor: 'pointer' }}>Not now</button>
+          </div>
+        </div>
+      )}
       <style>{`
         @keyframes bounce {
           0%, 100% { transform: translateY(0); opacity: .4; }
