@@ -1,12 +1,10 @@
 // Internal "New real signup" alert to support@. Reuses the /admin/signups real-vs-test rules.
 // PRIVACY: the email carries only the PT time, account type, a generic source and the admin link.
 // No names, emails, kid details, IPs, or company/center names. Errors are logged generically.
-import { buildRows, type RawSignup, type AccountType } from './signups'
+import { buildRows, isSocialSource, type RawSignup, type AccountType } from './signups'
 
 export const ADMIN_SIGNUPS_URL = 'https://www.algegram.xyz/admin/signups'
 export const ALERT_SUBJECT = 'New real signup'
-
-const SOCIAL = /^(instagram|ig|facebook|fb|tiktok|youtube|yt|x|twitter|reddit|linkedin|threads|pinterest|snapchat|social)$/
 
 /** Generic "how they found us": no platform, company or center names. */
 export function alertSource(r: RawSignup): string {
@@ -18,7 +16,7 @@ export function alertSource(r: RawSignup): string {
   if (a.ref || src === 'referral') kind = 'Referral link'
   else if (src === 'seo' || med === 'organic') kind = 'Search'
   else if (src === 'referrer') kind = 'Another website'
-  else if (SOCIAL.test(src) || med === 'social') kind = 'Social post'
+  else if (isSocialSource(r)) kind = 'Social post'
   else if (src === 'email' || med === 'email') kind = 'Email'
   else if (src) kind = 'Campaign link'
   else return 'Direct'

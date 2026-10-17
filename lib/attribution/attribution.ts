@@ -43,12 +43,20 @@ export function referrerDomain(referer: string | null | undefined): string | und
   }
 }
 
+// Short `?src=` aliases for links where full UTM tags are awkward (e.g. a paid social post).
+// Maps to the same first-party labels as UTM tags; unknown src values are ignored.
+export const SRC_ALIASES: Record<string, Pick<Attribution, "utm_source" | "utm_medium" | "utm_campaign">> = {
+  "ig-boost": { utm_source: "social", utm_medium: "paid", utm_campaign: "boost_timer" },
+};
+
 export function attributionFromSearchParams(params: URLSearchParams, pathname: string, referer?: string | null): Attribution | null {
   const out: Attribution = {};
   for (const k of KEYS) {
     const v = cleanValue(params.get(k));
     if (v) out[k] = v;
   }
+  const src = cleanValue(params.get("src"));
+  if (src && SRC_ALIASES[src] && !out.utm_source) Object.assign(out, SRC_ALIASES[src], out);
   if (!Object.keys(out).length) {
     // No campaign tags: record organic search / referral by the referrer's domain only.
     const d = referrerDomain(referer);
