@@ -157,3 +157,29 @@ export function summarize(rows: SignupRow[], includeTests: boolean, now = new Da
   const since = (t: Date) => pool.filter(r => new Date(r.createdAt) >= t).length
   return { week: since(week), month: since(month), all: pool.length, hidden: rows.length - pool.length }
 }
+
+export const ADMIN_HOME = '/admin/signups'
+
+/** Return path for the sign-in page: only same-site /admin paths (plus ?all=1), never a full URL. */
+export function safeAdminNext(pathname: string, search = ''): string {
+  if (!/^\/admin(\/[a-z0-9_-]+)*\/?$/i.test(pathname) || pathname.includes('//')) return ADMIN_HOME
+  const path = pathname === '/admin' || pathname === '/admin/' ? ADMIN_HOME : pathname.replace(/\/$/, '')
+  return new URLSearchParams(search).get('all') === '1' ? `${path}?all=1` : path
+}
+
+export type AdminGate = { action: 'allow' } | { action: 'login'; next: string } | { action: 'not_found' }
+
+/**
+ * Admin access decision (used by middleware, page and API). Signed out: pages go to sign-in,
+ * API calls get a bare 404 (no data). Signed in but not an allowlisted owner: 404.
+ */
+export function adminGate(pathname: string, search: string,
+  user: { email?: string | null; email_confirmed_at?: string | null } | null | undefined): AdminGate {
+  if (isAdminUser(user)) return { action: 'allow' }
+  if (!user && !pathname.startsWith('/api/')) return { action: 'login', next: safeAdminNext(pathname, search) }
+  return { action: 'not_found' }
+}
+
+export function loginUrlFor(next: string): string {
+  return `/auth/login?next=${encodeURIComponent(next)}`
+}
