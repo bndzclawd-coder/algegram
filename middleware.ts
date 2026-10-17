@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { withAttribution } from '@/lib/attribution/middleware'
+import { isAdminUser } from '@/lib/admin/signups'
 
 // Routes that need a signed-in user. Only these pay for the Supabase session check;
 // public pages just get the first-touch attribution cookie.
@@ -28,7 +29,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (!isProtected(pathname)) {
+  const isAdmin = pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/api/admin/')
+  if (!isProtected(pathname) && !isAdmin) {
     return withAttribution(request, NextResponse.next({ request }))
   }
 
@@ -55,6 +57,18 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Owner-only admin: anyone else (incl. logged out) sees a plain 404, never a login redirect.
+  if (isAdmin && !isAdminUser(user)) {
+    const h = { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' }
+    if (pathname.startsWith('/api/')) return new NextResponse('Not found', { status: 404, headers: h })
+    const url = request.nextUrl.clone()
+    url.pathname = '/_admin-not-found'
+    url.search = ''
+    const res = NextResponse.rewrite(url, { status: 404 })
+    Object.entries(h).forEach(([k, v]) => res.headers.set(k, v))
+    return res
+  }
+
   if (!user) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -74,6 +88,7 @@ export const config = {
   matcher: [
     '/api/stripe/portal',
     '/api/account/delete',
+    '/api/admin/:path*',
     '/((?!api|_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|og-image.png|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|svg|webp|ico|css|js|txt|xml)$).*)',
   ],
 }

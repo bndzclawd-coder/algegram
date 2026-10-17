@@ -3,7 +3,7 @@ import { SITE_URL } from '@/lib/site-config'
 
 // Private app, auth, API, center pay and pilot links stay out of search. Public pages are open,
 // including to AI search crawlers (explicitly allowed below).
-const PRIVATE = ['/api/', '/chat', '/settings', '/auth/', '/practice', '/test', '/upgrade', '/parent/', '/center/', '/p/']
+const PRIVATE = ['/api/', '/chat', '/settings', '/auth/', '/practice', '/test', '/upgrade', '/parent/', '/center/', '/p/', '/admin', '/api/admin/']
 const AI_AND_SEARCH = ['OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot', 'Google-Extended', 'Bingbot']
 
 export default function robots(): MetadataRoute.Robots {
