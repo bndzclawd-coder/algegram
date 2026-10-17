@@ -7,9 +7,9 @@ export const PRO_DEFAULT_MODEL = 'google/gemini-2.5-flash'
 
 // Matches the Pro model picker in app/chat/page.tsx (the models Pro users can currently choose).
 export const PRO_MODELS = [
-  { id: 'openai/gpt-4o', label: 'GPT-4o' },
-  { id: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet' },
-  { id: 'google/gemini-2.5-flash', label: 'Gemini Flash' },
+  { id: 'openai/gpt-4o', label: 'Clear explainer' },
+  { id: 'anthropic/claude-sonnet-4.5', label: 'Deep thinker' },
+  { id: 'google/gemini-2.5-flash', label: 'Standard' },
 ] as const
 
 // Provider allowlist per model: only zero-data-retention, no-training endpoints (checked on OpenRouter's ZDR list).
