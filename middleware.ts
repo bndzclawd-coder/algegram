@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { withAttribution } from '@/lib/attribution/middleware'
-import { isAdminUser } from '@/lib/admin/signups'
+import { adminGate } from '@/lib/admin/signups'
 
 // Routes that need a signed-in user. Only these pay for the Supabase session check;
 // public pages just get the first-touch attribution cookie.
@@ -57,16 +57,32 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Owner-only admin: anyone else (incl. logged out) sees a plain 404, never a login redirect.
-  if (isAdmin && !isAdminUser(user)) {
-    const h = { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' }
-    if (pathname.startsWith('/api/')) return new NextResponse('Not found', { status: 404, headers: h })
-    const url = request.nextUrl.clone()
-    url.pathname = '/_admin-not-found'
-    url.search = ''
-    const res = NextResponse.rewrite(url, { status: 404 })
-    Object.entries(h).forEach(([k, v]) => res.headers.set(k, v))
-    return res
+  // Owner-only admin. Signed out: pages go to sign-in (return path limited to /admin), API gets a
+  // bare 404. Signed in but not the owner: 404. Nothing from the admin pages is ever sent.
+  if (isAdmin) {
+    const gate = adminGate(pathname, request.nextUrl.search, user)
+    if (gate.action !== 'allow') {
+      const h = { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' }
+      let res: NextResponse
+      if (gate.action === 'login') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/auth/login'
+        url.search = ''
+        url.searchParams.set('next', gate.next)
+        res = NextResponse.redirect(url, 307)
+      } else if (pathname.startsWith('/api/')) {
+        res = new NextResponse('Not found', { status: 404 })
+      } else {
+        const url = request.nextUrl.clone()
+        url.pathname = '/_admin-not-found'
+        url.search = ''
+        res = NextResponse.rewrite(url, { status: 404 })
+      }
+      Object.entries(h).forEach(([k, v]) => res.headers.set(k, v))
+      // Keep any refreshed session cookies.
+      supabaseResponse.cookies.getAll().forEach(c => res.cookies.set(c))
+      return res
+    }
   }
 
   if (!user) {

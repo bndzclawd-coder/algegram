@@ -3,15 +3,21 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { isAdminUser, type RawSignup } from './signups'
 
-/** The signed-in owner, or null (callers answer null with a 404). */
-export async function getAdminUser() {
+/** The signed-in user (or null). Never throws. */
+export async function getSessionUser() {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    return isAdminUser(user) ? user : null
+    return user ?? null
   } catch {
     return null
   }
+}
+
+/** The signed-in owner, or null (callers answer null with a 404 / sign-in redirect). */
+export async function getAdminUser() {
+  const user = await getSessionUser()
+  return isAdminUser(user) ? user : null
 }
 
 export async function loadRawSignups(): Promise<RawSignup[]> {

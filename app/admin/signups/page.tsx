@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
-import { getAdminUser, loadRawSignups } from '@/lib/admin/server'
-import { buildRows, summarize } from '@/lib/admin/signups'
+import { notFound, redirect } from 'next/navigation'
+import { getSessionUser, loadRawSignups } from '@/lib/admin/server'
+import { adminGate, buildRows, loginUrlFor, summarize, type SignupRow } from '@/lib/admin/signups'
 import RevealButton from './RevealButton'
 
 // Owner-only. Everyone else gets a 404 (also enforced in middleware). Never cached or indexed.
@@ -20,12 +20,29 @@ const FLAG_STYLE: Record<string, string> = {
   owner: 'bg-slate-200 text-slate-700',
 }
 
-export default async function AdminSignupsPage({ searchParams }: { searchParams: { all?: string } }) {
-  const admin = await getAdminUser()
-  if (!admin) notFound()
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))])
+}
 
+export default async function AdminSignupsPage({ searchParams }: { searchParams: { all?: string } }) {
   const includeTests = searchParams?.all === '1'
-  const rows = buildRows(await loadRawSignups())
+  // Same gate as middleware (defense in depth): signed out -> sign-in, not the owner -> 404.
+  const gate = adminGate('/admin/signups', includeTests ? '?all=1' : '', await getSessionUser())
+  if (gate.action === 'login') redirect(loginUrlFor(gate.next))
+  if (gate.action !== 'allow') notFound()
+
+  let rows: SignupRow[]
+  try {
+    rows = buildRows(await withTimeout(loadRawSignups(), 15000))
+  } catch {
+    console.error('[admin] signups load failed')
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-8 text-slate-900">
+        <h1 className="text-2xl font-bold">Signups</h1>
+        <p className="mt-3">The signup list couldn’t load right now. <a className="text-indigo-600 underline" href="/admin/signups">Try again</a>.</p>
+      </main>
+    )
+  }
   const s = summarize(rows, includeTests)
   const shown = includeTests ? rows : rows.filter(r => r.flag === 'real')
 
