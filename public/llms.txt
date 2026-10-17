@@ -24,6 +24,7 @@
 - [Percent word problems](https://www.algegram.xyz/learn/percent-word-problems)
 - [Free topic quizzes: fractions](https://www.algegram.xyz/quiz/fractions)
 - [Step-by-step topic guides: fractions](https://www.algegram.xyz/solve/fractions)
+- [10-second math challenges with step-by-step answers](https://www.algegram.xyz/challenges)
 - [Solve 2x + 5 = 17 step by step](https://www.algegram.xyz/solve/2x-plus-5-equals-17)
 - [Solve 3(x − 2) = 15 step by step](https://www.algegram.xyz/solve/3-x-minus-2-equals-15)
 - [Solve x/4 − 3 = 2 step by step](https://www.algegram.xyz/solve/x-over-4-minus-3-equals-2)
