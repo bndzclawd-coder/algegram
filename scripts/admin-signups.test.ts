@@ -45,7 +45,7 @@ test('kids: type kid, reveal returns the parent email only', () => {
 test('source and plan labels', () => {
   assert.equal(sourceLabel(base({})), 'Direct')
   assert.equal(sourceLabel(base({ seat_slug: 'mathtowne' })), 'Center link: mathtowne')
-  assert.equal(sourceLabel(base({ signup_attribution: { utm_source: 'instagram', utm_medium: 'social', utm_campaign: 'timer' } })), 'instagram (social) · timer')
+  assert.equal(sourceLabel(base({ signup_attribution: { utm_source: 'instagram', utm_medium: 'social', utm_campaign: 'timer' } })), 'Social post · instagram (social) · timer')
   const now = NOW.getTime()
   assert.equal(planLabel(base({}), now), 'Free')
   assert.equal(planLabel(base({ sub_plan: 'pro', sub_status: 'active' }), now), 'Paid Pro')

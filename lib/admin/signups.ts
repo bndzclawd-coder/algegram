@@ -93,6 +93,16 @@ export function classify(r: RawSignup, owners = ownerAccountEmails()): { flag: F
   return { flag: 'real', reason: null }
 }
 
+const SOCIAL_SOURCES = /^(instagram|ig|facebook|fb|tiktok|youtube|yt|x|twitter|reddit|linkedin|threads|pinterest|snapchat|social)$/
+
+/** True when first-touch attribution came from a social post (organic or paid/boosted). */
+export function isSocialSource(r: RawSignup): boolean {
+  const a = (r.signup_attribution ?? {}) as Record<string, unknown>
+  const src = String(a.utm_source ?? r.signup_ref ?? '').toLowerCase()
+  const med = String(a.utm_medium ?? '').toLowerCase()
+  return SOCIAL_SOURCES.test(src) || med === 'social' || med === 'paid_social'
+}
+
 export function sourceLabel(r: RawSignup): string {
   if (r.seat_slug) return `Center link: ${r.seat_slug}`
   const pilot = /^pilot:(.+)$/.exec(r.comp_reason ?? '')
@@ -101,7 +111,10 @@ export function sourceLabel(r: RawSignup): string {
   const src = (a.ref as string) || (a.utm_source as string) || r.signup_ref || null
   const camp = (a.utm_campaign as string) || null
   const med = (a.utm_medium as string) || null
-  if (src || camp) return [src ?? 'unknown', med && `(${med})`, camp && `· ${camp}`].filter(Boolean).join(' ')
+  if (src || camp) {
+    const raw = [src ?? 'unknown', med && `(${med})`, camp && `· ${camp}`].filter(Boolean).join(' ')
+    return !a.ref && isSocialSource(r) ? `Social post · ${raw}` : raw
+  }
   const refr = a.referrer as string | undefined
   if (refr) return `Referrer: ${refr}`
   return 'Direct'
