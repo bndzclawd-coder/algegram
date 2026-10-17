@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { pageMetadata } from '@/lib/seo'
 import { GUEST_FREE_QUESTIONS, SITE_URL } from '@/lib/site-config'
+import OfferText from '@/app/components/OfferText'
 
 // Static list of supported topics and example Q&A pairs
 // Never render user input on these pages — SEO-safe static content only
@@ -13,6 +14,10 @@ const TOPIC_DATA: Record<string, {
   seoTitle?: string
   intro?: string
   faq?: { q: string; a: string }[]
+  /** Single worked-problem pages (seeded, hand-written): custom heading, signup CTA, related links. */
+  h1?: string
+  ctaLabel?: string
+  related?: { href: string; label: string }[]
 }> = {
   algebra: {
     title: 'Algebra',
@@ -86,10 +91,107 @@ const TOPIC_DATA: Record<string, {
       { question: 'Solve x/4 + 1 = 6', answer: 'x = 20',
         steps: ['Subtract 1 from both sides: x/4 = 5.', 'Multiply both sides by 4: x = 20.', 'Check: 20/4 + 1 = 5 + 1 = 6. ✓'] },
     ],
+    related: [
+      { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17 step by step' },
+      { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15 step by step' },
+      { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2 step by step' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations' },
+    ],
     faq: [
       { q: 'What is a linear equation?', a: 'An equation where the variable is only to the first power, like 3x + 7 = 22. Its graph is a straight line, which is where the name comes from.' },
       { q: 'What do you do when there are variables on both sides?', a: 'Move all the variable terms to one side by adding or subtracting, move the numbers to the other side, then divide by the coefficient.' },
       { q: 'How can I check my answer?', a: 'Substitute your value back into the original equation. If both sides come out equal, the answer is correct.' },
+    ],
+  },
+  '2x-plus-5-equals-17': {
+    title: 'Solve 2x + 5 = 17',
+    h1: 'Solve 2x + 5 = 17 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve 2x + 5 = 17 Step by Step (x = 6)',
+    description: 'How to solve the two-step equation 2x + 5 = 17, with every step explained and a quick check of the answer.',
+    intro: 'This is a two-step equation. The x is being multiplied by 2 and then has 5 added. To get x alone, undo those in reverse order: take away the 5 first, then undo the multiply by 2.',
+    examples: [
+      { question: 'Solve 2x + 5 = 17', answer: 'x = 6',
+        steps: [
+          'Start with the equation: 2x + 5 = 17.',
+          'Subtract 5 from both sides to undo the + 5: 2x + 5 − 5 = 17 − 5, so 2x = 12.',
+          'Divide both sides by 2 to undo the × 2: 2x ÷ 2 = 12 ÷ 2, so x = 6.',
+          'Check your answer: put x = 6 back in. 2(6) + 5 = 12 + 5 = 17. Both sides match, so x = 6 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why do you subtract 5 before dividing by 2?', a: 'You undo the operations in the reverse order they were done to x. The 2 multiplied x first and the 5 was added last, so the 5 comes off first. If you divide first, you have to divide every term: x + 2.5 = 8.5, which still gives x = 6 but with more work.' },
+      { q: 'How do I check my answer?', a: 'Replace x with your answer in the original equation. 2(6) + 5 = 17, so both sides are equal and the answer is right.' },
+    ],
+    related: [
+      { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15' },
+      { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  '3-x-minus-2-equals-15': {
+    title: 'Solve 3(x − 2) = 15',
+    h1: 'Solve 3(x − 2) = 15 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve 3(x − 2) = 15 Step by Step (x = 7)',
+    description: 'How to solve the equation 3(x − 2) = 15 with brackets, step by step, two ways, with a quick check of the answer.',
+    intro: 'Here x has 2 taken away, and then the whole bracket is multiplied by 3. You can undo the × 3 first by dividing both sides by 3, or you can multiply out the bracket first. Both ways give the same answer.',
+    examples: [
+      { question: 'Solve 3(x − 2) = 15', answer: 'x = 7',
+        steps: [
+          'Start with the equation: 3(x − 2) = 15.',
+          'Divide both sides by 3 to undo the × 3: (x − 2) = 15 ÷ 3, so x − 2 = 5.',
+          'Add 2 to both sides to undo the − 2: x − 2 + 2 = 5 + 2, so x = 7.',
+          'Check your answer: put x = 7 back in. 3(7 − 2) = 3(5) = 15. Both sides match, so x = 7 is correct. ✓',
+        ] },
+      { question: 'Another way: multiply out the bracket first', answer: 'x = 7',
+        steps: [
+          'Multiply the 3 by each term inside the bracket: 3 × x − 3 × 2 = 15, so 3x − 6 = 15.',
+          'Add 6 to both sides: 3x = 21.',
+          'Divide both sides by 3: x = 7.',
+          'Same answer as before. Check: 3(7) − 6 = 21 − 6 = 15. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Should I divide first or multiply out the bracket first?', a: 'Either works. Dividing by 3 first is quicker here because 15 divides evenly by 3. Multiplying out the bracket always works, even when the numbers do not divide evenly.' },
+      { q: 'What is a common mistake with 3(x − 2)?', a: 'Only multiplying the x by 3 and forgetting the 2. The 3 multiplies everything in the bracket, so 3(x − 2) is 3x − 6, not 3x − 2.' },
+    ],
+    related: [
+      { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17' },
+      { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-over-4-minus-3-equals-2': {
+    title: 'Solve x/4 − 3 = 2',
+    h1: 'Solve x/4 − 3 = 2 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve x/4 − 3 = 2 Step by Step (x = 20)',
+    description: 'How to solve the two-step equation x/4 − 3 = 2, where x is divided by 4, with every step explained and a quick check of the answer.',
+    intro: 'Here x is divided by 4 and then has 3 taken away. Undo them in reverse order: add the 3 back first, then undo the divide by 4 by multiplying by 4.',
+    examples: [
+      { question: 'Solve x/4 − 3 = 2', answer: 'x = 20',
+        steps: [
+          'Start with the equation: x/4 − 3 = 2.',
+          'Add 3 to both sides to undo the − 3: x/4 − 3 + 3 = 2 + 3, so x/4 = 5.',
+          'Multiply both sides by 4 to undo the ÷ 4: (x/4) × 4 = 5 × 4, so x = 20.',
+          'Check your answer: put x = 20 back in. 20/4 − 3 = 5 − 3 = 2. Both sides match, so x = 20 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'How do you undo dividing by 4?', a: 'Multiply by 4. Multiplying and dividing undo each other, so (x/4) × 4 is just x.' },
+      { q: 'Why add 3 first instead of multiplying by 4 first?', a: 'The 3 was taken away last, so it is undone first. If you multiply by 4 first, you must multiply every term: x − 12 = 8, which still gives x = 20.' },
+    ],
+    related: [
+      { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17' },
+      { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
     ],
   },
   percentages: {
@@ -235,7 +337,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
         <div style={{ marginBottom: '0.75rem' }}>
           <Link href="/" style={{ color: 'var(--text-dim)', fontSize: '0.875rem', textDecoration: 'none' }}>← All topics</Link>
         </div>
-        <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', marginBottom: '0.75rem' }}>{data.title} Help</h1>
+        <h1 style={{ fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', marginBottom: '0.75rem' }}>{data.h1 ?? `${data.title} Help`}</h1>
         <p style={{ color: 'var(--text-dim)', marginBottom: data.intro ? '1rem' : '2rem', lineHeight: 1.7 }}>{data.description}</p>
         {data.intro && <p style={{ lineHeight: 1.7, marginBottom: '2rem' }}>{data.intro}</p>}
         {data.faq && (
@@ -250,7 +352,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
         {/* CTA banner */}
         <div style={{ background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '12px', padding: '1.25rem', marginBottom: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Ask your own {data.title.toLowerCase()} question</div>
+            <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{data.ctaLabel ? `Try a similar ${data.ctaLabel}` : `Ask your own ${data.title.toLowerCase()} question`}</div>
             <div style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Type your own problem on the homepage and see every step. {GUEST_FREE_QUESTIONS} free questions, no sign-up.</div>
           </div>
           <Link href={`/?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
@@ -258,7 +360,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
           </Link>
         </div>
 
-        <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '1.5rem', color: 'var(--text-dim)' }}>Example problems &amp; solutions</h2>
+        <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '1.5rem', color: 'var(--text-dim)' }}>{data.h1 ? 'Step-by-step solution' : <>Example problems &amp; solutions</>}</h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {data.examples.map((ex, i) => (
@@ -292,6 +394,26 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
               </div>
             ))}
           </section>
+        )}
+
+        {data.related && (
+          <section style={{ marginTop: '3rem' }}>
+            <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.75rem' }}>Keep practicing</h2>
+            <ul style={{ lineHeight: 1.9, paddingLeft: '1.2rem', listStyle: 'disc' }}>
+              {data.related.map(r => <li key={r.href}><Link href={r.href} style={{ color: 'var(--accent2)' }}>{r.label}</Link></li>)}
+            </ul>
+          </section>
+        )}
+
+        {data.h1 && (
+          <div style={{ marginTop: '3rem', textAlign: 'center', padding: '2rem', background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '16px' }}>
+            <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>
+              <OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' />
+            </p>
+            <Link href={`/auth/signup?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', display: 'inline-block' }}>
+              <OfferText normal='Sign up free, get 7 days of Pro' center='Sign up free' /> →
+            </Link>
+          </div>
         )}
 
         <div style={{ marginTop: '3rem', textAlign: 'center', padding: '2rem', background: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--border)' }}>
