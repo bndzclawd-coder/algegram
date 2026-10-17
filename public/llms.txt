@@ -32,4 +32,4 @@
 
 ## Notes
 - Algegram is clearly labeled as AI and shows no ads.
-- AI requests use zero-data-retention providers; photos are processed in memory and never saved.
+- We never save photos of math problems. The services that answer questions don't use them for training; they may hold a question or photo briefly to answer, and may keep one flagged by safety checks for review.
