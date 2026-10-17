@@ -5,6 +5,7 @@ import { sendWelcomeEmail } from '@/lib/email/lifecycle'
 import { recordSignupAttribution, attributionFromToken } from '@/lib/attribution/server'
 import { cleanRefCode, isPilot, onAccountActivated } from '@/lib/referral'
 import { cleanCenterSlug } from '@/lib/center/link'
+import { notifyNewSignupBounded } from '@/lib/admin/signup-alert-server'
 import { claimToken, releaseToken, USED_LINK_ERROR } from '@/lib/account/consent-token'
 
 export async function POST(req: NextRequest) {
@@ -65,6 +66,9 @@ export async function POST(req: NextRequest) {
   if (newUser.user) await recordSignupAttribution(db, newUser.user.id, childAttr)
   // Parent has consented: the 7-day Pro bonus starts now, and the referrer (if any) is credited.
   const act = newUser.user ? await onAccountActivated(db as any, newUser.user.id, { pilot: isPilot(childAttr) }) : null
+
+  // Internal "New real signup" alert: one per family (keyed on the parent's email). Never throws.
+  if (newUser.user) await notifyNewSignupBounded(newUser.user.id)
 
   // Account-only welcome to the PARENT (no promo). No-op unless LIFECYCLE_EMAILS_ENABLED=true.
   if (newUser.user) {
