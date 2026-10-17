@@ -92,6 +92,7 @@ const TOPIC_DATA: Record<string, {
         steps: ['Subtract 1 from both sides: x/4 = 5.', 'Multiply both sides by 4: x = 20.', 'Check: 20/4 + 1 = 5 + 1 = 6. ✓'] },
     ],
     related: [
+      { href: '/solve/x-over-3-plus-4-equals-10', label: 'Solve x/3 + 4 = 10 step by step' },
       { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17 step by step' },
       { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15 step by step' },
       { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2 step by step' },
@@ -101,6 +102,34 @@ const TOPIC_DATA: Record<string, {
       { q: 'What is a linear equation?', a: 'An equation where the variable is only to the first power, like 3x + 7 = 22. Its graph is a straight line, which is where the name comes from.' },
       { q: 'What do you do when there are variables on both sides?', a: 'Move all the variable terms to one side by adding or subtracting, move the numbers to the other side, then divide by the coefficient.' },
       { q: 'How can I check my answer?', a: 'Substitute your value back into the original equation. If both sides come out equal, the answer is correct.' },
+    ],
+  },
+  'x-over-3-plus-4-equals-10': {
+    title: 'Solve x/3 + 4 = 10',
+    h1: 'Solve x/3 + 4 = 10 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve x/3 + 4 = 10 Step by Step (x = 18)',
+    description: 'How to solve the two-step equation x/3 + 4 = 10, where x is divided by 3, with every step explained and a quick check of the answer.',
+    intro: 'Here x is divided by 3 and then has 4 added. Undo them in reverse order: take away the 4 first, then undo the divide by 3 by multiplying by 3.',
+    examples: [
+      { question: 'Solve x/3 + 4 = 10', answer: 'x = 18',
+        steps: [
+          'Start with the equation: x/3 + 4 = 10.',
+          'Subtract 4 from both sides to undo the + 4: x/3 + 4 − 4 = 10 − 4, so x/3 = 6.',
+          'Multiply both sides by 3 to undo the ÷ 3: (x/3) × 3 = 6 × 3, so x = 18.',
+          'Check your answer: put x = 18 back in. 18/3 + 4 = 6 + 4 = 10. Both sides match, so x = 18 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'How do you undo dividing by 3?', a: 'Multiply by 3. Multiplying and dividing undo each other, so (x/3) × 3 is just x.' },
+      { q: 'Why subtract 4 first instead of multiplying by 3 first?', a: 'The 4 was added last, so it is undone first. If you multiply by 3 first, you must multiply every term: x + 12 = 30, which still gives x = 18.' },
+    ],
+    related: [
+      { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17' },
+      { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
     ],
   },
   '2x-plus-5-equals-17': {
