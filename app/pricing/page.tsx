@@ -134,7 +134,7 @@ export default function Pricing() {
         </div>
 
         <p style={{ marginTop: '2rem', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
-          Secure HTTPS connection &middot; Payments secured by Stripe
+          Secure HTTPS connection &middot; Payments secured by our payment processor
         </p>
       </div>
 

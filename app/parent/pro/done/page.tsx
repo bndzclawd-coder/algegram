@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = { title: 'Algegram Pro for your child', robots: { index: false, follow: false } }
 
 const COPY: Record<string, [string, string]> = {
-  ok: ['Thanks! Pro is on its way', 'Your child’s account will show Pro within a minute. You can manage or cancel anytime from the link in your Stripe receipt, or by emailing support@algegram.xyz.'],
+  ok: ['Thanks! Pro is on its way', 'Your child’s account will show Pro within a minute. You can manage or cancel anytime from the link in your payment receipt, or by emailing support@algegram.xyz.'],
   already: ['Pro is already active', 'This account already has Pro. Nothing else to do.'],
   expired: ['This link has expired', 'Ask your child to tap “Ask a parent about Pro” again and we’ll email you a fresh link.'],
   error: ['Something went wrong', 'Please try the link again in a minute, or email support@algegram.xyz.'],
