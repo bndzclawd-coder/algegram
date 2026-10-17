@@ -56,3 +56,24 @@ export async function loadRawSignup(id: string): Promise<RawSignup | null> {
   const { data: p } = await db.from('user_profiles').select('birth_year').eq('user_id', id).maybeSingle()
   return { id: u.id, email: u.email ?? null, created_at: u.created_at, user_metadata: u.user_metadata ?? null, birth_year: (p as any)?.birth_year ?? null }
 }
+
+/** Everything the signup rules need for one account (service role). */
+export async function loadFullSignup(db: ReturnType<typeof createServiceClient>, id: string): Promise<RawSignup | null> {
+  const { data } = await db.auth.admin.getUserById(id)
+  const u: any = data?.user
+  if (!u) return null
+  const [p, a, s, b] = await Promise.all([
+    db.from('user_profiles').select('birth_year, comp_pro_until, comp_reason, bonus_pro_until').eq('user_id', id).maybeSingle(),
+    db.from('user_attribution').select('signup_ref, signup_attribution').eq('user_id', id).maybeSingle(),
+    db.from('center_seats').select('center_slug').eq('user_id', id).maybeSingle(),
+    db.from('subscriptions').select('plan, status').eq('user_id', id).maybeSingle(),
+  ])
+  const P: any = p.data ?? {}, A: any = a.data ?? {}
+  return {
+    id, email: u.email ?? null, created_at: u.created_at, email_confirmed_at: u.email_confirmed_at ?? null,
+    user_metadata: u.user_metadata ?? null, birth_year: P.birth_year ?? null, comp_pro_until: P.comp_pro_until ?? null,
+    comp_reason: P.comp_reason ?? null, bonus_pro_until: P.bonus_pro_until ?? null,
+    signup_ref: A.signup_ref ?? null, signup_attribution: A.signup_attribution ?? null,
+    seat_slug: (s.data as any)?.center_slug ?? null, sub_plan: (b.data as any)?.plan ?? null, sub_status: (b.data as any)?.status ?? null,
+  }
+}

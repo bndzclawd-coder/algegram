@@ -4,6 +4,7 @@ import { sendWelcomeEmail as sendLegacyWelcomeEmail } from '@/lib/emails/welcome
 import { lifecycleEnabled, sendWelcomeEmail } from '@/lib/email/lifecycle'
 import { recordSignupAttribution, readAttribution } from '@/lib/attribution/server'
 import { onAccountActivated } from '@/lib/referral'
+import { notifyNewSignup } from '@/lib/admin/signup-alert-server'
 
 /** Same-site path only (no open redirect). Accepts a path, or a full URL on our own host
  *  (Supabase's {{ .RedirectTo }}), in which case its own `next` param or path is used. */
@@ -37,6 +38,8 @@ export async function afterConfirm(user: User | null, next: string): Promise<str
     await onAccountActivated(db as any, user.id, { pilot })
     ;(async () => {
       await attributionWrite
+      // Internal "New real signup" alert (real accounts only, once per family). Never throws.
+      await notifyNewSignup(user.id)
       try {
         if (lifecycleEnabled()) await sendWelcomeEmail(user)
         else if (user.email) await sendLegacyWelcomeEmail(user.email)
