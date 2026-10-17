@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { WHAT_IS_ALGEGRAM } from '@/lib/about'
+import { WHAT_IS_ALGEGRAM_INTRO, WHAT_IS_ALGEGRAM_OUTRO } from '@/lib/about'
+import AboutProLine from '@/app/components/AboutProLine'
 import { LEARN_PAGES, LEARN_SLUGS } from '@/lib/learn/data'
 import OfferText from '@/app/components/OfferText'
 import CenterFullNotice from '@/app/components/CenterFullNotice'
@@ -131,7 +132,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
 
           <section id='about' aria-labelledby='about-h'>
             <h2 id='about-h'>What is Algegram?</h2>
-            <p className='lead' style={{ maxWidth: 760 }}>{WHAT_IS_ALGEGRAM}</p>
+            <p className='lead' data-testid='what-is-algegram' style={{ maxWidth: 760 }}>{WHAT_IS_ALGEGRAM_INTRO}<AboutProLine />{WHAT_IS_ALGEGRAM_OUTRO}</p>
             <h3 style={{ marginTop: '1.5rem' }}>Free math practice</h3>
             <div className='topics'>{LEARN_SLUGS.map(s => <Link key={s} href={`/learn/${s}`}>{LEARN_PAGES[s].title}</Link>)}</div>
           </section>
