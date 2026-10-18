@@ -13,7 +13,13 @@ export function guestHistory(messages: ChatMessage[]): ChatMessage[] {
 }
 
 /** True when the newest message is the student's reply to a chat practice problem ("Try this one: ..."). */
+// "I got 4a+1 is that right", "where did I go wrong", "is 4a+1 right?": the student wants their work checked.
+const CHECK_WORK = /\b(i got|my answer|is (this|that|it|mine)? ?(right|correct)|is .{1,40} (right|correct)\??$|where did i go wrong|did i (get|do) it right|check (my|this))/i
+
+/** True when the newest message is the student's answer to a chat practice problem, or asks Layla to check their work. */
 export function isAnsweringPractice(messages: ChatMessage[]): boolean {
   const n = messages.length
-  return n >= 2 && messages[n - 1].role === 'user' && messages[n - 2].role === 'assistant' && isPracticeProblem(messages[n - 2].content)
+  if (n < 2 || messages[n - 1].role !== 'user') return false
+  if (messages[n - 2].role === 'assistant' && isPracticeProblem(messages[n - 2].content)) return true
+  return CHECK_WORK.test(messages[n - 1].content.trim().slice(0, 200))
 }

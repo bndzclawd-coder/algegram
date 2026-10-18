@@ -84,3 +84,23 @@ test('practice detection: lead-in allowed, trailing invitation on a solved answe
   assert.ok(isAnsweringPractice([{ role: 'assistant', content: '**Try this one:** $g(x)=x^2+4x$' }, { role: 'user', content: '2a+5' }]))
   assert.ok(!isAnsweringPractice([{ role: 'assistant', content: solved }, { role: 'user', content: 'why?' }]))
 })
+
+import { QUICK_REPLIES, showQuickReplies } from '../app/components/QuickReplyChips'
+
+test('quick-reply chips: labels in order, only under finished math answers', () => {
+  assert.deepEqual(QUICK_REPLIES.map(q => q.label), ['Try one like this', 'Easier', 'Harder', 'Explain simpler'])
+  assert.deepEqual(QUICK_REPLIES.map(q => q.text), ['Give me one like this to try', 'Give me an easier one', 'Give me a harder one', 'Explain it simpler'])
+  const solved = '1. Write $f(a+1) = 2(a+1)^2 - 3(a+1) + 1$\n2. Expand: $2a^2 + a$\n3. Subtract: $f(a+1) - f(a) = 4a - 1$'
+  assert.ok(showQuickReplies(solved))
+  assert.ok(!showQuickReplies(OFF_TOPIC_REPLY))
+  assert.ok(!showQuickReplies('Which step should I explain?'))
+  assert.ok(!showQuickReplies('**Try this one:** Let $g(x)=x^2+4x$. Find $g(a+1)-g(a)$.'))
+  assert.ok(!showQuickReplies('⚠️ Free limit reached'))
+})
+
+test('work-check messages get a short think', () => {
+  for (const q of ['is 4a+1 right?', 'I got 4a - 1 is that correct', 'where did I go wrong, I got 2a² + 4a', 'i got 4a+1 is that right'])
+    assert.ok(isAnsweringPractice([{ role: 'assistant', content: 'x' }, { role: 'user', content: q }]), q)
+  for (const q of ['why?', 'explain it simpler', 'tell me a joke'])
+    assert.ok(!isAnsweringPractice([{ role: 'assistant', content: 'x' }, { role: 'user', content: q }]), q)
+})

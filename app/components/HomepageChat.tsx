@@ -3,6 +3,7 @@ import OfferText from '@/app/components/OfferText'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { memo, useState, useEffect, useRef, useCallback } from 'react'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
+import QuickReplyChips, { showQuickReplies } from '@/app/components/QuickReplyChips'
 import { lessonAnswerIndex } from '@/lib/whiteboard/parse'
 
 type Message = { role: 'user' | 'assistant'; content: string }
@@ -268,6 +269,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
               )}
               <MessageBubble msg={m} />
               {i === lessonIdx && <MemoWatchLayla answer={m.content} />}
+              {m.role === 'assistant' && i === messages.length - 1 && !streaming && showQuickReplies(m.content) && <QuickReplyChips onPick={t => send(t)} disabled={streaming} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
