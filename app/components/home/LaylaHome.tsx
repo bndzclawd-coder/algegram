@@ -103,6 +103,19 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
             </div>
           </section>
 
+          <section id='parents' aria-labelledby='parents-h'>
+            <h2 id='parents-h' data-reveal>Just math.</h2>
+            <p className='lead' data-reveal>Layla stays on homework, so it isn’t a place for off-topic chats or entertainment. Ask about anything else and Layla kindly steers back to math.</p>
+            <div className='card' data-reveal style={{ maxWidth: 760 }}>
+              <h3>For parents, Pro adds</h3>
+              <ul style={{ lineHeight: 1.8, paddingLeft: '1.2rem', listStyle: 'disc', margin: '0.5rem 0 0' }}>
+                <li><strong>Practice questions</strong> on any topic, plus weak-spot practice built from the questions your child gets wrong.</li>
+                <li><strong>Step-by-step whiteboard lessons</strong> that explain each step of an answer. Free accounts get 1 a day.</li>
+                <li><strong>Weekly progress report</strong> by email, sent to the parent for kids under 13. Coming soon.</li>
+              </ul>
+            </div>
+          </section>
+
           <section id='pricing' aria-labelledby='pricing-h'>
             <h2 id='pricing-h' data-reveal>Simple pricing</h2>
             <p className='lead' data-reveal><OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' /></p>
@@ -123,6 +136,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
                 <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
                 <ul>
                   {PLANS.pro.features.map(f => <li key={f}>{f}</li>)}
+                  {PLANS.pro.comingSoon.map(f => <li key={f} className='soon'>{f} · Coming soon</li>)}
                 </ul>
                 <a className='btn' href='/upgrade' rel='nofollow'>{PRO_CTA_TEXT}</a>
                 <p className='foot'>Fair-use limits apply.</p>

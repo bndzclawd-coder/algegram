@@ -26,6 +26,9 @@ export const PLANS = {
       'Quizzes and timed tests',
       'Weak-spot practice built from your mistakes',
       'Layla whiteboard lessons that explain each step',
+    ],
+    // Listed without a checkmark and labeled "Coming soon" until verified live end to end.
+    comingSoon: [
       'Weekly progress report by email',
     ],
   },
