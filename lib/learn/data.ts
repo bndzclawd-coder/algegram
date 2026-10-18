@@ -252,7 +252,7 @@ export const LEARN_PAGES: Record<string, LearnPage> = {
     intro: 'A quadratic equation can be written as ax² + bx + c = 0. First move every term to one side so the other side is 0, then pick a method: factoring is fastest when it works, and the quadratic formula always works.',
     rules: [
       'Write the equation in standard form: ax² + bx + c = 0.',
-      'Factoring: find two numbers that multiply to a·c and add to b, then set each factor equal to 0.',
+      'Factoring: find two numbers that multiply to a·c and add to b, split the middle term using those two numbers, factor by grouping, then set each factor equal to 0.',
       'Quadratic formula: x = (−b ± √(b² − 4ac)) / (2a).',
       'The discriminant b² − 4ac tells you how many real solutions: positive = 2, zero = 1, negative = none.',
     ],

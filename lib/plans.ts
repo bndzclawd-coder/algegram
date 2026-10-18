@@ -8,7 +8,7 @@ export const PLANS = {
     features: [
       '20 messages per day',
       'Algebra & calculus help',
-      'LaTeX math rendering',
+      'Clean math notation',
     ],
   },
   pro: {
