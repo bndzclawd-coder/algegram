@@ -1,6 +1,6 @@
 'use client'
 import { hasLessonContent, isPracticeProblem } from '@/lib/whiteboard/parse'
-import { OFF_TOPIC_REPLY } from '@/lib/chat/prompts'
+import { OFF_TOPIC_REPLY } from '@/lib/chat/off-topic'
 
 // Label shown on the chip -> the message it sends (a normal chat message: same limits as typing it).
 export const QUICK_REPLIES = [
