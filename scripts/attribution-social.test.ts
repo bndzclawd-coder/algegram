@@ -54,3 +54,11 @@ test('non-social sources are unchanged', () => {
   assert.equal(sourceLabel(row({ utm_source: 'newsletter', utm_campaign: 'oct' })), 'newsletter · oct')
   assert.equal(alertSource(row({ ref: 'abc12345', utm_source: 'instagram' })), 'Referral link')
 })
+
+test('timer Reel links for the Oct 24 / Oct 26 /solve pages read as Social post with their campaign', () => {
+  for (const [path, camp] of [['/solve/5x-minus-8-equals-27', 'timer_5x'], ['/solve/x-plus-6-over-2-equals-9', 'timer_x6']]) {
+    const a = decodeAttribution(encodeAttribution(attributionFromSearchParams(new URLSearchParams(`utm_source=instagram&utm_medium=social&utm_campaign=${camp}`), path, null)!))!
+    assert.equal(a.landing_path, path)
+    assert.equal(alertSource(row(a)), `Social post (campaign: ${camp})`)
+  }
+})

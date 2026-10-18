@@ -212,7 +212,7 @@ export const LEARN_PAGES: Record<string, LearnPage> = {
       { q: 'What if the variable is on the right side?', a: 'Solve it the same way. For example, 17 = 2x + 3 gives 14 = 2x, so x = 7.' },
     ],
     quiz: [{ href: '/quiz/linear-equations', label: 'Free linear equations quiz' }],
-    related: [{ href: '/solve/x-over-3-plus-4-equals-10', label: 'Solve x/3 + 4 = 10 step by step' }, { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17 step by step' }, { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15 step by step' }, { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2 step by step' }, { href: '/learn/one-step-equations', label: 'One-step equations' }, { href: '/learn/solve-quadratic-equation-step-by-step', label: 'Solve quadratic equations step by step' }],
+    related: [{ href: '/solve/x-over-3-plus-4-equals-10', label: 'Solve x/3 + 4 = 10 step by step' }, { href: '/solve/5x-minus-8-equals-27', label: 'Solve 5x − 8 = 27 step by step' }, { href: '/solve/x-plus-6-over-2-equals-9', label: 'Solve (x + 6)/2 = 9 step by step' }, { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17 step by step' }, { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15 step by step' }, { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2 step by step' }, { href: '/learn/one-step-equations', label: 'One-step equations' }, { href: '/learn/solve-quadratic-equation-step-by-step', label: 'Solve quadratic equations step by step' }],
     campaign: 'two_step_equations',
   },
   'ratio-word-problems': {
