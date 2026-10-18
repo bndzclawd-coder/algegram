@@ -10,11 +10,22 @@ export const QUICK_REPLIES = [
   { label: 'Explain simpler', text: 'Explain it simpler' },
 ] as const
 
-/** Chips go only under a finished math answer: not under refusals, errors, clarifying questions or practice problems. */
-export function showQuickReplies(content: string): boolean {
+const CHIP_TEXTS = new Set<string>(QUICK_REPLIES.map(q => q.text.toLowerCase()))
+/** True when a user message is exactly what one of the chips sends. */
+export function isQuickReplyText(text: string | null | undefined): boolean {
+  return CHIP_TEXTS.has(String(text ?? '').trim().toLowerCase())
+}
+
+/**
+ * Chips go only under a finished math reply: a worked answer, a practice problem ("Try this one:"), or any
+ * reply to a chip tap (so "Harder" -> new problem keeps its chips even without $math$). Never under
+ * refusals, errors, or a clarifying question that was not a chip reply. The caller renders them only under
+ * the latest message, after streaming ends.
+ */
+export function showQuickReplies(content: string, prevUserText?: string | null): boolean {
   const c = (content || '').trim()
   if (!c || c.startsWith('⚠️') || c.includes(OFF_TOPIC_REPLY)) return false
-  return hasLessonContent(c) && !isPracticeProblem(c)
+  return hasLessonContent(c) || isPracticeProblem(c) || isQuickReplyText(prevUserText)
 }
 
 export default function QuickReplyChips({ onPick, disabled }: { onPick: (text: string) => void; disabled?: boolean }) {

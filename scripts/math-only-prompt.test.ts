@@ -94,8 +94,22 @@ test('quick-reply chips: labels in order, only under finished math answers', () 
   assert.ok(showQuickReplies(solved))
   assert.ok(!showQuickReplies(OFF_TOPIC_REPLY))
   assert.ok(!showQuickReplies('Which step should I explain?'))
-  assert.ok(!showQuickReplies('**Try this one:** Let $g(x)=x^2+4x$. Find $g(a+1)-g(a)$.'))
   assert.ok(!showQuickReplies('⚠️ Free limit reached'))
+})
+
+test('quick-reply chips: still shown after any chip tap (Harder -> practice problem, Explain simpler -> plain text)', () => {
+  // The CS repro: Harder -> "Try this one: ..." had only the whiteboard button and no chips.
+  const harder = '**Try this one:** Solve 7x - 12 = 3x + 20.\n\nGive it a try and tell me your answer, or show your work and I will check it.'
+  assert.ok(showQuickReplies(harder, 'Give me a harder one'))
+  assert.ok(showQuickReplies('**Try this one:** Let $g(x)=x^2+4x$. Find $g(a+1)-g(a)$.'), 'a practice problem is a math reply')
+  assert.ok(showQuickReplies('Okay, an easier one. **Try this one:** Solve x + 4 = 9.', 'Give me an easier one'))
+  for (const q of QUICK_REPLIES) assert.ok(showQuickReplies('Think of it like sharing 8 cookies between 2 friends: each gets 4, so x is 4.', q.text), q.label)
+  // Not after a chip: refusal and errors never get chips, and a plain clarifying question still does not.
+  assert.ok(!showQuickReplies(OFF_TOPIC_REPLY, 'Give me a harder one'))
+  assert.ok(!showQuickReplies('⚠️ Free limit reached (20/day).', 'Give me a harder one'))
+  assert.ok(!showQuickReplies('Which step should I explain?', 'why?'))
+  // No upgrade chips, ever.
+  assert.ok(QUICK_REPLIES.every(q => !/pro|upgrade|trial|pricing/i.test(q.label + q.text)))
 })
 
 test('work-check messages get a short think', () => {

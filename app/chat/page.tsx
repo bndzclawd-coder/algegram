@@ -348,7 +348,7 @@ function ChatInner() {
             <div key={i}>
               <MessageBubble msg={m} />
               {i === lessonIdx && <MemoWatchLayla answer={m.content} />}
-              {m.role === 'assistant' && i === messages.length - 1 && !streaming && showQuickReplies(m.content) && <QuickReplyChips onPick={t => send(t)} disabled={streaming} />}
+              {m.role === 'assistant' && i === messages.length - 1 && !streaming && showQuickReplies(m.content, messages[i - 1]?.role === 'user' ? messages[i - 1].content : null) && <QuickReplyChips onPick={t => send(t)} disabled={streaming} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
