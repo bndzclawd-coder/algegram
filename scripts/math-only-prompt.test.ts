@@ -24,7 +24,7 @@ test('rule asks for no personal details and names no other company or app', () =
 })
 
 import { OFF_TOPIC_REPLY, FOLLOW_UP_RULE, PRACTICE_RULE, PRO_PRACTICE_NOTE, FREE_PRACTICE_NOTE, systemPrompt } from '../lib/chat/prompts'
-import { guestHistory } from '../lib/chat/history'
+import { guestHistory, isAnsweringPractice } from '../lib/chat/history'
 import { lessonAnswerIndex, isPracticeProblem } from '../lib/whiteboard/parse'
 
 test('off-topic reply stays word for word (Reels depend on it)', () => {
@@ -75,4 +75,12 @@ test('whiteboard button stays under the solved answer after a short follow-up re
   assert.ok(isPracticeProblem('**Try this one:** $g(x) = x^2 + 4x$'))
   assert.equal(lessonAnswerIndex([...msgs, { role: 'user', content: 'more' }, { role: 'assistant', content: '**Try this one:** Let $g(x)=x^2+4x$. Find $g(a+1)-g(a)$.' }], false), 1)
   assert.equal(lessonAnswerIndex([{ role: 'user', content: 'hi' }, { role: 'assistant', content: 'Hello' }], false), -1)
+})
+
+test('practice detection: lead-in allowed, trailing invitation on a solved answer is not practice', () => {
+  assert.ok(isPracticeProblem('Okay, an easier one. **Try this one:** If $f(x) = 2x + 3$, find $f(a+1) - f(a)$.'))
+  const solved = '1. Write $f(a+1) = 2(a+1)^2 - 3(a+1) + 1$\n2. Expand and simplify everything carefully: $2a^2 + a$\n3. Subtract: $f(a+1) - f(a) = 4a - 1$\n\nTry this one: $g(x) = x^2 + 4x$.'
+  assert.ok(!isPracticeProblem(solved))
+  assert.ok(isAnsweringPractice([{ role: 'assistant', content: '**Try this one:** $g(x)=x^2+4x$' }, { role: 'user', content: '2a+5' }]))
+  assert.ok(!isAnsweringPractice([{ role: 'assistant', content: solved }, { role: 'user', content: 'why?' }]))
 })

@@ -8,7 +8,7 @@ import { MODEL_PROVIDERS, resolveModel, FREE_MODEL, type PlanKind } from '@/lib/
 import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
 import { SYSTEM_PROMPTS, systemPrompt, type PromptContext } from '@/lib/chat/prompts'
 import { isChildAccount } from '@/lib/account/age-gate'
-import { guestHistory } from '@/lib/chat/history'
+import { guestHistory, isAnsweringPractice } from '@/lib/chat/history'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
@@ -42,14 +42,16 @@ function isSimpleProblem(text: string): boolean {
 }
 
 async function callOpenRouter(model: string, messages: ChatMessage[], mode: string, ctx: PromptContext) {
+  const checking = isAnsweringPractice(messages)
   const body = {
     model,
     messages: [{ role: 'system', content: systemPrompt(mode, ctx) }, ...messages],
     stream: true,
     temperature: 0.3,
-    max_tokens: 1400,
-    // Default model: skip hidden 'thinking' so the first word shows quickly.
-    ...(model === FREE_MODEL ? { reasoning: { enabled: false } } : {}),
+    max_tokens: checking ? 2600 : 1400,
+    // Default model: skip hidden 'thinking' so the first word shows quickly, except when the student is
+    // answering a chat practice problem: then a short think lets Layla work it out before judging their answer.
+    ...(model === FREE_MODEL ? { reasoning: checking ? { max_tokens: 1024 } : { enabled: false } } : {}),
     // Zero data retention on every request: OpenRouter only routes to endpoints that keep nothing.
     provider: { data_collection: 'deny', zdr: true, only: MODEL_PROVIDERS[model] ?? MODEL_PROVIDERS[FREE_MODEL] },
   }
