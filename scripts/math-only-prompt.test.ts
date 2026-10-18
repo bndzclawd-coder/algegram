@@ -22,3 +22,57 @@ test('rule asks for no personal details and names no other company or app', () =
   assert.doesNotMatch(MATH_ONLY_RULE, /\b(name|email|age|address|location)\b/i)
   assert.doesNotMatch(MATH_ONLY_RULE + AI_IDENTITY_RULE, /chatgpt|openai|google|gemini|claude|anthropic|unlimited/i)
 })
+
+import { OFF_TOPIC_REPLY, FOLLOW_UP_RULE, PRACTICE_RULE, PRO_PRACTICE_NOTE, FREE_PRACTICE_NOTE, systemPrompt } from '../lib/chat/prompts'
+import { guestHistory } from '../lib/chat/history'
+import { lessonAnswerIndex, isPracticeProblem } from '../lib/whiteboard/parse'
+
+test('off-topic reply stays word for word (Reels depend on it)', () => {
+  assert.equal(OFF_TOPIC_REPLY, "Hi, I'm Layla, an AI tutor. I can only help with math. Please share a math problem you are working on.")
+  assert.ok(MATH_ONLY_RULE.includes(OFF_TOPIC_REPLY))
+})
+
+test('follow-ups and practice requests are math in every mode; clarifying question when unsure', () => {
+  for (const [mode, p] of Object.entries(SYSTEM_PROMPTS)) {
+    assert.ok(p.includes(FOLLOW_UP_RULE), `${mode} is missing the follow-up rule`)
+    assert.ok(p.includes(PRACTICE_RULE), `${mode} is missing the practice rule`)
+  }
+  assert.match(FOLLOW_UP_RULE, /Which step should I explain\?/)
+  assert.match(PRACTICE_RULE, /exactly ONE new problem/)
+  assert.match(PRACTICE_RULE, /do not show the answer/)
+  assert.doesNotMatch(FOLLOW_UP_RULE + PRACTICE_RULE + PRO_PRACTICE_NOTE + FREE_PRACTICE_NOTE, /chatgpt|openai|google|gemini|claude|anthropic|unlimited/i)
+})
+
+test('plan notes: Pro gets the Practice link, adult Free one Pro line, under-13 / center / guest neither', () => {
+  assert.ok(systemPrompt('math', { plan: 'pro' }).includes('/practice?topic='))
+  assert.ok(systemPrompt('math', { plan: 'free' }).includes('/upgrade'))
+  for (const ctx of [{ plan: 'free' as const, child: true }, { plan: 'free' as const, center: true }, { plan: 'guest' as const }]) {
+    const p = systemPrompt('math', ctx)
+    assert.ok(!p.includes('/upgrade') && !p.includes('/practice?topic='), JSON.stringify(ctx))
+  }
+  assert.equal(systemPrompt('quiz', { plan: 'pro' }), SYSTEM_PROMPTS.quiz)
+})
+
+test('guests keep recent history (follow-ups need context)', () => {
+  const msgs = [
+    { role: 'user' as const, content: 'f(a)=2a^2-3a+1, find f(a+1)-f(a)' },
+    { role: 'assistant' as const, content: '... = 4a - 1' },
+    { role: 'user' as const, content: 'why?' },
+  ]
+  assert.deepEqual(guestHistory(msgs), msgs)
+  const long = Array.from({ length: 20 }, (_, i) => ({ role: (i % 2 ? 'assistant' : 'user') as 'user' | 'assistant', content: 'x'.repeat(9000) }))
+  const h = guestHistory(long)
+  assert.ok(h.length <= 8 && h[0].role === 'user' && h.every(m => m.content.length <= 4000))
+})
+
+test('whiteboard button stays under the solved answer after a short follow-up reply', () => {
+  const solved = '1. Write $f(a+1) = 2(a+1)^2 - 3(a+1) + 1$\n2. Expand: $2a^2 + a$\n3. Subtract: $f(a+1) - f(a) = 4a - 1$'
+  const msgs = [
+    { role: 'user', content: 'q' }, { role: 'assistant', content: solved },
+    { role: 'user', content: 'ok' }, { role: 'assistant', content: 'Which step should I explain?' },
+  ]
+  assert.equal(lessonAnswerIndex(msgs, false), 1)
+  assert.ok(isPracticeProblem('**Try this one:** $g(x) = x^2 + 4x$'))
+  assert.equal(lessonAnswerIndex([...msgs, { role: 'user', content: 'more' }, { role: 'assistant', content: '**Try this one:** Let $g(x)=x^2+4x$. Find $g(a+1)-g(a)$.' }], false), 1)
+  assert.equal(lessonAnswerIndex([{ role: 'user', content: 'hi' }, { role: 'assistant', content: 'Hello' }], false), -1)
+})

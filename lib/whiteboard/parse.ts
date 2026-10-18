@@ -73,3 +73,24 @@ export function speakable(s: string): string {
 export function hasLessonContent(answer: string): boolean {
   return /\$[^$]+\$|\\\[|\\\(/.test(answer) && parseSteps(answer).length > 0
 }
+
+/** A chat practice problem ("Try this one: ...") has no worked steps, so it gets no lesson. */
+export function isPracticeProblem(answer: string): boolean {
+  return /^\s*(\*\*)?\s*try this one\b/i.test(String(answer ?? ''))
+}
+
+/**
+ * Index of the assistant message that gets the "Watch Layla explain this" button: the newest finished
+ * answer with lesson content. A short follow-up reply (e.g. "Which step should I explain?") no longer
+ * hides the button under the solved answer above it. -1 = none.
+ */
+export function lessonAnswerIndex(messages: { role: string; content: string }[], streaming: boolean): number {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.role !== 'assistant') continue
+    if (streaming && i === messages.length - 1) continue
+    if (!m.content || m.content.startsWith('⚠️') || isPracticeProblem(m.content)) continue
+    if (hasLessonContent(m.content)) return i
+  }
+  return -1
+}

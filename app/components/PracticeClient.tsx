@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import MathText from '@/app/components/MathText'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
-import { PRACTICE_TOPICS, DIFFICULTIES, type TopicId, type Difficulty } from '@/lib/practice/topics'
+import { PRACTICE_TOPICS, DIFFICULTIES, isTopic, type TopicId, type Difficulty } from '@/lib/practice/topics'
 
 type Mode = 'practice' | 'test'
 type Review = { correct: boolean; answer: string; steps: string[]; hint: string | null }
@@ -53,6 +53,12 @@ export default function PracticeClient({ mode }: { mode: Mode }) {
   const [left, setLeft] = useState<number | null>(null)
   const finishing = useRef(false)
   const [spots, setSpots] = useState<Spot[]>([])
+
+  // ?topic=<id> (e.g. the chat's "Practice more like this" link) preselects that topic; unknown ids are ignored.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get('topic')
+    if (isTopic(t)) setTopic(t)
+  }, [])
 
   // Weak spots: lowest-scoring topics from your saved topic scores (no questions are stored).
   useEffect(() => {

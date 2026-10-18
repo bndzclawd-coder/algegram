@@ -3,6 +3,7 @@ import OfferText from '@/app/components/OfferText'
 import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { memo, useState, useEffect, useRef, useCallback } from 'react'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
+import { lessonAnswerIndex } from '@/lib/whiteboard/parse'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
@@ -76,6 +77,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
+  const lessonIdx = lessonAnswerIndex(messages, streaming)
   const [guestRemaining, setGuestRemaining] = useState(5)
   const [guestTotal] = useState(5)
   const [showSignupWall, setShowSignupWall] = useState(false)
@@ -265,7 +267,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
                 <div data-testid='tutor-intro' style={{ fontWeight: 700, fontSize: '0.9rem', margin: '0 0 0.35rem 2.25rem' }}>{intro}</div>
               )}
               <MessageBubble msg={m} />
-              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <MemoWatchLayla answer={m.content} />}
+              {i === lessonIdx && <MemoWatchLayla answer={m.content} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
