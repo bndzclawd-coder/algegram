@@ -76,7 +76,9 @@ export function hasLessonContent(answer: string): boolean {
 
 /** A chat practice problem ("Try this one: ...") has no worked steps, so it gets no lesson. */
 export function isPracticeProblem(answer: string): boolean {
-  return /^\s*(\*\*)?\s*try this one\b/i.test(String(answer ?? ''))
+  // The marker opens the message, sometimes after a short lead-in ("Okay, an easier one."). A solved
+  // answer that ends with an optional "Try this one" line is not a practice problem.
+  return /try this one\s*:/i.test(String(answer ?? '').replace(/\*\*/g, '').slice(0, 120))
 }
 
 /**

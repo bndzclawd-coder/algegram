@@ -6,6 +6,7 @@
 // Each case costs one chat message (Free accounts: 20 a day). Exit code 1 if any case fails.
 import { writeFileSync } from 'node:fs'
 import { OFF_TOPIC_REPLY } from '../lib/chat/prompts'
+import { isPracticeProblem } from '../lib/whiteboard/parse'
 
 type Msg = { role: 'user' | 'assistant'; content: string }
 const BASE = (process.env.AG_BASE || 'https://www.algegram.xyz').replace(/\/$/, '')
@@ -75,12 +76,12 @@ async function main() {
   }
   if (want('practice')) for (const q of PRACTICE) {
     const r = (await ask([...base, { role: 'user', content: q }])).reply
-    const marker = /^\s*(\*\*)?\s*try this one/i.test(r)
+    const marker = isPracticeProblem(r)
     const reveals = /(the|final) answer (is|:)|answer:\s*\$|solution:/i.test(r)
     const ok = marker && !reveals && !REDIRECT.test(r) && !isRefusal(r)
     rec('practice', q, r, ok, ok ? 'one problem, no answer' : `marker=${marker} reveals=${reveals}`)
   }
-  if (want('attempt')) {
+  if (want('attempt')) for (let rep = 0; rep < Number(process.env.AG_ATTEMPT_REPEAT || 1); rep++) {
     const prob = '**Try this one:** Let $g(x) = x^2 + 4x$. Find $g(a+1) - g(a)$. Send me your answer!'
     const conv: Msg[] = [...base, { role: 'user', content: 'can u give more questions' }, { role: 'assistant', content: prob }]
     const wrong = (await ask([...conv, { role: 'user', content: '2a+3' }])).reply
