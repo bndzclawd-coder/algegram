@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
-import { releasedChallenges, nextChallenge } from '@/lib/challenges/data'
+import { releasedChallenges, nextChallenge, type Challenge } from '@/lib/challenges/data'
 import OfferText from '@/app/components/OfferText'
 
 // Re-render at most once a minute so each challenge appears shortly after its 5 PM PT post time.
@@ -13,6 +13,22 @@ export const metadata = pageMetadata({
 })
 
 const btn = { background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.85rem 1.25rem', borderRadius: '12px', fontWeight: 700, fontSize: '1rem', textDecoration: 'none', display: 'block', textAlign: 'center' as const }
+
+const listStyle = { listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column' as const, gap: '1rem' }
+
+function ChallengeCard({ c, newest }: { c: Challenge; newest: boolean }) {
+  return (
+    <li style={{ background: 'var(--surface)', border: newest ? '1px solid rgba(108,99,255,.5)' : '1px solid var(--border)', borderRadius: '14px', padding: '1.25rem' }}>
+      <div style={{ color: 'var(--text-dim)', fontSize: '0.8rem', marginBottom: '0.35rem' }}>{newest ? `Newest · ${c.dateLabel}` : c.dateLabel}</div>
+      <p style={{ fontWeight: 800, fontSize: '1.6rem', margin: '0 0 0.9rem', letterSpacing: '0.01em' }}>Solve {c.equation}</p>
+      <details style={{ marginBottom: '0.9rem' }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--accent2)', padding: '0.5rem 0', minHeight: 44 }}>Show the answer</summary>
+        <p style={{ fontWeight: 700, fontSize: '1.15rem', margin: '0.25rem 0 0' }}>{c.answer}</p>
+      </details>
+      <Link href={c.solvePath} style={btn}>See the steps →</Link>
+    </li>
+  )
+}
 
 export default function Challenges() {
   const now = Date.now()
@@ -50,33 +66,29 @@ export default function Challenges() {
             </div>
           </div>
         ) : (
-          <ol style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {list.map((c, i) => (
-              <li key={c.solvePath} style={{ background: 'var(--surface)', border: i === 0 ? '1px solid rgba(108,99,255,.5)' : '1px solid var(--border)', borderRadius: '14px', padding: '1.25rem' }}>
-                <div style={{ color: 'var(--text-dim)', fontSize: '0.8rem', marginBottom: '0.35rem' }}>{i === 0 ? `Newest · ${c.dateLabel}` : c.dateLabel}</div>
-                <p style={{ fontWeight: 800, fontSize: '1.6rem', margin: '0 0 0.9rem', letterSpacing: '0.01em' }}>Solve {c.equation}</p>
-                <details style={{ marginBottom: '0.9rem' }}>
-                  <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--accent2)', padding: '0.5rem 0', minHeight: 44 }}>Show the answer</summary>
-                  <p style={{ fontWeight: 700, fontSize: '1.15rem', margin: '0.25rem 0 0' }}>{c.answer}</p>
-                </details>
-                <Link href={c.solvePath} style={btn}>See the steps →</Link>
-              </li>
-            ))}
-          </ol>
+          <ol style={listStyle}>{list.slice(0, 1).map((c, i) => <ChallengeCard key={c.solvePath} c={c} newest={i === 0} />)}</ol>
         )}
 
-        {list.length > 0 && next && (
-          <p style={{ color: 'var(--text-dim)', textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Next challenge: {next.dateLabel} at 5 PM PT.</p>
-        )}
-
-        <div style={{ textAlign: 'center', padding: '1.5rem', background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '16px' }}>
-          <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>
+        <section aria-labelledby="parents-h" style={{ padding: '1.5rem', background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '16px', marginBottom: '1.5rem' }}>
+          <h2 id="parents-h" style={{ fontWeight: 800, fontSize: '1.2rem', lineHeight: 1.35, marginBottom: '0.6rem' }}>Just math. Homework time stays homework time.</h2>
+          <p style={{ lineHeight: 1.7, marginBottom: '1.1rem' }}>
+            Layla only helps with math and kindly turns away anything else. Pro includes step-by-step whiteboard lessons and practice built from your child’s mistakes.
+          </p>
+          <p style={{ color: 'var(--text-dim)', marginBottom: '1rem', textAlign: 'center' }}>
             <OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' />
           </p>
           <Link href="/auth/signup?utm_source=social&utm_medium=bio&utm_campaign=challenges" style={btn}>
             <OfferText normal='Sign up free, get 7 days of Pro' center='Sign up free' /> →
           </Link>
-        </div>
+        </section>
+
+        {list.length > 1 && (
+          <ol style={listStyle}>{list.slice(1).map(c => <ChallengeCard key={c.solvePath} c={c} newest={false} />)}</ol>
+        )}
+
+        {list.length > 0 && next && (
+          <p style={{ color: 'var(--text-dim)', textAlign: 'center', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Next challenge: {next.dateLabel} at 5 PM PT.</p>
+        )}
       </main>
 
       <footer style={{ borderTop: '1px solid var(--border)', padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
