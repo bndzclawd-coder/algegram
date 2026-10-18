@@ -6,7 +6,9 @@ import { PLANS } from '@/lib/plans'
 import { maybeSendDailyLimitEmail } from '@/lib/email/lifecycle'
 import { MODEL_PROVIDERS, resolveModel, FREE_MODEL, type PlanKind } from '@/lib/models'
 import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
-import { SYSTEM_PROMPTS } from '@/lib/chat/prompts'
+import { SYSTEM_PROMPTS, systemPrompt, type PromptContext } from '@/lib/chat/prompts'
+import { isChildAccount } from '@/lib/account/age-gate'
+import { guestHistory } from '@/lib/chat/history'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
@@ -39,10 +41,10 @@ function isSimpleProblem(text: string): boolean {
   return t.length > 0 && t.length <= 160 && !HARD.test(t)
 }
 
-async function callOpenRouter(model: string, messages: ChatMessage[], mode: string) {
+async function callOpenRouter(model: string, messages: ChatMessage[], mode: string, ctx: PromptContext) {
   const body = {
     model,
-    messages: [{ role: 'system', content: SYSTEM_PROMPTS[mode] }, ...messages],
+    messages: [{ role: 'system', content: systemPrompt(mode, ctx) }, ...messages],
     stream: true,
     temperature: 0.3,
     max_tokens: 1400,
@@ -64,9 +66,9 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
 }
 
 /** Calls OpenRouter; on failure logs status only (never user content or the raw body) and returns a generic error. */
-async function aiStream(plan: PlanKind, model: string, messages: ChatMessage[], mode: string) {
+async function aiStream(plan: PlanKind, model: string, messages: ChatMessage[], mode: string, ctx: PromptContext = { plan }) {
   try {
-    const res = await callOpenRouter(model, messages, mode)
+    const res = await callOpenRouter(model, messages, mode, ctx)
     if (res.ok && res.body) return { ok: true as const, body: res.body }
     console.error('[chat] OpenRouter request failed', { plan, model, status: res.status })
     res.body?.cancel().catch(() => {})
@@ -100,11 +102,14 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
   // Count the question before the answer is returned, so failed calls can't be used to dodge the limit.
   // The network quota check and the AI request start together (speed); a refused quota discards the AI stream.
   const nextUsed = used + 1
-  const lastUser = [...parsed.messages].reverse().find(m => m.role === 'user')
-  const model = lastUser && parsed.mode === 'math' && isSimpleProblem(lastUser.content) ? FAST_MODEL : resolveModel('guest', parsed.model)
+  // Recent history is sent so follow-ups ("why?", "another one like this") are read in context.
+  // Still nothing is stored; the guest counter counts every message as before.
+  const history = guestHistory(parsed.messages)
+  const lastUser = [...history].reverse().find(m => m.role === 'user')
+  const model = lastUser && parsed.mode === 'math' && history.length <= 1 && isSimpleProblem(lastUser.content) ? FAST_MODEL : resolveModel('guest', parsed.model)
   const [ipCheck, ai] = await Promise.all([
     consumeIpQuota(req),
-    aiStream('guest', model, lastUser ? [lastUser] : parsed.messages.slice(-1), parsed.mode),
+    aiStream('guest', model, history, parsed.mode, { plan: 'guest' }),
   ])
   if (ipCheck !== 'ok') {
     if (ai.ok) ai.body.cancel().catch(() => {})
@@ -151,7 +156,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { isPro } = await resolvePro(db, user.id)
+  const { isPro, center } = await resolvePro(db, user.id)
   const plan: PlanKind = isPro ? 'pro' : 'free'
 
   let usedToday: number | null = null
@@ -189,7 +194,8 @@ export async function POST(req: NextRequest) {
   // Free plan (or Pro on the default model): simple problems use the fast model.
   const lastAsk = [...parsed.messages].reverse().find(m => m.role === 'user')
   if (model === FREE_MODEL && parsed.mode === 'math' && lastAsk && isSimpleProblem(lastAsk.content) && parsed.messages.length <= 2) model = FAST_MODEL
-  const ai = await aiStream(plan, model, parsed.messages, parsed.mode)
+  const child = !isPro && parsed.mode === 'math' ? await isChildAccount(db, user).catch(() => true) : false
+  const ai = await aiStream(plan, model, parsed.messages, parsed.mode, { plan, child, center: !!center })
   if (!ai.ok) return ai.res
 
   const headers = new Headers(streamHeaders(plan))

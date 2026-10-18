@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:prompts": "npx -y tsx --test scripts/math-only-prompt.test.ts",
+    "eval:followups": "npx -y tsx scripts/eval-followups.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.1",

@@ -6,6 +6,7 @@ import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
 import { memo, useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
+import { lessonAnswerIndex } from '@/lib/whiteboard/parse'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { PRO_MODELS, PRO_DEFAULT_MODEL } from '@/lib/models'
@@ -86,6 +87,7 @@ function ChatInner() {
   const [mode, setMode] = useState<Mode>('math')
   const [model, setModel] = useState<string>(PRO_DEFAULT_MODEL)
   const [streaming, setStreaming] = useState(false)
+  const lessonIdx = lessonAnswerIndex(messages, streaming)
   const [usage, setUsage] = useState<Usage | null>(null)
   const [user, setUser] = useState<any>(null)
   const [showSignupWall, setShowSignupWall] = useState(false)
@@ -408,7 +410,7 @@ function ChatInner() {
           {messages.map((m, i) => (
             <div key={i}>
               <MessageBubble msg={m} />
-              {m.role === 'assistant' && i === messages.length - 1 && !streaming && m.content && !m.content.startsWith('⚠️') && <MemoWatchLayla answer={m.content} />}
+              {i === lessonIdx && <MemoWatchLayla answer={m.content} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
