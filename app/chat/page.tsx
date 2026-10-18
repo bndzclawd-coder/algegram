@@ -112,7 +112,11 @@ function ChatInner() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    // When an answer finishes, the chips and the whiteboard button appear under it: scroll again so they're in view.
+    if (streaming) return
+    const t = setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 400)
+    return () => clearTimeout(t)
+  }, [messages, streaming])
 
   async function fetchUsage() {
     try {
