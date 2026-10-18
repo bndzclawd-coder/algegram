@@ -89,7 +89,8 @@ async function main() {
     const right = (await ask([...conv, { role: 'user', content: '2a+5' }])).reply
     const link = /\/practice\?topic=functions/.test(right)
     const anyPractice = /\/practice\?topic=/.test(right)
-    const okR = /correct|right|yes|great|nice/i.test(right) && !/unlimited/i.test(right) &&
+    const opening = norm(right).slice(0, 80)
+    const okR = /correct|right|yes|great|nice|well done/i.test(opening) && !/close|not quite|almost/i.test(opening) && !/unlimited/i.test(right) &&
       (first.plan === 'pro' ? anyPractice : !anyPractice)
     rec('attempt', '2a+5 (right)', right, okR, `plan=${first.plan} practiceLink=${anyPractice} functionsTopic=${link} upgradeLine=${/\/upgrade/.test(right)}`)
   }
