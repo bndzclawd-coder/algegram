@@ -10,7 +10,7 @@
 // Exit code 1 if any case fails.
 import { writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
-import { OFF_TOPIC_REPLY } from '../lib/chat/prompts'
+import { OFF_TOPIC_REPLY, PRACTICE_CLOSING } from '../lib/chat/prompts'
 import { isPracticeProblem } from '../lib/whiteboard/parse'
 
 type Msg = { role: 'user' | 'assistant'; content: string }
@@ -101,6 +101,7 @@ async function main() {
     const upsell = /\/upgrade|free trial|\btry pro\b|upgrade to pro/i.test(r)
     const practiceLink = /\/practice\?topic=/.test(r)
     if (/unlimited/i.test(r)) return 'says unlimited'
+    if (/\banswert\b/i.test(r)) return 'typo: answert'
     if (plan !== 'free' && upsell) return 'upgrade line'
     if (plan !== 'pro' && practiceLink) return 'Practice link on non-Pro'
     return null
@@ -118,8 +119,9 @@ async function main() {
   await run('practice', r => {
     const marker = isPracticeProblem(r), reveals = /(the|final) answer (is|:)|answer:\s*\$|solution:/i.test(r)
     const link = /\/practice\?topic=/.test(r)
-    const ok = marker && !reveals && !isRefusal(r) && (plan !== 'pro' || link)
-    return [ok, `oneProblem=${marker} reveals=${reveals} practiceLink=${link}`]
+    const closing = norm(r).includes(norm(PRACTICE_CLOSING))
+    const ok = marker && closing && !reveals && !isRefusal(r) && (plan !== 'pro' || link)
+    return [ok, `oneProblem=${marker} closingLine=${closing} reveals=${reveals} practiceLink=${link}`]
   })
   await run('explain', r => {
     const ok = !isRefusal(r) && !isPracticeProblem(r)

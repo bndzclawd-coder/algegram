@@ -104,3 +104,30 @@ test('work-check messages get a short think', () => {
   for (const q of ['why?', 'explain it simpler', 'tell me a joke'])
     assert.ok(!isAnsweringPractice([{ role: 'assistant', content: 'x' }, { role: 'user', content: q }]), q)
 })
+
+import { PRACTICE_CLOSING } from '../lib/chat/prompts'
+import { cleanReplyText, cleanReplyStream } from '../lib/chat/clean'
+
+test('practice problems use one fixed closing line', () => {
+  assert.equal(PRACTICE_CLOSING, "Send me your answer when you're ready.")
+  assert.ok(PRACTICE_RULE.includes(PRACTICE_CLOSING))
+  assert.doesNotMatch(PRACTICE_RULE + PRO_PRACTICE_NOTE + FOLLOW_UP_RULE, /answert/i)
+})
+
+test('reply cleanup fixes "answert" as a whole word only and never touches math', () => {
+  assert.equal(cleanReplyText('Send me your answert!'), 'Send me your answer!')
+  assert.equal(cleanReplyText('Answert: $x = 7$'), 'Answer: $x = 7$')
+  for (const s of ['$answerty = 2$', 'answerts', '$f(a+1) - f(a) = 4a - 1$', 'x = answer + t']) assert.equal(cleanReplyText(s), s)
+})
+
+test('stream cleanup fixes a word split across chunks and keeps every other character', async () => {
+  const ev = (c: string) => `data: ${JSON.stringify({ choices: [{ delta: { content: c } }] })}\n\n`
+  const parts = [': OPENROUTER PROCESSING\n\n', ev('**Try this one:** $5x - 8 = 27$. Send me your answ'), ev('ert when you'), ev("'re ready."), 'data: [DONE]\n\n']
+  const enc = new TextEncoder()
+  const src = new ReadableStream<Uint8Array>({ start(c) { for (const p of parts) c.enqueue(enc.encode(p)); c.close() } })
+  const text = await new Response(cleanReplyStream(src)).text()
+  let out = ''
+  for (const line of text.split('\n')) if (line.startsWith('data: ') && !line.includes('[DONE]')) out += JSON.parse(line.slice(6)).choices[0].delta.content
+  assert.equal(out, "**Try this one:** $5x - 8 = 27$. Send me your answer when you're ready.")
+  assert.ok(text.includes('data: [DONE]'))
+})
