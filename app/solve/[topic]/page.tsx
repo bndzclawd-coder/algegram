@@ -51,7 +51,7 @@ const TOPIC_DATA: Record<string, {
       },
       {
         question: 'Find lim(x→0) sin(x)/x',
-        answer: 'By L\'Hôpital\'s rule or the standard limit: lim = 1.',
+        answer: 'This is a standard limit equal to 1. By the squeeze theorem: for small x ≠ 0, cos(x) ≤ sin(x)/x ≤ 1, and both sides approach 1 as x→0, so lim = 1.',
       },
     ],
   },
