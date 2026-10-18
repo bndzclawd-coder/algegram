@@ -92,6 +92,8 @@ const TOPIC_DATA: Record<string, {
         steps: ['Subtract 1 from both sides: x/4 = 5.', 'Multiply both sides by 4: x = 20.', 'Check: 20/4 + 1 = 5 + 1 = 6. ✓'] },
     ],
     related: [
+      { href: '/solve/5x-minus-8-equals-27', label: 'Solve 5x − 8 = 27 step by step' },
+      { href: '/solve/x-plus-6-over-2-equals-9', label: 'Solve (x + 6)/2 = 9 step by step' },
       { href: '/solve/x-over-3-plus-4-equals-10', label: 'Solve x/3 + 4 = 10 step by step' },
       { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17 step by step' },
       { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15 step by step' },
@@ -102,6 +104,62 @@ const TOPIC_DATA: Record<string, {
       { q: 'What is a linear equation?', a: 'An equation where the variable is only to the first power, like 3x + 7 = 22. Its graph is a straight line, which is where the name comes from.' },
       { q: 'What do you do when there are variables on both sides?', a: 'Move all the variable terms to one side by adding or subtracting, move the numbers to the other side, then divide by the coefficient.' },
       { q: 'How can I check my answer?', a: 'Substitute your value back into the original equation. If both sides come out equal, the answer is correct.' },
+    ],
+  },
+  '5x-minus-8-equals-27': {
+    title: 'Solve 5x − 8 = 27',
+    h1: 'Solve 5x − 8 = 27 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve 5x − 8 = 27 Step by Step (x = 7)',
+    description: 'How to solve the two-step equation 5x − 8 = 27, where x is multiplied by 5, with every step explained and a quick check of the answer.',
+    intro: 'Here x is multiplied by 5 and then 8 is taken away. Undo them in reverse order: add the 8 back first, then undo the times 5 by dividing by 5.',
+    examples: [
+      { question: 'Solve 5x − 8 = 27', answer: 'x = 7',
+        steps: [
+          'Start with the equation: 5x − 8 = 27.',
+          'Add 8 to both sides to undo the − 8: 5x − 8 + 8 = 27 + 8, so 5x = 35.',
+          'Divide both sides by 5 to undo the × 5: 5x ÷ 5 = 35 ÷ 5, so x = 7.',
+          'Check your answer: put x = 7 back in. 5 × 7 − 8 = 35 − 8 = 27. Both sides match, so x = 7 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why add 8 instead of subtracting it?', a: 'The equation takes 8 away from 5x. Adding 8 undoes that, so the − 8 and + 8 cancel and leave 5x by itself.' },
+      { q: 'What does 5x mean?', a: '5x means 5 times x. To undo multiplying by 5, divide by 5.' },
+    ],
+    related: [
+      { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17' },
+      { href: '/solve/x-plus-6-over-2-equals-9', label: 'Solve (x + 6)/2 = 9' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-plus-6-over-2-equals-9': {
+    title: 'Solve (x + 6)/2 = 9',
+    h1: 'Solve (x + 6)/2 = 9 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve (x + 6)/2 = 9 Step by Step (x = 12)',
+    description: 'How to solve the two-step equation (x + 6)/2 = 9, where x + 6 is divided by 2, with every step explained and a quick check of the answer.',
+    intro: 'Here 6 is added to x first, and then the whole thing is divided by 2. Undo them in reverse order: undo the divide by 2 by multiplying by 2, then take away the 6.',
+    examples: [
+      { question: 'Solve (x + 6)/2 = 9', answer: 'x = 12',
+        steps: [
+          'Start with the equation: (x + 6)/2 = 9.',
+          'Multiply both sides by 2 to undo the ÷ 2: ((x + 6)/2) × 2 = 9 × 2, so x + 6 = 18.',
+          'Subtract 6 from both sides to undo the + 6: x + 6 − 6 = 18 − 6, so x = 12.',
+          'Check your answer: put x = 12 back in. (12 + 6)/2 = 18/2 = 9. Both sides match, so x = 12 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why multiply by 2 first this time?', a: 'The brackets mean the whole x + 6 is divided by 2. Dividing happened last, so it is undone first: multiply both sides by 2 to get x + 6 = 18.' },
+      { q: 'Can I subtract 6 first?', a: 'Not straight away. The 6 is inside the brackets and is being divided by 2 along with x, so you would have to take away 6/2 = 3 instead: x/2 = 6, which still gives x = 12.' },
+    ],
+    related: [
+      { href: '/solve/x-over-3-plus-4-equals-10', label: 'Solve x/3 + 4 = 10' },
+      { href: '/solve/5x-minus-8-equals-27', label: 'Solve 5x − 8 = 27' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
     ],
   },
   'x-over-3-plus-4-equals-10': {
