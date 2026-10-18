@@ -55,7 +55,7 @@ export const CASES: Record<string, Case[]> = {
 // Guest sample (fits the guest network limit with the opening question): CS cases across every group.
 const GUEST_CASES: Record<string, number[]> = { practice: [1, 2, 6], explain: [8, 9, 10], picture: [14], checkwork: [15, 16], vague: [18, 19], refused: [21, 22] }
 
-const REDIRECT = /another math problem you'?d like help with|do you have another (math )?(problem|question)/i
+const REDIRECT = /another math problem|do you have another (math )?(problem|question)/i
 const norm = (s: string) => s.replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim()
 const isRefusal = (r: string) => norm(r).replace(/^"|"$/g, '') === norm(OFF_TOPIC_REPLY)
 const flat = (r: string) => r.replace(/[{}$\\]/g, '').replace(/\s+/g, '')
@@ -142,7 +142,18 @@ async function main() {
     const ok = !saysRight && hint
     return [ok, `wrongAnswerAccepted=${saysRight} pointsToStep=${hint}`]
   })
-  await run('vague', r => [!isRefusal(r), !isRefusal(r) ? 'continues or asks which step' : 'refusal'])
+  // Acknowledgements right after a solved answer: no practice problem was given yet, so Layla must not refer to one.
+  const ACK = /^(ok|okay|thx|thanks|ok next|ok what next|got it)\b/i
+  const PHANTOM = /(problem|question|one) i (just )?(gave|sent|showed)|the practice problem (above|i)|try the (practice )?problem (above|i)/i
+  await run('vague', (r, c) => {
+    if (isRefusal(r)) return [false, 'refusal']
+    if (ACK.test(c.q.trim())) {
+      const phantom = PHANTOM.test(r)
+      const offers = isPracticeProblem(r) || /(want|like|ready for|how about|shall i give you|try) (one|another|a similar|a practice|a new)|one like this|to try\b/i.test(r)
+      return [!phantom && offers, `offersOne=${offers} phantomProblem=${phantom}`]
+    }
+    return [true, 'continues or asks which step']
+  })
 
   if (want('attempt') && !GUEST_SAMPLE) for (let rep = 0; rep < Number(process.env.AG_ATTEMPT_REPEAT || 1); rep++) {
     const prob = '**Try this one:** Let $g(x) = x^2 + 4x$. Find $g(a+1) - g(a)$. Send me your answer!'
