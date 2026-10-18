@@ -9,6 +9,7 @@ import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
 import { SYSTEM_PROMPTS, systemPrompt, type PromptContext } from '@/lib/chat/prompts'
 import { isChildAccount } from '@/lib/account/age-gate'
 import { guestHistory, isAnsweringPractice } from '@/lib/chat/history'
+import { cleanReplyStream } from '@/lib/chat/clean'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
@@ -71,7 +72,7 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
 async function aiStream(plan: PlanKind, model: string, messages: ChatMessage[], mode: string, ctx: PromptContext = { plan }) {
   try {
     const res = await callOpenRouter(model, messages, mode, ctx)
-    if (res.ok && res.body) return { ok: true as const, body: res.body }
+    if (res.ok && res.body) return { ok: true as const, body: cleanReplyStream(res.body) }
     console.error('[chat] OpenRouter request failed', { plan, model, status: res.status })
     res.body?.cancel().catch(() => {})
   } catch (e) {
