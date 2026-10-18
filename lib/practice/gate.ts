@@ -1,4 +1,5 @@
 import { resolvePro } from '@/lib/account/pro'
+import { isChildAccount } from '@/lib/account/age-gate'
 import { NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
@@ -23,6 +24,10 @@ export async function requirePro(): Promise<ProUser | NextResponse> {
       { status: 403 })
   }
   const { isPro } = await resolvePro(db, user.id)
-  if (!isPro) return NextResponse.json({ error: 'Practice and tests are part of Pro.', upgrade: true }, { status: 402 })
+  if (!isPro) {
+    // Under-13: no trial/upgrade CTA; the client offers only "Ask a parent about Pro" (lib/account/upsell.ts).
+    const child = await isChildAccount(db, user).catch(() => true)
+    return NextResponse.json(child ? { error: 'Practice and tests are part of Pro.', child: true } : { error: 'Practice and tests are part of Pro.', upgrade: true }, { status: 402 })
+  }
   return { userId: user.id, db }
 }

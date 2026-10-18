@@ -8,7 +8,7 @@ import { PRACTICE_TOPICS, DIFFICULTIES, isTopic, type TopicId, type Difficulty }
 type Mode = 'practice' | 'test'
 type Review = { correct: boolean; answer: string; steps: string[]; hint: string | null }
 type Spot = { topic: TopicId; label: string; pct: number; total: number }
-type ErrBody = { error?: string; upgrade?: boolean; signin?: boolean; ageRequired?: boolean; href?: string; limit?: boolean }
+type ErrBody = { error?: string; upgrade?: boolean; child?: boolean; signin?: boolean; ageRequired?: boolean; href?: string; limit?: boolean }
 
 const card = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '1.25rem' } as const
 const btn = { background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: 10, padding: '0.65rem 1.3rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' } as const
@@ -19,7 +19,8 @@ function ErrorBox({ err }: { err: ErrBody }) {
   return (
     <div role='alert' style={{ ...card, borderColor: 'rgba(248,113,113,.4)', marginTop: '1rem' }}>
       <p style={{ margin: 0 }}>{err.error}</p>
-      {err.upgrade && <a href='/upgrade' rel='nofollow' style={{ color: 'var(--accent2)', fontWeight: 700 }}>Try Pro →</a>}
+      {err.child && <Link href='/chat?askparent=1' style={{ color: 'var(--accent2)', fontWeight: 700 }}>Ask a parent about Pro →</Link>}
+      {err.upgrade && !err.child && <a href='/upgrade' rel='nofollow' style={{ color: 'var(--accent2)', fontWeight: 700 }}>Try Pro →</a>}
       {err.signin && <Link href='/auth/login' style={{ color: 'var(--accent2)', fontWeight: 700 }}>Sign in →</Link>}
       {err.href && <Link href={err.href} style={{ color: 'var(--accent2)', fontWeight: 700 }}>Continue →</Link>}
     </div>

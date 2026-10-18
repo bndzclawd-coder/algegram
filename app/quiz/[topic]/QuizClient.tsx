@@ -17,7 +17,7 @@ export default function QuizClient({ topic, questions }: { topic: string; questi
     fetch('/api/usage', { cache: 'no-store' }).then(async r => {
       if (r.status === 401) return
       const d = await r.json().catch(() => null)
-      setAcct({ signedIn: true, child: !!d?.child, pro: d?.plan === 'pro', center: d?.center ?? null })
+      setAcct({ signedIn: true, child: d?.child !== false, pro: d?.plan === 'pro', center: d?.center ?? null })
     }).catch(() => {})
   }, [])
   // Carry the landing page's UTM tags to signup (first-touch cookie is also set by middleware on this visit).
