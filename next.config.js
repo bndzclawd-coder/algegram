@@ -9,6 +9,14 @@ const nextConfig = {
     return [
       ...['/pro', '/plans', '/premium', '/subscribe', '/go-pro'].map(source => ({ source, destination: '/pricing', permanent: true })),
       { source: '/ai-math-tutor-for-kids-under-13', destination: '/how-algegram-works-for-kids', permanent: true },
+      // Short, easy-to-type links for Instagram captions (captions aren't clickable). Temporary (307) so they
+      // can be repointed for later Reels; the utm query lets the first-visit ag_attr cookie record the campaign.
+      // Not in the sitemap. Keep sources clear of real routes in app/.
+      ...[
+        ['/5x', '/solve/5x-minus-8-equals-27', 'timer_5x'],
+        ['/x6', '/solve/x-plus-6-over-2-equals-9', 'timer_x6'],
+        ['/x3', '/solve/x-over-3-plus-4-equals-10', 'timer_x3'],
+      ].map(([source, path, campaign]) => ({ source, destination: `${path}?utm_source=instagram&utm_medium=social&utm_campaign=${campaign}`, permanent: false })),
     ]
   },
   experimental: {
