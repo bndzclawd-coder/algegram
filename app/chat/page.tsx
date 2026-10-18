@@ -6,6 +6,7 @@ import { useTrialEligible, proButtonText } from '@/lib/account/useTrialEligible'
 import { memo, useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
+import QuickReplyChips, { showQuickReplies } from '@/app/components/QuickReplyChips'
 import { lessonAnswerIndex } from '@/lib/whiteboard/parse'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -147,10 +148,10 @@ function ChatInner() {
     setStreaming(false); if (fileRef.current) fileRef.current.value = ''
   }
 
-  const send = useCallback(async () => {
-    const text = input.trim()
+  const send = useCallback(async (overrideText?: string) => {
+    const text = (overrideText ?? input).trim()
     if (!text || streaming) return
-    setInput('')
+    if (overrideText === undefined) setInput('')
     const newMessages: Message[] = [...messages, { role: 'user', content: text }]
     setMessages(newMessages)
     setStreaming(true)
@@ -411,6 +412,7 @@ function ChatInner() {
             <div key={i}>
               <MessageBubble msg={m} />
               {i === lessonIdx && <MemoWatchLayla answer={m.content} />}
+              {m.role === 'assistant' && i === messages.length - 1 && !streaming && showQuickReplies(m.content) && <QuickReplyChips onPick={t => send(t)} disabled={streaming} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (
@@ -438,7 +440,7 @@ function ChatInner() {
             <input ref={fileRef} type='file' accept='image/*' capture='environment' hidden onChange={e => { const f = e.target.files?.[0]; if (f) sendPhoto(f) }} />
             <button type='button' onClick={onCamera} aria-label='Solve from a photo (Pro)' title='Snap just the problem, not your name.'
               style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.5rem 0.7rem', cursor: 'pointer', fontSize: '0.95rem', color: 'var(--text)', flexShrink: 0 }}>📷</button>
-            <button onClick={send} disabled={streaming || !input.trim()}
+            <button onClick={() => send()} disabled={streaming || !input.trim()}
               style={{ background: streaming || !input.trim() ? 'rgba(108,99,255,.3)' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.55rem 1rem', cursor: streaming || !input.trim() ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.875rem', flexShrink: 0 }}>
               {streaming ? '…' : '→'}
             </button>
