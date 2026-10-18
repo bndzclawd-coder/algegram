@@ -18,7 +18,9 @@ export function renderTextWithLinks(text: string, keyPrefix = 'l'): ReactNode[] 
     if (!href) continue
     if (m.index > last) out.push(text.slice(last, m.index))
     const external = href.startsWith('https://')
-    out.push(<a key={`${keyPrefix}${i++}`} href={href} {...(external ? { target: '_blank', rel: 'noopener noreferrer nofollow' } : {})}
+    // "Practice more like this" opens in a new tab so the chat stays open where it was.
+    const practice = /^\/practice(?:[?#/]|$)/.test(href)
+    out.push(<a key={`${keyPrefix}${i++}`} href={href} {...(external ? { target: '_blank', rel: 'noopener noreferrer nofollow' } : practice ? { target: '_blank', rel: 'noopener' } : {})}
       style={{ color: 'var(--accent2)', textDecoration: 'underline' }}>{m[1]}</a>)
     last = m.index + m[0].length
   }

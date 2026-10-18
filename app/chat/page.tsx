@@ -10,6 +10,7 @@ import SidebarPlan from '@/app/components/chat/SidebarPlan'
 import { canShowUpsell } from '@/lib/account/upsell'
 import QuickReplyChips, { showQuickReplies } from '@/app/components/QuickReplyChips'
 import { lessonAnswerIndex } from '@/lib/whiteboard/parse'
+import { chatOwner, saveChat, loadChat, clearChat } from '@/lib/chat/session-store'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { PRO_MODELS, PRO_DEFAULT_MODEL } from '@/lib/models'
@@ -112,6 +113,22 @@ function ChatInner() {
   const upsellRef = useRef(false)
   useEffect(() => { childRef.current = !!usage?.child; centerRef.current = usage?.center ?? null; upsellRef.current = canShowUpsell(usage) }, [usage])
   useEffect(() => { fetchUsage().finally(() => setAuthResolved(true)) }, [])
+
+  // Restore this tab's conversation after in-app navigation (sessionStorage only; see lib/chat/session-store.ts).
+  const ownerRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!authResolved || ownerRef.current) return
+    const owner = chatOwner(user?.id)
+    ownerRef.current = owner
+    const saved = loadChat(owner)
+    if (!saved) return
+    setMessages(m => (m.length ? m : saved.messages))
+    if (['math', 'graph', 'explain', 'check'].includes(saved.mode)) setMode(saved.mode as Mode)
+  }, [authResolved, user])
+  useEffect(() => {
+    if (!ownerRef.current || streaming) return
+    saveChat(ownerRef.current, mode, messages)
+  }, [messages, mode, streaming])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -241,6 +258,7 @@ function ChatInner() {
   }
 
   async function signOut() {
+    clearChat()
     if (supabase) await supabase.auth.signOut()
     router.push('/')
   }
