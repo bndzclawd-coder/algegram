@@ -8,6 +8,7 @@ import { MODEL_PROVIDERS, resolveModel, FREE_MODEL, type PlanKind } from '@/lib/
 import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
 import { SYSTEM_PROMPTS, systemPrompt, type PromptContext } from '@/lib/chat/prompts'
 import { isChildAccount } from '@/lib/account/age-gate'
+import { freeLimitBody } from '@/lib/account/upsell'
 import { guestHistory, isAnsweringPractice } from '@/lib/chat/history'
 import { cleanReplyStream } from '@/lib/chat/clean'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
@@ -172,10 +173,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 503 })
     }
     if (data === null || data === undefined) {
-      return NextResponse.json(
-        { error: `Free limit reached (${FREE_LIMIT}/day). Try Pro free for 7 days for more help.`, upgrade: true },
-        { status: 429 }
-      )
+      const isKid = await isChildAccount(db, user).catch(() => true)
+      return NextResponse.json(freeLimitBody(FREE_LIMIT, isKid), { status: 429 })
     }
     usedToday = Number(data)
     if (usedToday === FREE_LIMIT) {

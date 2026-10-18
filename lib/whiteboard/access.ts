@@ -2,9 +2,10 @@ import { resolvePro } from '@/lib/account/pro'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { guestSecret } from '@/lib/guest-limit'
+import { isChildAccount } from '@/lib/account/age-gate'
 import { FREE_LESSONS_PER_DAY, readGuestLessons, setGuestLessons } from './limit'
 
-export type LessonAccess = { allowed: boolean; pro: boolean; locked: boolean; reason?: string; ageRequired?: boolean }
+export type LessonAccess = { allowed: boolean; pro: boolean; locked: boolean; reason?: string; ageRequired?: boolean; child?: boolean }
 
 const UNAVAILABLE = NextResponse.json({ error: 'Lessons are temporarily unavailable.' }, { status: 503 })
 
@@ -32,17 +33,19 @@ export async function lessonAccess(req: NextRequest, consume: boolean): Promise<
   const { isPro } = await resolvePro(db, user.id)
   if (isPro) return json({ allowed: true, pro: true, locked: false })
 
+  // Under-13: the locked state must not link to /upgrade (child-privacy rule, lib/account/upsell.ts).
+  const child = await isChildAccount(db, user).catch(() => true)
   const day = new Date().toISOString().slice(0, 10)
   if (!consume) {
     const { data, error } = await db.from('lesson_usage').select('count').eq('user_id', user.id).eq('day', day).maybeSingle()
     if (error) { console.error('[lesson] usage read failed', { code: error.code }); return UNAVAILABLE }
     const locked = (data?.count ?? 0) >= FREE_LESSONS_PER_DAY
-    return json({ allowed: !locked, pro: false, locked })
+    return json({ allowed: !locked, pro: false, locked, child })
   }
   const { data, error } = await db.rpc('increment_lesson_usage', { p_user_id: user.id, p_day: day, p_limit: FREE_LESSONS_PER_DAY })
   if (error) { console.error('[lesson] increment_lesson_usage failed', { code: error.code }); return UNAVAILABLE }
-  if (data === null) return json({ allowed: false, pro: false, locked: true }, 429)
-  return json({ allowed: true, pro: false, locked: false })
+  if (data === null) return json({ allowed: false, pro: false, locked: true, child }, 429)
+  return json({ allowed: true, pro: false, locked: false, child })
 }
 
 function json(body: LessonAccess, status = 200) {

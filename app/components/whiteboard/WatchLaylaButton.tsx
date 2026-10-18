@@ -5,7 +5,7 @@ import { hasLessonContent } from '@/lib/whiteboard/parse'
 
 const LaylaWhiteboard = dynamic(() => import('./LaylaWhiteboard'), { ssr: false })
 
-type Status = { allowed: boolean; pro: boolean; locked: boolean; ageRequired?: boolean }
+type Status = { allowed: boolean; pro: boolean; locked: boolean; ageRequired?: boolean; child?: boolean }
 
 /** Shown under a finished answer. Only a counter is sent to the server; the answer stays in the browser. */
 export default function WatchLaylaButton({ answer }: { answer: string }) {
@@ -35,7 +35,9 @@ export default function WatchLaylaButton({ answer }: { answer: string }) {
 
   return (
     <>
-      {status.locked
+      {status.locked && status.child
+        ? <span data-testid='watch-layla-locked-child' style={{ ...style, opacity: 0.85, cursor: 'default' }}>🔒 Watch Layla explain this · back tomorrow</span>
+        : status.locked
         ? <a href='/upgrade' rel='nofollow' style={{ ...style, opacity: 0.85 }} aria-label='Watch Layla explain this. Locked: included with Pro'>🔒 Watch Layla explain this · Pro</a>
         : <button type='button' onClick={start} style={style} disabled={busy}>
             🎬 Watch Layla explain this{!status.pro ? ' (1 free a day)' : ''}
