@@ -16,6 +16,9 @@ const nextConfig = {
         ['/5x', '/solve/5x-minus-8-equals-27', 'timer_5x'],
         ['/x6', '/solve/x-plus-6-over-2-equals-9', 'timer_x6'],
         ['/x3', '/solve/x-over-3-plus-4-equals-10', 'timer_x3'],
+        ['/2x', '/solve/2x-plus-5-equals-17', 'timer_2x'],
+        ['/3x', '/solve/3-x-minus-2-equals-15', 'timer_3x'],
+        ['/x4', '/solve/x-over-4-minus-3-equals-2', 'timer_x4'],
       ].map(([source, path, campaign]) => ({ source, destination: `${path}?utm_source=instagram&utm_medium=social&utm_campaign=${campaign}`, permanent: false })),
     ]
   },
