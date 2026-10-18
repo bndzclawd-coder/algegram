@@ -126,6 +126,11 @@ export default function Pricing() {
                   <span style={{ color: 'var(--accent2)' }}>&#10003;</span> {f}
                 </li>
               ))}
+              {PLANS.pro.comingSoon.map(f => (
+                <li key={f} style={{ display: 'flex', gap: '0.6rem', fontSize: '0.875rem', color: 'var(--text-dim)' }}>
+                  <span aria-hidden style={{ width: '0.8em' }}>·</span> {f} <em style={{ fontStyle: 'normal', fontSize: '0.75rem', border: '1px solid var(--border)', borderRadius: 999, padding: '0 0.45rem' }}>Coming soon</em>
+                </li>
+              ))}
             </ul>
             <p style={{ marginTop: '1rem', fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.5 }}>
               Premium models for normal use. Heavy use switches to our standard model for the rest of the day.

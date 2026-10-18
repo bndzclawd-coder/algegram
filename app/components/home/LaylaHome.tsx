@@ -123,6 +123,7 @@ export default function LaylaHome({ example, topics }: { example: Example; topic
                 <div className='amt'>${(PLANS.pro.price / 100).toFixed(2)}<small>/mo</small></div>
                 <ul>
                   {PLANS.pro.features.map(f => <li key={f}>{f}</li>)}
+                  {PLANS.pro.comingSoon.map(f => <li key={f} className='soon'>{f} · Coming soon</li>)}
                 </ul>
                 <a className='btn' href='/upgrade' rel='nofollow'>{PRO_CTA_TEXT}</a>
                 <p className='foot'>Fair-use limits apply.</p>
