@@ -62,7 +62,9 @@ test('every tagged <Link> in the app has prefetch={false} (Next hides <Link> pre
   let tagged = 0
   for (const f of files) {
     const src = fs.readFileSync(f, 'utf8')
-    for (const m of src.matchAll(/<Link\b[^>]*>/gs)) {
+    const re = /<Link\b[^>]*>/g
+    let m: RegExpExecArray | null
+    while ((m = re.exec(src)) !== null) {
       if (!/utm_|[?&]ref=|[?&]src=/.test(m[0])) continue
       tagged++
       assert.match(m[0], /prefetch=\{false\}/, `${f}: ${m[0].slice(0, 100)}`)
