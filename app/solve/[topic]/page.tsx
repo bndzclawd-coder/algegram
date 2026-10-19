@@ -527,6 +527,9 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
         </div>
         © {new Date().getFullYear()} Algegram
       </footer>
+      {/* Room for the small-screen sticky button so it never covers the last lines or footer links. */}
+      <div className='sticky-try-own-spacer' aria-hidden='true' />
+      <style>{`.sticky-try-own-spacer { height: 84px; } @media (min-width: 768px) { .sticky-try-own-spacer { display: none; } }`}</style>
     </div>
   )
 }
