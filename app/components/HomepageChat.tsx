@@ -39,22 +39,24 @@ const MessageBubble = memo(function MessageBubble({ msg }: { msg: Message }) {
 
 const MemoWatchLayla = memo(WatchLaylaButton)
 
-function SignupWall({ onClose, proPitch = 'or go Pro for more.' }: { onClose: () => void; proPitch?: string }) {
+export function SignupWall({ onClose, proPitch = 'or go Pro for more.', kidSafe = false }: { onClose: () => void; proPitch?: string; kidSafe?: boolean }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
       <div style={{ background: 'var(--surface)', border: '1px solid rgba(108,99,255,.4)', borderRadius: '24px', padding: '2rem', maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 0 60px rgba(108,99,255,.2)' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎉</div>
         <h2 style={{ fontWeight: 800, fontSize: 'clamp(1.1rem, 4vw, 1.5rem)', marginBottom: '0.5rem' }}>You’ve used your 5 free questions!</h2>
         <p style={{ color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: '0.75rem', fontSize: '0.9rem' }}>
-          <OfferText normal='Sign up free to get 7 days of Pro, then 20 questions a day on Free. No card needed.' center='Sign up free with your center to keep going with Pro.' />
+          {kidSafe ? 'Sign up free to keep going: 20 questions a day. No card needed.' : <OfferText normal='Sign up free to get 7 days of Pro, then 20 questions a day on Free. No card needed.' center='Sign up free with your center to keep going with Pro.' />}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1.5rem' }}>
           <a href='/auth/signup' style={{ display: 'block', background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.9rem', borderRadius: '12px', fontWeight: 700, fontSize: '1rem', textDecoration: 'none' }}>
-            <OfferText normal='Sign up free, get 7 days of Pro →' center='Sign up free →' />
+            {kidSafe ? 'Sign up free →' : <OfferText normal='Sign up free, get 7 days of Pro →' center='Sign up free →' />}
           </a>
+          {!kidSafe && (
           <a href='/pricing' style={{ display: 'block', background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.75rem', borderRadius: '12px', fontWeight: 600, fontSize: '0.875rem', textDecoration: 'none' }}>
             See Pro plans
           </a>
+          )}
           <a href='/auth/login' style={{ display: 'block', color: 'var(--text-dim)', fontSize: '0.8rem', textDecoration: 'none', marginTop: '0.25rem' }}>
             Already have an account? Sign in
           </a>
@@ -68,7 +70,12 @@ function SignupWall({ onClose, proPitch = 'or go Pro for more.' }: { onClose: ()
 }
 
 /** intro: optional fixed line rendered by the page (not the model) above the first answer. */
-export default function HomepageChat({ intro, placeholders, proPitch }: { intro?: string; placeholders?: string[]; proPitch?: string } = {}) {
+/**
+ * kidSafe: the /ask page reached from /solve. Every guest there is treated as possibly under 13 for upgrade
+ * lines: no trial, Pro, upgrade, pricing or price text, and no photo (Pro) button. Limits are unchanged.
+ * autoFocus: focus the input on load, ready to type (empty input; nothing is prefilled from the page).
+ */
+export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = false, autoFocus = false }: { intro?: string; placeholders?: string[]; proPitch?: string; kidSafe?: boolean; autoFocus?: boolean } = {}) {
   const [phIdx, setPhIdx] = useState(0)
   useEffect(() => {
     if (!placeholders?.length) return
@@ -97,9 +104,11 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
       .catch(() => {})
   }, [])
 
+  useEffect(() => { if (autoFocus) inputRef.current?.focus() }, [autoFocus])
+
   // Topic pages link to /?q=...#try so the box arrives prefilled (never auto-sent).
   useEffect(() => {
-    const pre = new URLSearchParams(window.location.search).get('q')
+    const pre = kidSafe ? null : new URLSearchParams(window.location.search).get('q')
     if (pre) {
       setInput(pre.slice(0, 500))
       inputRef.current?.focus()
@@ -256,7 +265,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
           </div>
         </div>
       )}
-      {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} proPitch={proPitch} />}
+      {showSignupWall && <SignupWall onClose={() => setShowSignupWall(false)} proPitch={proPitch} kidSafe={kidSafe} />}
       {!hasMessages && acct && !acct.signedIn && (
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-block', background: 'rgba(108,99,255,.12)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent2)', marginBottom: '1.25rem' }}>
@@ -272,7 +281,7 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
                 <div data-testid='tutor-intro' style={{ fontWeight: 700, fontSize: '0.9rem', margin: '0 0 0.35rem 2.25rem' }}>{intro}</div>
               )}
               <MessageBubble msg={m} />
-              {i === lessonIdx && <MemoWatchLayla answer={m.content} />}
+              {i === lessonIdx && <MemoWatchLayla answer={m.content} kidSafe={kidSafe} />}
               {m.role === 'assistant' && i === messages.length - 1 && !streaming && showQuickReplies(m.content, messages[i - 1]?.role === 'user' ? messages[i - 1].content : null) && <QuickReplyChips onPick={t => send(t)} disabled={streaming} />}
             </div>
           ))}
@@ -302,9 +311,9 @@ export default function HomepageChat({ intro, placeholders, proPitch }: { intro?
           </span>
           )}
           <span style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <input ref={fileRef} type='file' accept='image/*' capture='environment' hidden onChange={e => { const f = e.target.files?.[0]; if (f) sendPhoto(f) }} />
-          <button type='button' onClick={onCamera} aria-label='Solve from a photo (Pro)' title='Snap just the problem, not your name.'
-            style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.55rem 0.8rem', cursor: 'pointer', fontSize: '1rem', color: 'var(--text)' }}>📷</button>
+          {!kidSafe && <input ref={fileRef} type='file' accept='image/*' capture='environment' hidden onChange={e => { const f = e.target.files?.[0]; if (f) sendPhoto(f) }} />}
+          {!kidSafe && <button type='button' onClick={onCamera} aria-label='Solve from a photo (Pro)' title='Snap just the problem, not your name.'
+            style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.55rem 0.8rem', cursor: 'pointer', fontSize: '1rem', color: 'var(--text)' }}>📷</button>}
           <button onClick={() => send()} disabled={streaming || !input.trim()}
             style={{ background: streaming || !input.trim() ? 'rgba(108,99,255,.3)' : 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', border: 'none', borderRadius: '10px', padding: '0.6rem 1.4rem', cursor: streaming || !input.trim() ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0, minWidth: 80 }}>
             {streaming ? '…' : 'Solve →'}
