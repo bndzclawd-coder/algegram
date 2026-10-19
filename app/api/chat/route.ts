@@ -123,9 +123,13 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
       ? NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
       : NextResponse.json({ error: 'Too many free questions from this network. Sign up to continue.', signup: true }, { status: 429 })
   }
-  // Daily /ask aggregate (date + count only). Fire and forget; never blocks or fails the chat.
+  // Daily /ask aggregate (date + count only). Awaited (serverless can drop work after the response) but it
+  // never fails the chat.
   if (isAskSessionStart(parsed.surface, parsed.messages.length)) {
-    Promise.resolve(createServiceClient().rpc('increment_guest_ask', { p_day: ptDay() })).then(r => { if (r.error) console.error('[chat] ask counter failed', { code: r.error.code }) }, () => console.error('[chat] ask counter threw'))
+    try {
+      const r = await createServiceClient().rpc('increment_guest_ask', { p_day: ptDay() })
+      if (r.error) console.error('[chat] ask counter failed', { code: r.error.code })
+    } catch { console.error('[chat] ask counter threw') }
   }
   // A standard math-only refusal does not use up one of the 5 free questions (decided here from the tutor's
   // own reply). It still counts toward the per-network cap above (consumeIpQuota), which is what stops
