@@ -8,7 +8,8 @@ const LaylaWhiteboard = dynamic(() => import('./LaylaWhiteboard'), { ssr: false 
 type Status = { allowed: boolean; pro: boolean; locked: boolean; ageRequired?: boolean; child?: boolean }
 
 /** Shown under a finished answer. Only a counter is sent to the server; the answer stays in the browser. */
-export default function WatchLaylaButton({ answer }: { answer: string }) {
+/** kidSafe: treat the viewer as possibly under 13 (no /upgrade link when locked). */
+export default function WatchLaylaButton({ answer, kidSafe = false }: { answer: string; kidSafe?: boolean }) {
   const [status, setStatus] = useState<Status | null>(null)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -35,7 +36,7 @@ export default function WatchLaylaButton({ answer }: { answer: string }) {
 
   return (
     <>
-      {status.locked && status.child
+      {status.locked && (status.child || kidSafe)
         ? <span data-testid='watch-layla-locked-child' style={{ ...style, opacity: 0.85, cursor: 'default' }}>🔒 Watch Layla explain this · back tomorrow</span>
         : status.locked
         ? <a href='/upgrade' rel='nofollow' style={{ ...style, opacity: 0.85 }} aria-label='Watch Layla explain this. Locked: included with Pro'>🔒 Watch Layla explain this · Pro</a>

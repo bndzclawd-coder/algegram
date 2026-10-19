@@ -2,7 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { pageMetadata } from '@/lib/seo'
 import { GUEST_FREE_QUESTIONS, SITE_URL } from '@/lib/site-config'
-import OfferText from '@/app/components/OfferText'
+import TryOwnCta from '@/app/components/solve/TryOwnCta'
+import StickyTryOwn from '@/app/components/solve/StickyTryOwn'
 
 // Static list of supported topics and example Q&A pairs
 // Never render user input on these pages — SEO-safe static content only
@@ -471,6 +472,9 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
           ))}
         </div>
 
+        {/* First strong call to action after the solution and its answer check. */}
+        <TryOwnCta />
+
         {data.faq && (
           <section style={{ marginTop: '3rem' }}>
             <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '1rem' }}>Frequently asked questions</h2>
@@ -495,10 +499,10 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
         {data.h1 && (
           <div style={{ marginTop: '3rem', textAlign: 'center', padding: '2rem', background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '16px' }}>
             <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>
-              <OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' />
+              Sign up free to keep going after your free questions. No card needed.
             </p>
             <Link href={`/auth/signup?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', display: 'inline-block' }}>
-              <OfferText normal='Sign up free, get 7 days of Pro' center='Sign up free' /> →
+              Sign up free →
             </Link>
           </div>
         )}
@@ -513,6 +517,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
         </div>
       </div>
 
+      <StickyTryOwn />
       <footer style={{ borderTop: '1px solid var(--border)', padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
         <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
           <Link href="/terms" style={{ color: 'var(--text-dim)' }}>Terms</Link>
