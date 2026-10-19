@@ -42,7 +42,7 @@ export default function Challenges() {
         <Link href="/" style={{ fontWeight: 800, fontSize: '1.2rem', background: 'linear-gradient(135deg,#6c63ff,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textDecoration: 'none' }}>
           Algegram
         </Link>
-        <Link href="/auth/signup?utm_source=social&utm_medium=bio&utm_campaign=challenges" style={{ background: 'var(--accent)', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}>
+        <Link prefetch={false} href="/auth/signup?utm_source=social&utm_medium=bio&utm_campaign=challenges" style={{ background: 'var(--accent)', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}>
           Get started free
         </Link>
       </nav>
@@ -77,7 +77,7 @@ export default function Challenges() {
           <p style={{ color: 'var(--text-dim)', marginBottom: '1rem', textAlign: 'center' }}>
             <OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' />
           </p>
-          <Link href="/auth/signup?utm_source=social&utm_medium=bio&utm_campaign=challenges" style={btn}>
+          <Link prefetch={false} href="/auth/signup?utm_source=social&utm_medium=bio&utm_campaign=challenges" style={btn}>
             <OfferText normal='Sign up free, get 7 days of Pro' center='Sign up free' /> →
           </Link>
         </section>

@@ -443,7 +443,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
             <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{data.ctaLabel ? `Try a similar ${data.ctaLabel}` : `Ask your own ${data.title.toLowerCase()} question`}</div>
             <div style={{ color: 'var(--text-dim)', fontSize: '0.875rem' }}>Type your own problem on the homepage and see every step. {GUEST_FREE_QUESTIONS} free questions, no sign-up.</div>
           </div>
-          <Link href={`/?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+          <Link prefetch={false} href={`/?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
             Try {GUEST_FREE_QUESTIONS} free questions →
           </Link>
         </div>
@@ -501,7 +501,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
             <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>
               Sign up free to keep going after your free questions. No card needed.
             </p>
-            <Link href={`/auth/signup?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', display: 'inline-block' }}>
+            <Link prefetch={false} href={`/auth/signup?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none', display: 'inline-block' }}>
               Sign up free →
             </Link>
           </div>
@@ -511,7 +511,7 @@ export default function SolveTopic({ params }: { params: { topic: string } }) {
           <p style={{ color: 'var(--text-dim)', marginBottom: '1rem' }}>
             Stuck on a different problem? Ask Algegram and get every step explained. Your first {GUEST_FREE_QUESTIONS} questions are free, no sign-up needed.
           </p>
-          <Link href={`/?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>
+          <Link prefetch={false} href={`/?utm_source=seo&utm_medium=organic&utm_campaign=${params.topic.replace(/-/g, '_')}`} style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.8rem 2rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.95rem', textDecoration: 'none' }}>
             Ask my math question →
           </Link>
         </div>
