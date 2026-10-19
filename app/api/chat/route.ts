@@ -11,6 +11,8 @@ import { isChildAccount } from '@/lib/account/age-gate'
 import { freeLimitBody } from '@/lib/account/upsell'
 import { guestHistory, isAnsweringPractice } from '@/lib/chat/history'
 import { cleanReplyStream } from '@/lib/chat/clean'
+import { peekRefusal } from '@/lib/chat/refusal'
+import { ptDay, isAskSessionStart } from '@/lib/guest-ask'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
@@ -30,7 +32,7 @@ function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mod
     .map(m => ({ role: m.role, content: m.content }))
   if (messages.length === 0) return null
   const mode = typeof b.mode === 'string' && b.mode in SYSTEM_PROMPTS ? b.mode : 'math'
-  return { messages, model: b.model, mode, surface: b.surface === 'home' ? 'home' : undefined }
+  return { messages, model: b.model, mode, surface: b.surface === 'home' || b.surface === 'ask' ? (b.surface as string) : undefined }
 }
 
 // Every OpenRouter request goes through here, so data_collection: 'deny' is always set.
@@ -121,10 +123,21 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
       ? NextResponse.json({ error: 'Guest questions are temporarily unavailable. Please sign up or log in to continue.', signup: true }, { status: 503 })
       : NextResponse.json({ error: 'Too many free questions from this network. Sign up to continue.', signup: true }, { status: 429 })
   }
-  const res = ai.ok
-    ? new NextResponse(ai.body, { status: 200, headers: { ...streamHeaders('guest'), 'X-Guest-Remaining': String(GUEST_LIMIT - nextUsed) } })
-    : ai.res
-  setGuestCount(res, secret, nextUsed)
+  // Daily /ask aggregate (date + count only). Fire and forget; never blocks or fails the chat.
+  if (isAskSessionStart(parsed.surface, parsed.messages.length)) {
+    Promise.resolve(createServiceClient().rpc('increment_guest_ask', { p_day: ptDay() })).then(r => { if (r.error) console.error('[chat] ask counter failed', { code: r.error.code }) }, () => console.error('[chat] ask counter threw'))
+  }
+  // A standard math-only refusal does not use up one of the 5 free questions (decided here from the tutor's
+  // own reply). It still counts toward the per-network cap above (consumeIpQuota), which is what stops
+  // someone looping off-topic prompts to burn model calls.
+  let body = ai.ok ? ai.body : null
+  let refusal = false
+  if (ai.ok) { const p = await peekRefusal(ai.body); body = p.body; refusal = p.refusal }
+  const counted = refusal ? used : nextUsed
+  const res = body
+    ? new NextResponse(body, { status: 200, headers: { ...streamHeaders('guest'), 'X-Guest-Remaining': String(GUEST_LIMIT - counted) } })
+    : (ai as { res: NextResponse }).res
+  setGuestCount(res, secret, counted)
   if (req.cookies.get('ga')) res.cookies.set('ga', '', { path: '/', maxAge: 0 }) // drop the retired #24 age cookie
   return res
 }
@@ -151,7 +164,7 @@ export async function POST(req: NextRequest) {
   if (!profile?.age_verified) {
     // Signed in but no verified age (older accounts) asking from the homepage box: serve it like a
     // guest question (5-question counter, guest age screen, no DB writes) instead of a dead end.
-    if (parsed.surface === 'home') return handleGuest(req, parsed)
+    if (parsed.surface === 'home' || parsed.surface === 'ask') return handleGuest(req, parsed)
     return NextResponse.json(
       profile
         ? { error: "Algegram needs a parent's OK for users under 13. Your account is safe! Ask a grown-up to help: [Get a parent's OK →](/auth/age)", ageRequired: true }
