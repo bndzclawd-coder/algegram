@@ -39,7 +39,7 @@ export default function Page() {
       <h2 style={h2}>Questions</h2>
       {FAQ.map((f, i) => <div key={i} style={{ marginBottom: '1rem' }}><h3 style={{ fontWeight: 600, fontSize: '1rem' }}>{f.q}</h3><p style={{ color: 'var(--text-dim)', margin: 0 }}>{f.a}</p></div>)}
       <p>More answers on our <Link href='/help' style={{ color: 'var(--accent2)' }}>help page</Link>.</p>
-      <p style={{ marginTop: '2rem' }}><Link href='/auth/signup?utm_source=seo&utm_medium=organic&utm_campaign=kids_under_13' style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem 1.5rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Sign up with a parent →</Link></p>
+      <p style={{ marginTop: '2rem' }}><Link prefetch={false} href='/auth/signup?utm_source=seo&utm_medium=organic&utm_campaign=kids_under_13' style={{ background: 'linear-gradient(135deg,#6c63ff,#8b5cf6)', color: '#fff', padding: '0.75rem 1.5rem', borderRadius: 12, fontWeight: 700, textDecoration: 'none' }}>Sign up with a parent →</Link></p>
     </main>
   )
 }
