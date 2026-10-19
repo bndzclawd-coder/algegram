@@ -6,10 +6,11 @@ import { ATTR_COOKIE, ATTR_MAX_AGE, attributionFromSearchParams, encodeAttributi
 const REF_RE = /^[a-z2-9]{8}$/
 
 /**
- * Background fetches that are not a page view: Next.js <Link> prefetches (Next-Router-Prefetch), browser
- * speculative loads (Purpose / Sec-Purpose: prefetch or prerender), and Next's middleware prefetch. A
- * prefetch of a tagged link must never set or change the attribution or referral cookie; only a real view
- * (a page load, or a client navigation the visitor actually clicked) can.
+ * Background fetches that are not a page view must never set or change the attribution or referral cookie.
+ * Browser speculative loads say so in Purpose / Sec-Purpose / X-Purpose / X-Moz (prefetch or prerender).
+ * NOTE: Next.js strips its own RSC / Next-Router-Prefetch headers before middleware runs, so a <Link>
+ * prefetch cannot be detected here: every <Link> whose href carries utm_/ref tags must use prefetch={false}
+ * (enforced by scripts/attribution-prefetch.test.ts). The Next header checks stay in case that changes.
  */
 export function isPrefetchRequest(headers: Pick<Headers, 'get'>): boolean {
   if (headers.get('next-router-prefetch')) return true
