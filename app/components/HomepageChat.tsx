@@ -141,7 +141,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
       res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, mode: 'math', surface: 'home' }),
+        body: JSON.stringify({ messages: newMessages, mode: 'math', surface: kidSafe ? 'ask' : 'home' }),
       })
     } catch {
       setMessages(m => [...m, { role: 'assistant', content: '⚠️ Something went wrong. Please try again.' }])
