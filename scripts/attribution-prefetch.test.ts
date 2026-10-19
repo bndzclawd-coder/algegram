@@ -55,9 +55,18 @@ test('Instagram short link (/x3 -> /solve?utm...) still records timer_x3, first 
   assert.equal(withAttribution(req, NextResponse.next()).cookies.get(ATTR_COOKIE), undefined)
 })
 
-test('tagged internal <Link>s do not prefetch', () => {
-  for (const f of ['app/solve/[topic]/page.tsx', 'app/challenges/page.tsx', 'app/how-algegram-works-for-kids/page.tsx']) {
+test('every tagged <Link> in the app has prefetch={false} (Next hides <Link> prefetches from middleware)', () => {
+  const files: string[] = []
+  const walk = (d: string) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = `${d}/${e.name}`; if (e.isDirectory()) walk(p); else if (/\.tsx$/.test(e.name)) files.push(p) } }
+  walk('app')
+  let tagged = 0
+  for (const f of files) {
     const src = fs.readFileSync(f, 'utf8')
-    for (const line of src.split('\n').filter(l => /<Link\b/.test(l) && /utm_/.test(l))) assert.match(line, /prefetch=\{false\}/, `${f}: ${line.trim().slice(0, 80)}`)
+    for (const m of src.matchAll(/<Link\b[^>]*>/gs)) {
+      if (!/utm_|[?&]ref=|[?&]src=/.test(m[0])) continue
+      tagged++
+      assert.match(m[0], /prefetch=\{false\}/, `${f}: ${m[0].slice(0, 100)}`)
+    }
   }
+  assert.ok(tagged >= 6, `found ${tagged} tagged Links`)
 })
