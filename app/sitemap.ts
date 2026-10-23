@@ -22,7 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/billing`, lastModified: today, changeFrequency: "monthly" as const, priority: 0.3 },
   ]
 
-  const topics = ['fractions', 'linear-equations', 'percentages', 'order-of-operations', 'word-problems', 'algebra', 'calculus', 'statistics', 'linear-algebra', 'number-theory', '2x-plus-5-equals-17', '3-x-minus-2-equals-15', 'x-over-4-minus-3-equals-2', 'x-over-3-plus-4-equals-10', '5x-minus-8-equals-27', 'x-plus-6-over-2-equals-9']
+  const topics = ['fractions', 'linear-equations', 'percentages', 'order-of-operations', 'word-problems', 'algebra', 'calculus', 'statistics', 'linear-algebra', 'number-theory', '2x-plus-5-equals-17', '3-x-minus-2-equals-15', 'x-over-4-minus-3-equals-2', 'x-over-3-plus-4-equals-10', '5x-minus-8-equals-27', 'x-plus-6-over-2-equals-9', '4x-plus-7-equals-31', '2-x-plus-3-equals-14']
   const topicPages: MetadataRoute.Sitemap = topics.map(t => ({
     url: `${BASE}/solve/${t}`,
     lastModified: today,

@@ -31,6 +31,8 @@
 - [Solve x/3 + 4 = 10 step by step](https://www.algegram.xyz/solve/x-over-3-plus-4-equals-10)
 - [Solve 5x − 8 = 27 step by step](https://www.algegram.xyz/solve/5x-minus-8-equals-27)
 - [Solve (x + 6)/2 = 9 step by step](https://www.algegram.xyz/solve/x-plus-6-over-2-equals-9)
+- [Solve 4x + 7 = 31 step by step](https://www.algegram.xyz/solve/4x-plus-7-equals-31)
+- [Solve 2(x + 3) = 14 step by step](https://www.algegram.xyz/solve/2-x-plus-3-equals-14)
 - [Quadratic equation solver](https://www.algegram.xyz/quadratic-equation-solver)
 - [Fraction calculator](https://www.algegram.xyz/fraction-calculator)
 - [Privacy policy](https://www.algegram.xyz/privacy)
