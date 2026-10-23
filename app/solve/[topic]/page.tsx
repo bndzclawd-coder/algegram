@@ -99,6 +99,8 @@ const TOPIC_DATA: Record<string, {
       { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17 step by step' },
       { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15 step by step' },
       { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2 step by step' },
+      { href: '/solve/4x-plus-7-equals-31', label: 'Solve 4x + 7 = 31 step by step' },
+      { href: '/solve/2-x-plus-3-equals-14', label: 'Solve 2(x + 3) = 14 step by step' },
       { href: '/learn/two-step-equations', label: 'Two-step equations' },
     ],
     faq: [
@@ -277,6 +279,69 @@ const TOPIC_DATA: Record<string, {
     related: [
       { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17' },
       { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  '4x-plus-7-equals-31': {
+    title: 'Solve 4x + 7 = 31',
+    h1: 'Solve 4x + 7 = 31 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve 4x + 7 = 31 Step by Step (x = 6)',
+    description: 'How to solve the two-step equation 4x + 7 = 31, where x is multiplied by 4, with every step explained and a quick check of the answer.',
+    intro: 'Here x is multiplied by 4 and then has 7 added. Undo them in reverse order: take away the 7 first, then divide by 4.',
+    examples: [
+      { question: 'Solve 4x + 7 = 31', answer: 'x = 6',
+        steps: [
+          'Start with the equation: 4x + 7 = 31.',
+          'Subtract 7 from both sides to undo the + 7: 4x + 7 − 7 = 31 − 7, so 4x = 24.',
+          'Divide both sides by 4 to undo the × 4: 4x ÷ 4 = 24 ÷ 4, so x = 6.',
+          'Check your answer: put x = 6 back in. 4 × 6 + 7 = 24 + 7 = 31. Both sides match, so x = 6 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why subtract 7 before dividing by 4?', a: 'The 7 was added last, so it is undone first. If you divide by 4 first, you must divide every term: x + 7/4 = 31/4, which still gives x = 6 but with messier fractions.' },
+      { q: 'How can I check my answer?', a: 'Put x = 6 back into the original equation: 4 × 6 + 7 = 31. Both sides are equal, so the answer is right.' },
+    ],
+    related: [
+      { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17' },
+      { href: '/solve/2-x-plus-3-equals-14', label: 'Solve 2(x + 3) = 14' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  '2-x-plus-3-equals-14': {
+    title: 'Solve 2(x + 3) = 14',
+    h1: 'Solve 2(x + 3) = 14 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve 2(x + 3) = 14 Step by Step (x = 4)',
+    description: 'How to solve the equation 2(x + 3) = 14 with brackets, step by step, two ways, with a quick check of the answer.',
+    intro: 'Here x has 3 added, and then the whole bracket is multiplied by 2. You can undo the × 2 first by dividing both sides by 2, or you can multiply out the bracket first. Both ways give the same answer.',
+    examples: [
+      { question: 'Solve 2(x + 3) = 14', answer: 'x = 4',
+        steps: [
+          'Start with the equation: 2(x + 3) = 14.',
+          'Divide both sides by 2 to undo the × 2: (x + 3) = 14 ÷ 2, so x + 3 = 7.',
+          'Subtract 3 from both sides to undo the + 3: x + 3 − 3 = 7 − 3, so x = 4.',
+          'Check your answer: put x = 4 back in. 2(4 + 3) = 2(7) = 14. Both sides match, so x = 4 is correct. ✓',
+        ] },
+      { question: 'Another way: multiply out the bracket first', answer: 'x = 4',
+        steps: [
+          'Multiply the 2 by each term inside the bracket: 2 × x + 2 × 3 = 14, so 2x + 6 = 14.',
+          'Subtract 6 from both sides: 2x = 8.',
+          'Divide both sides by 2: x = 4.',
+          'Same answer as before. Check: 2(4) + 6 = 8 + 6 = 14. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Should I divide first or multiply out the bracket first?', a: 'Either works. Dividing by 2 first is quicker here because 14 divides evenly by 2. Multiplying out the bracket always works, even when the numbers do not divide evenly.' },
+      { q: 'What is a common mistake with 2(x + 3)?', a: 'Only multiplying the x by 2 and forgetting the 3. The 2 multiplies everything in the bracket, so 2(x + 3) is 2x + 6, not 2x + 3.' },
+    ],
+    related: [
+      { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15' },
+      { href: '/solve/4x-plus-7-equals-31', label: 'Solve 4x + 7 = 31' },
       { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
       { href: '/solve/linear-equations', label: 'More linear equations with examples' },
       { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
