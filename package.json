@@ -14,7 +14,8 @@
     "test:solve-cta": "npx -y tsx --tsconfig scripts/tsconfig.test.json --test scripts/solve-cta.test.tsx",
     "test:child-upsell": "npx -y tsx --tsconfig scripts/tsconfig.test.json --test scripts/child-upsell.test.tsx",
     "eval:followups": "npx -y tsx scripts/eval-followups.ts",
-    "test:chat-errors": "npx -y tsx --test scripts/chat-errors.test.ts"
+    "test:chat-errors": "npx -y tsx --test scripts/chat-errors.test.ts",
+    "test:tutor-health": "npx -y tsx --test scripts/tutor-health.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.1",

@@ -4,7 +4,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { PLANS } from '@/lib/plans'
 import { maybeSendDailyLimitEmail } from '@/lib/email/lifecycle'
-import { MODEL_PROVIDERS, resolveModel, FREE_MODEL, type PlanKind } from '@/lib/models'
+import { resolveModel, FREE_MODEL, type PlanKind } from '@/lib/models'
+import { FAST_MODEL, reasoningFor, providerFor, openRouterHeaders } from '@/lib/chat/ai-settings'
 import { PRO_FAIR_USE_DAILY } from '@/lib/site-config'
 import { SYSTEM_PROMPTS, systemPrompt, type PromptContext } from '@/lib/chat/prompts'
 import { isChildAccount } from '@/lib/account/age-gate'
@@ -39,7 +40,6 @@ function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mod
 // Every OpenRouter request goes through here, so data_collection: 'deny' is always set.
 // Simple problems (short arithmetic / one-variable algebra / percent & fraction work) go to a fast model.
 // Same provider (OpenRouter) and the same privacy settings: data_collection 'deny' + zero-data-retention routing.
-const FAST_MODEL = 'google/gemini-3.5-flash-lite'
 const HARD = /(integra|∫|deriv|d\/dx|limit|lim|matri|eigen|vector|prove|proof|series|sum of|Σ|log|ln|sin|cos|tan|probab|statistic|differential)/i
 function isSimpleProblem(text: string): boolean {
   const t = text.trim()
@@ -54,20 +54,14 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
     stream: true,
     temperature: 0.3,
     max_tokens: checking ? 2600 : 1400,
-    // Default model: keep hidden 'thinking' minimal so the first word shows quickly (3.5 Flash requires reasoning; enabled:false is a 400), except when the student is
-    // answering a chat practice problem: then a short think lets Layla work it out before judging their answer.
-    ...(model === FREE_MODEL ? { reasoning: checking ? { max_tokens: 1024 } : { effort: 'minimal' } } : {}),
+    // 3.5 Flash requires reasoning: minimal by default, a short think when checking a practice answer (lib/chat/ai-settings.ts).
+    ...reasoningFor(model, checking),
     // Zero data retention on every request: OpenRouter only routes to endpoints that keep nothing.
-    provider: { data_collection: 'deny', zdr: true, only: MODEL_PROVIDERS[model] ?? MODEL_PROVIDERS[FREE_MODEL] },
+    ...providerFor(model),
   }
   return fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://algegram.xyz',
-      'X-Title': 'Algegram',
-    },
+    headers: openRouterHeaders(),
     body: JSON.stringify(body),
   })
 }
