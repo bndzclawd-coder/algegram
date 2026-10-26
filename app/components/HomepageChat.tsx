@@ -4,6 +4,7 @@ import { MathMarkdown } from '@/lib/chat/MathMarkdown'
 import { memo, useState, useEffect, useRef, useCallback } from 'react'
 import WatchLaylaButton from '@/app/components/whiteboard/WatchLaylaButton'
 import QuickReplyChips, { showQuickReplies } from '@/app/components/QuickReplyChips'
+import { stripFailedTurns, chipAnswerIndex } from '@/lib/chat/turns'
 import { lessonAnswerIndex } from '@/lib/whiteboard/parse'
 
 type Message = { role: 'user' | 'assistant'; content: string }
@@ -141,7 +142,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
       res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, mode: 'math', surface: kidSafe ? 'ask' : 'home' }),
+        body: JSON.stringify({ messages: stripFailedTurns(newMessages), mode: 'math', surface: kidSafe ? 'ask' : 'home' }),
       })
     } catch {
       setMessages(m => [...m, { role: 'assistant', content: '⚠️ Something went wrong. Please try again.' }])
@@ -243,6 +244,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
   }, [])
 
   const hasMessages = messages.length > 0
+  const chipIdx = chipAnswerIndex(messages)
   const firstAssistant = messages.findIndex(x => x.role === 'assistant')
 
   return (
@@ -282,7 +284,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
               )}
               <MessageBubble msg={m} />
               {i === lessonIdx && <MemoWatchLayla answer={m.content} kidSafe={kidSafe} />}
-              {m.role === 'assistant' && i === messages.length - 1 && !streaming && showQuickReplies(m.content, messages[i - 1]?.role === 'user' ? messages[i - 1].content : null) && <QuickReplyChips onPick={t => send(t)} disabled={streaming} />}
+              {m.role === 'assistant' && i === chipIdx && !streaming && showQuickReplies(m.content, messages[i - 1]?.role === 'user' ? messages[i - 1].content : null) && <QuickReplyChips onPick={t => send(t)} disabled={streaming} />}
             </div>
           ))}
           {streaming && messages[messages.length - 1]?.role === 'assistant' && !messages[messages.length - 1]?.content && (

@@ -13,6 +13,7 @@ import { guestHistory, isAnsweringPractice } from '@/lib/chat/history'
 import { cleanReplyStream } from '@/lib/chat/clean'
 import { peekRefusal } from '@/lib/chat/refusal'
 import { ptDay, isAskSessionStart } from '@/lib/guest-ask'
+import { guestCountAfter } from '@/lib/chat/turns'
 import { GUEST_LIMIT, guestSecret, readGuestCount, setGuestCount, consumeIpQuota } from '@/lib/guest-limit'
 
 const FREE_LIMIT = PLANS.free.messagesPerDay
@@ -53,9 +54,9 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
     stream: true,
     temperature: 0.3,
     max_tokens: checking ? 2600 : 1400,
-    // Default model: skip hidden 'thinking' so the first word shows quickly, except when the student is
+    // Default model: keep hidden 'thinking' minimal so the first word shows quickly (3.5 Flash requires reasoning; enabled:false is a 400), except when the student is
     // answering a chat practice problem: then a short think lets Layla work it out before judging their answer.
-    ...(model === FREE_MODEL ? { reasoning: checking ? { max_tokens: 1024 } : { enabled: false } } : {}),
+    ...(model === FREE_MODEL ? { reasoning: checking ? { max_tokens: 1024 } : { effort: 'minimal' } } : {}),
     // Zero data retention on every request: OpenRouter only routes to endpoints that keep nothing.
     provider: { data_collection: 'deny', zdr: true, only: MODEL_PROVIDERS[model] ?? MODEL_PROVIDERS[FREE_MODEL] },
   }
@@ -105,9 +106,9 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
   const parsed = preParsed ?? parseBody(await req.json().catch(() => null))
   if (!parsed) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
 
-  // Count the question before the answer is returned, so failed calls can't be used to dodge the limit.
+  // The question is counted only after a successful answer (see guestCountAfter); failed calls still count
+  // toward the per-network cap (consumeIpQuota), so they can't be used to dodge limits.
   // The network quota check and the AI request start together (speed); a refused quota discards the AI stream.
-  const nextUsed = used + 1
   // Recent history is sent so follow-ups ("why?", "another one like this") are read in context.
   // Still nothing is stored; the guest counter counts every message as before.
   const history = guestHistory(parsed.messages)
@@ -125,7 +126,7 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
   }
   // Daily /ask aggregate (date + count only). Awaited (serverless can drop work after the response) but it
   // never fails the chat.
-  if (isAskSessionStart(parsed.surface, parsed.messages.length)) {
+  if (ai.ok && isAskSessionStart(parsed.surface, parsed.messages.length)) {
     try {
       const r = await createServiceClient().rpc('increment_guest_ask', { p_day: ptDay() })
       if (r.error) console.error('[chat] ask counter failed', { code: r.error.code })
@@ -137,10 +138,12 @@ async function handleGuest(req: NextRequest, preParsed?: ReturnType<typeof parse
   let body = ai.ok ? ai.body : null
   let refusal = false
   if (ai.ok) { const p = await peekRefusal(ai.body); body = p.body; refusal = p.refusal }
-  const counted = refusal ? used : nextUsed
+  // Only a successful, non-refusal answer uses up a free question; an errored reply costs nothing.
+  const counted = guestCountAfter(used, ai.ok, refusal)
   const res = body
     ? new NextResponse(body, { status: 200, headers: { ...streamHeaders('guest'), 'X-Guest-Remaining': String(GUEST_LIMIT - counted) } })
     : (ai as { res: NextResponse }).res
+  if (!body) res.headers.set('X-Guest-Remaining', String(GUEST_LIMIT - counted))
   setGuestCount(res, secret, counted)
   if (req.cookies.get('ga')) res.cookies.set('ga', '', { path: '/', maxAge: 0 }) // drop the retired #24 age cookie
   return res
