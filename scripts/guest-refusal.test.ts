@@ -40,7 +40,7 @@ test('a reply that only resembles the refusal, or other off-topic text, still co
 test('route decides from the tutor reply only; refusals keep the network cap', () => {
   const src = fs.readFileSync('app/api/chat/route.ts', 'utf8')
   assert.match(src, /peekRefusal\(ai\.body\)/)
-  assert.match(src, /const counted = refusal \? used : nextUsed/)
+  assert.match(src, /const counted = guestCountAfter\(used, ai\.ok, refusal\)/)
   assert.ok(src.indexOf('consumeIpQuota(req)') < src.indexOf('peekRefusal('), 'network quota is consumed before the refusal check')
   assert.doesNotMatch(src, /parsed\.refusal|body\.refusal/)
 })

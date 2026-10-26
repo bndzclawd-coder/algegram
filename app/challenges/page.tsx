@@ -80,7 +80,7 @@ export default function Challenges() {
         <section aria-labelledby="parents-h" style={{ padding: '1.5rem', background: 'rgba(108,99,255,.1)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '16px', marginBottom: '1.5rem' }}>
           <h2 id="parents-h" style={{ fontWeight: 800, fontSize: '1.2rem', lineHeight: 1.35, marginBottom: '0.6rem' }}>Just math. Homework time stays homework time.</h2>
           <p style={{ lineHeight: 1.7, marginBottom: '1.1rem' }}>
-            Layla only helps with math and kindly turns away anything else. Pro includes step-by-step whiteboard lessons and practice built from your child’s mistakes.
+            Layla only helps with math and kindly turns away anything else. Every answer shows the steps, so kids learn how to solve it, not just the answer.
           </p>
           <p style={{ color: 'var(--text-dim)', marginBottom: '1rem', textAlign: 'center' }}>
             Sign up free to keep going: 20 questions a day. No card needed.
