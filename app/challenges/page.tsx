@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
 import { releasedChallenges, nextChallenge, type Challenge } from '@/lib/challenges/data'
-import OfferText from '@/app/components/OfferText'
+import { TRY_OWN_HREF, TRY_OWN_LABEL, TRY_OWN_LINE } from '@/lib/solve-cta'
 
 // Re-render at most once a minute so each challenge appears shortly after its 5 PM PT post time.
 export const revalidate = 60
@@ -56,6 +56,14 @@ export default function Challenges() {
           Tip: work backwards. Undo the last thing that was done to x first, then keep going until x is on its own.
         </p>
 
+        {/* Kid-safe one-tap path to /ask: no Pro, trial, price or upgrade text. */}
+        <div data-testid='challenges-try-own' style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <Link prefetch={false} href={TRY_OWN_HREF} data-testid='try-own-button' style={{ ...btn, fontWeight: 800, fontSize: '1.05rem', minHeight: 48 }}>
+            {TRY_OWN_LABEL} →
+          </Link>
+          <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', margin: '0.6rem 0 0' }}>{TRY_OWN_LINE}</p>
+        </div>
+
         {list.length === 0 ? (
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>
             <p style={{ fontWeight: 700, marginBottom: '0.4rem' }}>The first challenge is coming soon</p>
@@ -75,10 +83,10 @@ export default function Challenges() {
             Layla only helps with math and kindly turns away anything else. Pro includes step-by-step whiteboard lessons and practice built from your child’s mistakes.
           </p>
           <p style={{ color: 'var(--text-dim)', marginBottom: '1rem', textAlign: 'center' }}>
-            <OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' />
+            Sign up free to keep going: 20 questions a day. No card needed.
           </p>
           <Link prefetch={false} href="/auth/signup?utm_source=social&utm_medium=bio&utm_campaign=challenges" style={btn}>
-            <OfferText normal='Sign up free, get 7 days of Pro' center='Sign up free' /> →
+            Sign up free →
           </Link>
         </section>
 
