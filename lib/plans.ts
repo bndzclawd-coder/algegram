@@ -16,7 +16,7 @@ export const PLANS = {
     price: 1299, // cents — $12.99/mo
     messagesPerDay: Infinity,
     models: [
-      'google/gemini-2.5-flash',
+      'google/gemini-3.5-flash',
       'anthropic/claude-sonnet-4.5',
       'openai/gpt-4o',
     ],

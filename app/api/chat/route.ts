@@ -38,7 +38,7 @@ function parseBody(raw: unknown): { messages: ChatMessage[]; model: unknown; mod
 // Every OpenRouter request goes through here, so data_collection: 'deny' is always set.
 // Simple problems (short arithmetic / one-variable algebra / percent & fraction work) go to a fast model.
 // Same provider (OpenRouter) and the same privacy settings: data_collection 'deny' + zero-data-retention routing.
-const FAST_MODEL = 'google/gemini-2.5-flash-lite'
+const FAST_MODEL = 'google/gemini-3.5-flash-lite'
 const HARD = /(integra|∫|deriv|d\/dx|limit|lim|matri|eigen|vector|prove|proof|series|sum of|Σ|log|ln|sin|cos|tan|probab|statistic|differential)/i
 function isSimpleProblem(text: string): boolean {
   const t = text.trim()
