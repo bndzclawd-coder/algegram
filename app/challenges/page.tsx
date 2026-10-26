@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { pageMetadata } from '@/lib/seo'
 import { releasedChallenges, nextChallenge, type Challenge } from '@/lib/challenges/data'
-import OfferText from '@/app/components/OfferText'
 import { TRY_OWN_HREF, TRY_OWN_LABEL, TRY_OWN_LINE } from '@/lib/solve-cta'
 
 // Re-render at most once a minute so each challenge appears shortly after its 5 PM PT post time.
@@ -84,10 +83,10 @@ export default function Challenges() {
             Layla only helps with math and kindly turns away anything else. Pro includes step-by-step whiteboard lessons and practice built from your child’s mistakes.
           </p>
           <p style={{ color: 'var(--text-dim)', marginBottom: '1rem', textAlign: 'center' }}>
-            <OfferText normal='Sign up free, get 7 days of Pro. No card needed.' center='Sign up free with your center for 14 days of Pro.' />
+            Sign up free to keep going: 20 questions a day. No card needed.
           </p>
           <Link prefetch={false} href="/auth/signup?utm_source=social&utm_medium=bio&utm_campaign=challenges" style={btn}>
-            <OfferText normal='Sign up free, get 7 days of Pro' center='Sign up free' /> →
+            Sign up free →
           </Link>
         </section>
 
