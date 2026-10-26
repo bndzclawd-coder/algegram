@@ -11,7 +11,7 @@ export const maxDuration = 60
 // Photo help (Pro). The image is read into memory, stripped of metadata, sent once to the model
 // through OpenRouter with zero-data-retention routing, and discarded. Never stored, never logged.
 const MAX_BYTES = 4 * 1024 * 1024
-const PHOTO_MODEL = 'google/gemini-2.5-flash'
+const PHOTO_MODEL = 'google/gemini-3.5-flash'
 const NOT_MATH = 'I can only help with math problems.'
 const PROMPT = `You are Layla, Algegram's AI math tutor, reading a photo of a math problem.
 Rules:
