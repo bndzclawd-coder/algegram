@@ -89,6 +89,8 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
   const lessonIdx = lessonAnswerIndex(messages, streaming)
   const [guestRemaining, setGuestRemaining] = useState(5)
   const [guestTotal] = useState(5)
+  // True once /api/guest-limit (the signed guest cookie) has answered, so the empty-state count is the real one.
+  const [guestKnown, setGuestKnown] = useState(false)
   const [showSignupWall, setShowSignupWall] = useState(false)
   const acctRef = useRef<{ signedIn: boolean } | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -100,6 +102,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
       .then(r => r.json())
       .then(data => {
         setGuestRemaining(data.remaining ?? 5)
+        if (typeof data.remaining === 'number') setGuestKnown(true)
         if ((data.remaining ?? 5) <= 0) setShowSignupWall(true)
       })
       .catch(() => {})
@@ -151,7 +154,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
     }
     // /api/chat checks and counts the guest limit itself and reports what's left.
     const left = res.headers.get('X-Guest-Remaining')
-    if (left !== null) setGuestRemaining(Math.max(0, parseInt(left, 10) || 0))
+    if (left !== null) { setGuestRemaining(Math.max(0, parseInt(left, 10) || 0)); setGuestKnown(true) }
     else if (res.ok) setAcct(a => (a && a.left !== null ? { ...a, left: Math.max(0, a.left - 1) } : a))
     if (!res.ok) {
       if (res.status === 429) setGuestRemaining(0)
@@ -271,7 +274,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
       {!hasMessages && acct && !acct.signedIn && (
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-block', background: 'rgba(108,99,255,.12)', border: '1px solid rgba(108,99,255,.3)', borderRadius: '999px', padding: '0.3rem 1rem', fontSize: '0.8rem', color: 'var(--accent2)', marginBottom: '1.25rem' }}>
-            ✨ No sign-up needed · {guestRemaining} free question{guestRemaining !== 1 ? 's' : ''} left
+            ✨ No sign-up needed{guestKnown && <span data-testid='guest-free-count'> · {guestRemaining} free question{guestRemaining !== 1 ? 's' : ''} left</span>}
           </div>
         </div>
       )}
@@ -307,7 +310,7 @@ export default function HomepageChat({ intro, placeholders, proPitch, kidSafe = 
             {acct.pro ? '' : acct.left !== null ? `${acct.left} question${acct.left !== 1 ? 's' : ''} left today` : ''}
           </span>
           ) : (
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', flexShrink: 1, minWidth: 0, visibility: acct ? 'visible' : 'hidden' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', flexShrink: 1, minWidth: 0, visibility: acct && guestKnown ? 'visible' : 'hidden' }}>
             {guestRemaining > 0 ? `${guestRemaining} free question${guestRemaining !== 1 ? 's' : ''} remaining · ` : 'Free limit reached · '}
             <a href='/auth/signup' style={{ color: 'var(--accent2)', textDecoration: 'none', fontWeight: 600 }}>Sign up for more →</a>
           </span>
