@@ -33,6 +33,8 @@
 - [Solve (x + 6)/2 = 9 step by step](https://www.algegram.xyz/solve/x-plus-6-over-2-equals-9)
 - [Solve 4x + 7 = 31 step by step](https://www.algegram.xyz/solve/4x-plus-7-equals-31)
 - [Solve 2(x + 3) = 14 step by step](https://www.algegram.xyz/solve/2-x-plus-3-equals-14)
+- [Solve (x − 4)/3 = 5 step by step](https://www.algegram.xyz/solve/x-minus-4-over-3-equals-5)
+- [Solve (x + 10)/4 = 6 step by step](https://www.algegram.xyz/solve/x-plus-10-over-4-equals-6)
 - [Quadratic equation solver](https://www.algegram.xyz/quadratic-equation-solver)
 - [Fraction calculator](https://www.algegram.xyz/fraction-calculator)
 - [Privacy policy](https://www.algegram.xyz/privacy)

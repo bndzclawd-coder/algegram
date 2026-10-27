@@ -24,6 +24,9 @@ export const CHALLENGES: Challenge[] = [
   { equation: '(x + 6)/2 = 9', answer: 'x = 12', releaseAt: '2026-10-26T17:00:00-07:00', dateLabel: 'Mon Oct 26', solvePath: '/solve/x-plus-6-over-2-equals-9' },
   { equation: '4x + 7 = 31', answer: 'x = 6', releaseAt: '2026-10-28T17:00:00-07:00', dateLabel: 'Wed Oct 28', solvePath: '/solve/4x-plus-7-equals-31' },
   { equation: '2(x + 3) = 14', answer: 'x = 4', releaseAt: '2026-10-30T17:00:00-07:00', dateLabel: 'Fri Oct 30', solvePath: '/solve/2-x-plus-3-equals-14' },
+  { equation: '(x − 4)/3 = 5', answer: 'x = 19', releaseAt: '2026-10-29T17:00:00-07:00', dateLabel: 'Thu Oct 29', solvePath: '/solve/x-minus-4-over-3-equals-5' },
+  // Still PDT (-07:00): US clocks change on Sun Nov 1, so later entries must use -08:00.
+  { equation: '(x + 10)/4 = 6', answer: 'x = 14', releaseAt: '2026-10-31T17:00:00-07:00', dateLabel: 'Sat Oct 31', solvePath: '/solve/x-plus-10-over-4-equals-6' },
 ]
 
 /** Released challenges, newest first. */
