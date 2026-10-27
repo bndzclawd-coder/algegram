@@ -23,6 +23,8 @@ const nextConfig = {
         ['/2x3', '/solve/2-x-plus-3-equals-14', 'timer_2x3'],
         ['/x19', '/solve/x-minus-4-over-3-equals-5', 'timer_x19'],
         ['/x14', '/solve/x-plus-10-over-4-equals-6', 'timer_x14'],
+        // Instagram bio link -> /challenges (not in the sitemap).
+        ['/ig', '/challenges', 'ig_bio'],
       ].map(([source, path, campaign]) => ({ source, destination: `${path}?utm_source=instagram&utm_medium=social&utm_campaign=${campaign}`, permanent: false })),
       // Parent share link: temporary (307) to the kid-safe /ask page with share attribution. Not in the sitemap.
       { source: '/try', destination: '/ask?utm_source=share&utm_medium=referral&utm_campaign=parent_share', permanent: false },
