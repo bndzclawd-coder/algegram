@@ -28,3 +28,15 @@ test('client strips failed turns and only counts on success', () => {
   assert.match(src, /stripFailedTurns\(newMessages\)/)
   assert.match(src, /chipAnswerIndex\(messages\)/)
 })
+
+test('cleanReplyStream reports usage counts and strips them from the browser stream', async () => {
+  const { cleanReplyStream } = await import('../lib/chat/clean')
+  const sse = 'data: {"choices":[{"index":0,"delta":{"content":"x = 4"}}]}\n' +
+    'data: {"choices":[{"index":0,"delta":{"content":""},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":3,"completion_tokens_details":{"reasoning_tokens":1},"cost":0.00001}}\n' +
+    'data: [DONE]\n'
+  let got: any = null
+  const out = cleanReplyStream(new Response(sse).body!, u => { got = u })
+  const text = await new Response(out).text()
+  assert.deepEqual(got, { prompt_tokens: 10, completion_tokens: 3, reasoning_tokens: 1, cost: 0.00001 })
+  assert.ok(!text.includes('usage') && !text.includes('cost') && text.includes('x = 4'))
+})

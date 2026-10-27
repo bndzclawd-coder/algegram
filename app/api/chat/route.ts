@@ -58,6 +58,8 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
     ...reasoningFor(model, checking),
     // Zero data retention on every request: OpenRouter only routes to endpoints that keep nothing.
     ...providerFor(model),
+    // Token counts only (for cost tracking); logged below, never forwarded to the browser.
+    usage: { include: true },
   }
   return fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -70,7 +72,7 @@ async function callOpenRouter(model: string, messages: ChatMessage[], mode: stri
 async function aiStream(plan: PlanKind, model: string, messages: ChatMessage[], mode: string, ctx: PromptContext = { plan }) {
   try {
     const res = await callOpenRouter(model, messages, mode, ctx)
-    if (res.ok && res.body) return { ok: true as const, body: cleanReplyStream(res.body) }
+    if (res.ok && res.body) return { ok: true as const, body: cleanReplyStream(res.body, u => console.log('[chat] usage', { plan, model, turns: messages.length, ...u })) }
     console.error('[chat] OpenRouter request failed', { plan, model, status: res.status })
     res.body?.cancel().catch(() => {})
   } catch (e) {

@@ -20,7 +20,9 @@ export function cleanReplyText(text: string): string {
  * split across chunks ("answ" + "ert"), so trailing letters of each chunk are held back and sent with the
  * next one; anything still held is flushed before [DONE] or at the end of the stream.
  */
-export function cleanReplyStream(body: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+export type StreamUsage = { prompt_tokens?: number; completion_tokens?: number; reasoning_tokens?: number; cost?: number }
+/** onUsage gets the provider's token counts (numbers only) from the final chunk; usage is not forwarded to the browser. */
+export function cleanReplyStream(body: ReadableStream<Uint8Array>, onUsage?: (u: StreamUsage) => void): ReadableStream<Uint8Array> {
   const dec = new TextDecoder()
   const enc = new TextEncoder()
   let buf = ''
@@ -35,6 +37,11 @@ export function cleanReplyStream(body: ReadableStream<Uint8Array>): ReadableStre
     if (data.trim() === '[DONE]') { flushHeld(ctl); ctl.enqueue(enc.encode(line + '\n')); return }
     let json: any
     try { json = JSON.parse(data) } catch { ctl.enqueue(enc.encode(line + '\n')); return }
+    if (json && typeof json === 'object' && json.usage) {
+      const u = json.usage
+      try { onUsage?.({ prompt_tokens: u.prompt_tokens, completion_tokens: u.completion_tokens, reasoning_tokens: u.completion_tokens_details?.reasoning_tokens, cost: u.cost }) } catch {}
+      delete json.usage
+    }
     const delta = json?.choices?.[0]?.delta
     if (delta && typeof delta.content === 'string') {
       const text = held + delta.content
