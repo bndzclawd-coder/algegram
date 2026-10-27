@@ -101,6 +101,8 @@ const TOPIC_DATA: Record<string, {
       { href: '/solve/x-over-4-minus-3-equals-2', label: 'Solve x/4 − 3 = 2 step by step' },
       { href: '/solve/4x-plus-7-equals-31', label: 'Solve 4x + 7 = 31 step by step' },
       { href: '/solve/2-x-plus-3-equals-14', label: 'Solve 2(x + 3) = 14 step by step' },
+      { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5 step by step' },
+      { href: '/solve/x-plus-10-over-4-equals-6', label: 'Solve (x + 10)/4 = 6 step by step' },
       { href: '/learn/two-step-equations', label: 'Two-step equations' },
     ],
     faq: [
@@ -279,6 +281,62 @@ const TOPIC_DATA: Record<string, {
     related: [
       { href: '/solve/2x-plus-5-equals-17', label: 'Solve 2x + 5 = 17' },
       { href: '/solve/3-x-minus-2-equals-15', label: 'Solve 3(x − 2) = 15' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-minus-4-over-3-equals-5': {
+    title: 'Solve (x − 4)/3 = 5',
+    h1: 'Solve (x − 4)/3 = 5 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve (x − 4)/3 = 5 Step by Step (x = 19)',
+    description: 'How to solve the two-step equation (x − 4)/3 = 5, where x − 4 is divided by 3, with every step explained and a quick check of the answer.',
+    intro: 'Here 4 is taken away from x first, and then the whole thing is divided by 3. Undo them in reverse order: undo the divide by 3 by multiplying by 3, then add the 4 back.',
+    examples: [
+      { question: 'Solve (x − 4)/3 = 5', answer: 'x = 19',
+        steps: [
+          'Start with the equation: (x − 4)/3 = 5.',
+          'Multiply both sides by 3 to undo the ÷ 3: ((x − 4)/3) × 3 = 5 × 3, so x − 4 = 15.',
+          'Add 4 to both sides to undo the − 4: x − 4 + 4 = 15 + 4, so x = 19.',
+          'Check your answer: put x = 19 back in. (19 − 4)/3 = 15/3 = 5. Both sides match, so x = 19 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why multiply by 3 first?', a: 'The brackets mean the whole x − 4 is divided by 3. Dividing happened last, so it is undone first: multiply both sides by 3 to get x − 4 = 15.' },
+      { q: 'Why add 4 instead of subtracting it?', a: 'The equation takes 4 away from x. Adding 4 undoes that, so the − 4 and + 4 cancel and leave x by itself.' },
+    ],
+    related: [
+      { href: '/solve/x-plus-6-over-2-equals-9', label: 'Solve (x + 6)/2 = 9' },
+      { href: '/solve/x-plus-10-over-4-equals-6', label: 'Solve (x + 10)/4 = 6' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-plus-10-over-4-equals-6': {
+    title: 'Solve (x + 10)/4 = 6',
+    h1: 'Solve (x + 10)/4 = 6 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve (x + 10)/4 = 6 Step by Step (x = 14)',
+    description: 'How to solve the two-step equation (x + 10)/4 = 6, where x + 10 is divided by 4, with every step explained and a quick check of the answer.',
+    intro: 'Here 10 is added to x first, and then the whole thing is divided by 4. Undo them in reverse order: undo the divide by 4 by multiplying by 4, then take away the 10.',
+    examples: [
+      { question: 'Solve (x + 10)/4 = 6', answer: 'x = 14',
+        steps: [
+          'Start with the equation: (x + 10)/4 = 6.',
+          'Multiply both sides by 4 to undo the ÷ 4: ((x + 10)/4) × 4 = 6 × 4, so x + 10 = 24.',
+          'Subtract 10 from both sides to undo the + 10: x + 10 − 10 = 24 − 10, so x = 14.',
+          'Check your answer: put x = 14 back in. (14 + 10)/4 = 24/4 = 6. Both sides match, so x = 14 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why multiply by 4 first?', a: 'The brackets mean the whole x + 10 is divided by 4. Dividing happened last, so it is undone first: multiply both sides by 4 to get x + 10 = 24.' },
+      { q: 'Can I subtract 10 first?', a: 'Not straight away. The 10 is inside the brackets and is being divided by 4 along with x, so you would have to take away 10/4 = 2.5 instead: x/4 = 3.5, which still gives x = 14.' },
+    ],
+    related: [
+      { href: '/solve/x-plus-6-over-2-equals-9', label: 'Solve (x + 6)/2 = 9' },
+      { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5' },
       { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
       { href: '/solve/linear-equations', label: 'More linear equations with examples' },
       { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
