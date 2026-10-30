@@ -27,6 +27,8 @@ export const CHALLENGES: Challenge[] = [
   { equation: '(x − 4)/3 = 5', answer: 'x = 19', releaseAt: '2026-10-29T17:00:00-07:00', dateLabel: 'Thu Oct 29', solvePath: '/solve/x-minus-4-over-3-equals-5' },
   // Still PDT (-07:00): US clocks change on Sun Nov 1, so later entries must use -08:00.
   { equation: '(x + 10)/4 = 6', answer: 'x = 14', releaseAt: '2026-10-31T17:00:00-07:00', dateLabel: 'Sat Oct 31', solvePath: '/solve/x-plus-10-over-4-equals-6' },
+  // PST (-08:00) from Sun Nov 1 onward.
+  { equation: '(x + 8)/3 = 7', answer: 'x = 13', releaseAt: '2026-11-02T17:00:00-08:00', dateLabel: 'Mon Nov 2', solvePath: '/solve/x-plus-8-over-3-equals-7' },
 ]
 
 /** Released challenges, newest first. */

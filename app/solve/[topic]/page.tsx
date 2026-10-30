@@ -103,6 +103,7 @@ const TOPIC_DATA: Record<string, {
       { href: '/solve/2-x-plus-3-equals-14', label: 'Solve 2(x + 3) = 14 step by step' },
       { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5 step by step' },
       { href: '/solve/x-plus-10-over-4-equals-6', label: 'Solve (x + 10)/4 = 6 step by step' },
+      { href: '/solve/x-plus-8-over-3-equals-7', label: 'Solve (x + 8)/3 = 7 step by step' },
       { href: '/learn/two-step-equations', label: 'Two-step equations' },
     ],
     faq: [
@@ -336,6 +337,34 @@ const TOPIC_DATA: Record<string, {
     ],
     related: [
       { href: '/solve/x-plus-6-over-2-equals-9', label: 'Solve (x + 6)/2 = 9' },
+      { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-plus-8-over-3-equals-7': {
+    title: 'Solve (x + 8)/3 = 7',
+    h1: 'Solve (x + 8)/3 = 7 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve (x + 8)/3 = 7 Step by Step (x = 13)',
+    description: 'How to solve the two-step equation (x + 8)/3 = 7, where x + 8 is divided by 3, with every step explained and a quick check of the answer.',
+    intro: 'Here 8 is added to x first, and then the whole thing is divided by 3. Undo them in reverse order: undo the divide by 3 by multiplying by 3, then take away the 8.',
+    examples: [
+      { question: 'Solve (x + 8)/3 = 7', answer: 'x = 13',
+        steps: [
+          'Start with the equation: (x + 8)/3 = 7.',
+          'Multiply both sides by 3 to undo the ÷ 3: ((x + 8)/3) × 3 = 7 × 3, so x + 8 = 21.',
+          'Subtract 8 from both sides to undo the + 8: x + 8 − 8 = 21 − 8, so x = 13.',
+          'Check your answer: put x = 13 back in. (13 + 8)/3 = 21/3 = 7. Both sides match, so x = 13 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why multiply by 3 first?', a: 'The brackets mean the whole x + 8 is divided by 3. Dividing happened last, so it is undone first: multiply both sides by 3 to get x + 8 = 21.' },
+      { q: 'Why subtract 8 instead of adding it?', a: 'The equation adds 8 to x. Subtracting 8 undoes that, so the + 8 and − 8 cancel and leave x by itself.' },
+    ],
+    related: [
+      { href: '/solve/x-plus-10-over-4-equals-6', label: 'Solve (x + 10)/4 = 6' },
       { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5' },
       { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
       { href: '/solve/linear-equations', label: 'More linear equations with examples' },
