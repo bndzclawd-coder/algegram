@@ -80,10 +80,11 @@ test('Instagram bio link (/ig -> /challenges) reads as Social post with campaign
   assert.equal(alertSource(row(a)), 'Social post (campaign: ig_bio)')
 })
 
-test('timer Reel link for the Nov 2 /solve page (/x13) reads as Social post with its campaign', () => {
-  const path = '/solve/x-plus-8-over-3-equals-7', camp = 'timer_x13'
+test('timer Reel link for the Oct 30 / Nov 2 /solve pages (/x21 Oct 30, /x13 Nov 2) read as Social post with their campaign', () => {
+  for (const [path, camp] of [['/solve/x-minus-6-over-5-equals-3', 'timer_x21'], ['/solve/x-plus-8-over-3-equals-7', 'timer_x13']]) {
   const a = decodeAttribution(encodeAttribution(attributionFromSearchParams(new URLSearchParams(`utm_source=instagram&utm_medium=social&utm_campaign=${camp}`), path, null)!))!
   assert.equal(a.landing_path, path)
   assert.equal(a.utm_campaign, camp)
   assert.equal(alertSource(row(a)), `Social post (campaign: ${camp})`)
+  }
 })

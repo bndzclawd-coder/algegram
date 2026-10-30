@@ -103,6 +103,7 @@ const TOPIC_DATA: Record<string, {
       { href: '/solve/2-x-plus-3-equals-14', label: 'Solve 2(x + 3) = 14 step by step' },
       { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5 step by step' },
       { href: '/solve/x-plus-10-over-4-equals-6', label: 'Solve (x + 10)/4 = 6 step by step' },
+      { href: '/solve/x-minus-6-over-5-equals-3', label: 'Solve (x − 6)/5 = 3 step by step' },
       { href: '/solve/x-plus-8-over-3-equals-7', label: 'Solve (x + 8)/3 = 7 step by step' },
       { href: '/learn/two-step-equations', label: 'Two-step equations' },
     ],
@@ -338,6 +339,34 @@ const TOPIC_DATA: Record<string, {
     related: [
       { href: '/solve/x-plus-6-over-2-equals-9', label: 'Solve (x + 6)/2 = 9' },
       { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-minus-6-over-5-equals-3': {
+    title: 'Solve (x − 6)/5 = 3',
+    h1: 'Solve (x − 6)/5 = 3 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve (x − 6)/5 = 3 Step by Step (x = 21)',
+    description: 'How to solve the two-step equation (x − 6)/5 = 3, where x − 6 is divided by 5, with every step explained and a quick check of the answer.',
+    intro: 'Here 6 is taken away from x first, and then the whole thing is divided by 5. Undo them in reverse order: undo the divide by 5 by multiplying by 5, then add the 6 back.',
+    examples: [
+      { question: 'Solve (x − 6)/5 = 3', answer: 'x = 21',
+        steps: [
+          'Start with the equation: (x − 6)/5 = 3.',
+          'Multiply both sides by 5 to undo the ÷ 5: ((x − 6)/5) × 5 = 3 × 5, so x − 6 = 15.',
+          'Add 6 to both sides to undo the − 6: x − 6 + 6 = 15 + 6, so x = 21.',
+          'Check your answer: put x = 21 back in. (21 − 6)/5 = 15/5 = 3. Both sides match, so x = 21 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why multiply by 5 first?', a: 'The brackets mean the whole x − 6 is divided by 5. Dividing happened last, so it is undone first: multiply both sides by 5 to get x − 6 = 15.' },
+      { q: 'Why add 6 instead of subtracting it?', a: 'The equation takes 6 away from x. Adding 6 undoes that, so the − 6 and + 6 cancel and leave x by itself.' },
+    ],
+    related: [
+      { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5' },
+      { href: '/solve/x-plus-8-over-3-equals-7', label: 'Solve (x + 8)/3 = 7' },
       { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
       { href: '/solve/linear-equations', label: 'More linear equations with examples' },
       { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
