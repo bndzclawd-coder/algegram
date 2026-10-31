@@ -1,4 +1,5 @@
 import { stripe } from '@/lib/stripe'
+import { SITE_URL } from '@/lib/site-config'
 
 export const LIVE_STATUSES = new Set(['active', 'trialing'])
 
@@ -17,7 +18,7 @@ export async function hasLiveSubscription(_dbStatus: string | null | undefined, 
 export async function portalUrl(customerId: string, returnPath = '/settings'): Promise<string> {
   const session = await stripe.billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}${returnPath}`,
+    return_url: `${SITE_URL}${returnPath}`,
   })
   return session.url
 }

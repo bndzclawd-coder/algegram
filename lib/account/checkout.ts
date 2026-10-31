@@ -1,5 +1,5 @@
 import { stripe } from '@/lib/stripe'
-import { TRIAL_DAYS } from '@/lib/site-config'
+import { TRIAL_DAYS, SITE_URL } from '@/lib/site-config'
 import { hasLiveSubscription, portalUrl } from '@/lib/account/subscription-status'
 import { attributionLabel, readAttribution } from '@/lib/attribution/server'
 import { isChildAccount } from '@/lib/account/age-gate'
@@ -62,8 +62,8 @@ export async function startProCheckout(db: Db, user: { id: string; email?: strin
     metadata: { supabase_user_id: user.id, ...refMeta },
     mode: 'subscription',
     line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID!, quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/chat?upgraded=1`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+    success_url: `${SITE_URL}/chat?upgraded=1`,
+    cancel_url: `${SITE_URL}/pricing`,
     allow_promotion_codes: true,
     subscription_data: { ...(trial ? { trial_period_days: TRIAL_DAYS } : {}), metadata: { supabase_user_id: user.id, ...refMeta } },
     managed_payments: { enabled: false },
