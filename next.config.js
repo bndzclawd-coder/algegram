@@ -25,6 +25,8 @@ const nextConfig = {
         ['/x14', '/solve/x-plus-10-over-4-equals-6', 'timer_x14'],
         ['/x21', '/solve/x-minus-6-over-5-equals-3', 'timer_x21'],
         ['/x13', '/solve/x-plus-8-over-3-equals-7', 'timer_x13'],
+        ['/x22', '/solve/x-minus-2-over-4-equals-5', 'timer_x22'],
+        ['/x16', '/solve/x-plus-4-over-5-equals-4', 'timer_x16'],
         // Instagram bio link -> /challenges (not in the sitemap).
         ['/ig', '/challenges', 'ig_bio'],
       ].map(([source, path, campaign]) => ({ source, destination: `${path}?utm_source=instagram&utm_medium=social&utm_campaign=${campaign}`, permanent: false })),

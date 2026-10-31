@@ -88,3 +88,12 @@ test('timer Reel link for the Oct 30 / Nov 2 /solve pages (/x21 Oct 30, /x13 Nov
   assert.equal(alertSource(row(a)), `Social post (campaign: ${camp})`)
   }
 })
+
+test('timer Reel links for the Nov 4 / Nov 6 /solve pages (/x22, /x16) read as Social post with their campaign', () => {
+  for (const [path, camp] of [['/solve/x-minus-2-over-4-equals-5', 'timer_x22'], ['/solve/x-plus-4-over-5-equals-4', 'timer_x16']]) {
+  const a = decodeAttribution(encodeAttribution(attributionFromSearchParams(new URLSearchParams(`utm_source=instagram&utm_medium=social&utm_campaign=${camp}`), path, null)!))!
+  assert.equal(a.landing_path, path)
+  assert.equal(a.utm_campaign, camp)
+  assert.equal(alertSource(row(a)), `Social post (campaign: ${camp})`)
+  }
+})

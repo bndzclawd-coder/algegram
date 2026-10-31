@@ -105,6 +105,8 @@ const TOPIC_DATA: Record<string, {
       { href: '/solve/x-plus-10-over-4-equals-6', label: 'Solve (x + 10)/4 = 6 step by step' },
       { href: '/solve/x-minus-6-over-5-equals-3', label: 'Solve (x − 6)/5 = 3 step by step' },
       { href: '/solve/x-plus-8-over-3-equals-7', label: 'Solve (x + 8)/3 = 7 step by step' },
+      { href: '/solve/x-minus-2-over-4-equals-5', label: 'Solve (x − 2)/4 = 5 step by step' },
+      { href: '/solve/x-plus-4-over-5-equals-4', label: 'Solve (x + 4)/5 = 4 step by step' },
       { href: '/learn/two-step-equations', label: 'Two-step equations' },
     ],
     faq: [
@@ -395,6 +397,62 @@ const TOPIC_DATA: Record<string, {
     related: [
       { href: '/solve/x-plus-10-over-4-equals-6', label: 'Solve (x + 10)/4 = 6' },
       { href: '/solve/x-minus-4-over-3-equals-5', label: 'Solve (x − 4)/3 = 5' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-minus-2-over-4-equals-5': {
+    title: 'Solve (x − 2)/4 = 5',
+    h1: 'Solve (x − 2)/4 = 5 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve (x − 2)/4 = 5 Step by Step (x = 22)',
+    description: 'How to solve the two-step equation (x − 2)/4 = 5, where x − 2 is divided by 4, with every step explained and a quick check of the answer.',
+    intro: 'Here 2 is taken away from x first, and then the whole thing is divided by 4. Undo them in reverse order: undo the divide by 4 by multiplying by 4, then add the 2 back.',
+    examples: [
+      { question: 'Solve (x − 2)/4 = 5', answer: 'x = 22',
+        steps: [
+          'Start with the equation: (x − 2)/4 = 5.',
+          'Multiply both sides by 4 to undo the ÷ 4: ((x − 2)/4) × 4 = 5 × 4, so x − 2 = 20.',
+          'Add 2 to both sides to undo the − 2: x − 2 + 2 = 20 + 2, so x = 22.',
+          'Check your answer: put x = 22 back in. (22 − 2)/4 = 20/4 = 5. Both sides match, so x = 22 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why multiply by 4 first?', a: 'The brackets mean the whole x − 2 is divided by 4. Dividing happened last, so it is undone first: multiply both sides by 4 to get x − 2 = 20.' },
+      { q: 'Why add 2 instead of subtracting it?', a: 'The equation takes 2 away from x. Adding 2 undoes that, so the − 2 and + 2 cancel and leave x by itself.' },
+    ],
+    related: [
+      { href: '/solve/x-minus-6-over-5-equals-3', label: 'Solve (x − 6)/5 = 3' },
+      { href: '/solve/x-plus-4-over-5-equals-4', label: 'Solve (x + 4)/5 = 4' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  'x-plus-4-over-5-equals-4': {
+    title: 'Solve (x + 4)/5 = 4',
+    h1: 'Solve (x + 4)/5 = 4 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve (x + 4)/5 = 4 Step by Step (x = 16)',
+    description: 'How to solve the two-step equation (x + 4)/5 = 4, where x + 4 is divided by 5, with every step explained and a quick check of the answer.',
+    intro: 'Here 4 is added to x first, and then the whole thing is divided by 5. Undo them in reverse order: undo the divide by 5 by multiplying by 5, then take away the 4.',
+    examples: [
+      { question: 'Solve (x + 4)/5 = 4', answer: 'x = 16',
+        steps: [
+          'Start with the equation: (x + 4)/5 = 4.',
+          'Multiply both sides by 5 to undo the ÷ 5: ((x + 4)/5) × 5 = 4 × 5, so x + 4 = 20.',
+          'Subtract 4 from both sides to undo the + 4: x + 4 − 4 = 20 − 4, so x = 16.',
+          'Check your answer: put x = 16 back in. (16 + 4)/5 = 20/5 = 4. Both sides match, so x = 16 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why multiply by 5 first?', a: 'The brackets mean the whole x + 4 is divided by 5. Dividing happened last, so it is undone first: multiply both sides by 5 to get x + 4 = 20.' },
+      { q: 'Why subtract 4 instead of adding it?', a: 'The equation adds 4 to x. Subtracting 4 undoes that, so the + 4 and − 4 cancel and leave x by itself.' },
+    ],
+    related: [
+      { href: '/solve/x-plus-8-over-3-equals-7', label: 'Solve (x + 8)/3 = 7' },
+      { href: '/solve/x-minus-2-over-4-equals-5', label: 'Solve (x − 2)/4 = 5' },
       { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
       { href: '/solve/linear-equations', label: 'More linear equations with examples' },
       { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
