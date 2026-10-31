@@ -16,7 +16,8 @@
     "eval:followups": "npx -y tsx scripts/eval-followups.ts",
     "test:chat-errors": "npx -y tsx --test scripts/chat-errors.test.ts",
     "test:tutor-health": "npx -y tsx --test scripts/tutor-health.test.ts",
-    "test:challenges-release": "npx -y tsx --test scripts/challenges-release.test.ts"
+    "test:challenges-release": "npx -y tsx --test scripts/challenges-release.test.ts",
+    "test:www-app-urls": "npx -y tsx --test scripts/www-app-urls.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.1",

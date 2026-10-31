@@ -6,6 +6,7 @@ import { consume, clientIp } from '@/lib/rate-limit'
 import { recordSignupAttribution } from '@/lib/attribution/server'
 import { ipHash, readRefCookie } from '@/lib/referral'
 import { readCenterCookie } from '@/lib/center/link'
+import { SITE_URL } from '@/lib/site-config'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (rl === 'limited') return NextResponse.json({ error: 'Too many sign-ups from this network. Please try again later.' }, { status: 429 })
 
   const wantsPro = body?.plan === 'pro'
-  const origin = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin
+  const origin = SITE_URL
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signUp({
     email, password,

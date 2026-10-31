@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import { Resend } from 'resend'
 import { consume, clientIp } from '@/lib/rate-limit'
 import { escapeHtml } from '@/lib/age'
-import { MAILBOX_LIVE } from '@/lib/site-config'
+import { MAILBOX_LIVE, SITE_URL } from '@/lib/site-config'
 
 // Rate limits (hashed keys only, see lib/rate-limit.ts). Shared by new-signup and existing-account consent.
 export const PER_IP = { limit: 5, windowSeconds: 60 * 60 }        // 5 requests / hour / network
@@ -39,7 +39,7 @@ export async function sendConsentEmail(opts: {
   centerName?: string | null
   parentEmail: string; childEmail: string; childBirthYear: number; token: string; existingAccount?: boolean
 }): Promise<boolean> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  const appUrl = SITE_URL
   const consentUrl = escapeHtml(`${appUrl}/auth/consent?token=${encodeURIComponent(opts.token)}`)
   const deleteUrl = escapeHtml(`${appUrl}/auth/consent?token=${encodeURIComponent(opts.token)}&action=delete`)
   const child = escapeHtml(opts.childEmail)
