@@ -3,8 +3,10 @@ import { pageMetadata } from '@/lib/seo'
 import { releasedChallenges, nextChallenge, type Challenge } from '@/lib/challenges/data'
 import { TRY_OWN_HREF, TRY_OWN_LABEL, TRY_OWN_LINE } from '@/lib/solve-cta'
 
-// Re-render at most once a minute so each challenge appears shortly after its 5 PM PT post time.
-export const revalidate = 60
+// Render on every request so a challenge appears the moment its 5 PM PT release time passes.
+// (ISR `revalidate = 60` served the stale build-time copy to the first visitor after release,
+// so on a quiet page the previous day's challenge stayed on top past 5 PM.)
+export const dynamic = 'force-dynamic'
 
 export const metadata = pageMetadata({
   title: '10-Second Math Challenges with Step-by-Step Answers | Algegram',
