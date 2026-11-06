@@ -31,6 +31,10 @@ export const CHALLENGES: Challenge[] = [
   { equation: '(x + 8)/3 = 7', answer: 'x = 13', releaseAt: '2026-11-02T17:00:00-08:00', dateLabel: 'Mon Nov 2', solvePath: '/solve/x-plus-8-over-3-equals-7' },
   { equation: '(x − 2)/4 = 5', answer: 'x = 22', releaseAt: '2026-11-04T17:00:00-08:00', dateLabel: 'Wed Nov 4', solvePath: '/solve/x-minus-2-over-4-equals-5' },
   { equation: '(x + 4)/5 = 4', answer: 'x = 16', releaseAt: '2026-11-06T17:00:00-08:00', dateLabel: 'Fri Nov 6', solvePath: '/solve/x-plus-4-over-5-equals-4' },
+  { equation: '(x + 3)/2 = 8', answer: 'x = 13', releaseAt: '2026-11-08T17:00:00-08:00', dateLabel: 'Sun Nov 8', solvePath: '/solve/x-plus-3-over-2-equals-8' },
+  { equation: '(x − 5)/4 = 3', answer: 'x = 17', releaseAt: '2026-11-10T17:00:00-08:00', dateLabel: 'Tue Nov 10', solvePath: '/solve/x-minus-5-over-4-equals-3' },
+  { equation: '(x + 7)/3 = 5', answer: 'x = 8', releaseAt: '2026-11-12T17:00:00-08:00', dateLabel: 'Thu Nov 12', solvePath: '/solve/x-plus-7-over-3-equals-5' },
+  { equation: '(x − 3)/5 = 2', answer: 'x = 13', releaseAt: '2026-11-14T17:00:00-08:00', dateLabel: 'Sat Nov 14', solvePath: '/solve/x-minus-3-over-5-equals-2' },
 ]
 
 /** Released challenges, newest first. */
