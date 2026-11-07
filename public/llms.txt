@@ -43,6 +43,8 @@
 - [Solve (x − 5)/4 = 3 step by step](https://www.algegram.xyz/solve/x-minus-5-over-4-equals-3)
 - [Solve (x + 7)/3 = 5 step by step](https://www.algegram.xyz/solve/x-plus-7-over-3-equals-5)
 - [Solve (x − 3)/5 = 2 step by step](https://www.algegram.xyz/solve/x-minus-3-over-5-equals-2)
+- [Solve 2(x + 3) = 10 step by step](https://www.algegram.xyz/solve/2-x-plus-3-equals-10)
+- [What is 3 + 3 × 3? Order of operations](https://www.algegram.xyz/solve/3-plus-3-times-3)
 - [Quadratic equation solver](https://www.algegram.xyz/quadratic-equation-solver)
 - [Fraction calculator](https://www.algegram.xyz/fraction-calculator)
 - [Privacy policy](https://www.algegram.xyz/privacy)

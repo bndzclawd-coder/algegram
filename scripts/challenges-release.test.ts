@@ -32,29 +32,25 @@ test('Nov 4 (x22) and Nov 6 (x16) release at 5 PM PST (-08:00) and their answers
   assert.equal(releasedChallenges(nov6).find(c => c.equation === '(x + 4)/5 = 4')?.answer, 'x = 16')
 })
 
-test('Nov 8, 10, 12, and 14 release at 5 PM PST (-08:00), answers check out, and each solvePath exists', () => {
-  const nov8 = Date.parse('2026-11-08T17:00:00-08:00')
-  const nov10 = Date.parse('2026-11-10T17:00:00-08:00')
-  const nov12 = Date.parse('2026-11-12T17:00:00-08:00')
-  const nov14 = Date.parse('2026-11-14T17:00:00-08:00')
-
-  assert.equal(nextChallenge(nov8 - 1000)?.equation, '(x + 3)/2 = 8')
-  assert.equal(releasedChallenges(nov8)[0].solvePath, '/solve/x-plus-3-over-2-equals-8')
-  assert.equal(nextChallenge(nov8)?.equation, '(x − 5)/4 = 3')
-  assert.equal(releasedChallenges(nov10)[0].solvePath, '/solve/x-minus-5-over-4-equals-3')
-  assert.equal(nextChallenge(nov10)?.equation, '(x + 7)/3 = 5')
-  assert.equal(releasedChallenges(nov12)[0].solvePath, '/solve/x-plus-7-over-3-equals-5')
-  assert.equal(nextChallenge(nov12)?.equation, '(x − 3)/5 = 2')
-  assert.equal(releasedChallenges(nov14)[0].solvePath, '/solve/x-minus-3-over-5-equals-2')
-
-  // Verify math: (13 + 3)/2 = 8, (17 − 5)/4 = 3, (8 + 7)/3 = 5, (13 − 3)/5 = 2
-  assert.equal((13 + 3) / 2, 8)
-  assert.equal((17 - 5) / 4, 3)
-  assert.equal((8 + 7) / 3, 5)
-  assert.equal((13 - 3) / 5, 2)
+test('Nov 8-14: only Nov 10 2(x + 3) = 10 and Nov 12 3 + 3 × 3 at 5 PM PST; fraction pages stay evergreen', () => {
+  const start = Date.parse('2026-11-08T00:00:00-08:00')
+  const end = Date.parse('2026-11-15T00:00:00-08:00')
+  const nov10 = Date.parse('2026-11-10T17:00:00-08:00'), nov12 = Date.parse('2026-11-12T17:00:00-08:00')
+  const inWindow = releasedChallenges(Date.parse('2027-12-31T00:00:00-08:00'))
+    .filter(c => { const t = Date.parse(c.releaseAt); return t >= start && t < end })
+    .sort((a, b) => Date.parse(a.releaseAt) - Date.parse(b.releaseAt))
+  assert.deepEqual(inWindow.map(c => [c.releaseAt, c.equation, c.answer, c.solvePath]), [
+    ['2026-11-10T17:00:00-08:00', '2(x + 3) = 10', 'x = 2', '/solve/2-x-plus-3-equals-10'],
+    ['2026-11-12T17:00:00-08:00', '3 + 3 × 3', '12', '/solve/3-plus-3-times-3'],
+  ])
+  assert.equal(nextChallenge(Date.parse('2026-11-07T12:00:00-08:00'))?.equation, '2(x + 3) = 10')
+  assert.equal(nextChallenge(nov10)?.equation, '3 + 3 × 3')
+  assert.equal(releasedChallenges(nov12)[0].solvePath, '/solve/3-plus-3-times-3')
+  assert.equal(2 * (2 + 3), 10)
+  assert.equal(3 + 3 * 3, 12)
 
   const solveSrc = readFileSync('app/solve/[topic]/page.tsx', 'utf8')
-  for (const slug of ['x-plus-3-over-2-equals-8', 'x-minus-5-over-4-equals-3', 'x-plus-7-over-3-equals-5', 'x-minus-3-over-5-equals-2']) {
+  for (const slug of ['x-plus-3-over-2-equals-8', 'x-minus-5-over-4-equals-3', 'x-plus-7-over-3-equals-5', 'x-minus-3-over-5-equals-2', '2-x-plus-3-equals-10', '3-plus-3-times-3']) {
     assert.ok(solveSrc.includes(`'${slug}': {`))
   }
 })

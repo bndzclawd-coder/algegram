@@ -111,6 +111,7 @@ const TOPIC_DATA: Record<string, {
       { href: '/solve/x-minus-5-over-4-equals-3', label: 'Solve (x − 5)/4 = 3 step by step' },
       { href: '/solve/x-plus-7-over-3-equals-5', label: 'Solve (x + 7)/3 = 5 step by step' },
       { href: '/solve/x-minus-3-over-5-equals-2', label: 'Solve (x − 3)/5 = 2 step by step' },
+      { href: '/solve/2-x-plus-3-equals-10', label: 'Solve 2(x + 3) = 10 step by step' },
       { href: '/learn/two-step-equations', label: 'Two-step equations' },
     ],
     faq: [
@@ -544,6 +545,61 @@ const TOPIC_DATA: Record<string, {
       { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
       { href: '/solve/linear-equations', label: 'More linear equations with examples' },
       { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  '2-x-plus-3-equals-10': {
+    title: 'Solve 2(x + 3) = 10',
+    h1: 'Solve 2(x + 3) = 10 (Step by Step)',
+    ctaLabel: 'equation',
+    seoTitle: 'Solve 2(x + 3) = 10 Step by Step (x = 2)',
+    description: 'How to solve the equation 2(x + 3) = 10 by multiplying out the brackets, with every step explained and a quick check of the answer.',
+    intro: 'The 2 outside the brackets multiplies everything inside. Multiply it out first (distribute), then solve the two-step equation that is left.',
+    examples: [
+      { question: 'Solve 2(x + 3) = 10', answer: 'x = 2',
+        steps: [
+          'Start with the equation: 2(x + 3) = 10.',
+          'Distribute the 2 to both terms in the brackets: 2 × x + 2 × 3 = 10, so 2x + 6 = 10.',
+          'Subtract 6 from both sides: 2x + 6 − 6 = 10 − 6, so 2x = 4.',
+          'Divide both sides by 2: 2x ÷ 2 = 4 ÷ 2, so x = 2.',
+          'Check your answer: put x = 2 back in. 2(2 + 3) = 2 × 5 = 10. Both sides match, so x = 2 is correct. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'What is the most common mistake?', a: 'Multiplying only the x by 2 and forgetting the 3, which gives 2x + 3 = 10. The 2 multiplies every term inside the brackets, so it must be 2x + 6 = 10.' },
+      { q: 'Can I divide by 2 first instead?', a: 'Yes. Dividing both sides by 2 gives x + 3 = 5, and subtracting 3 gives x = 2. Both ways give the same answer.' },
+    ],
+    related: [
+      { href: '/solve/2-x-plus-3-equals-14', label: 'Solve 2(x + 3) = 14' },
+      { href: '/solve/3-plus-3-times-3', label: 'What is 3 + 3 × 3?' },
+      { href: '/learn/two-step-equations', label: 'Two-step equations explained' },
+      { href: '/solve/linear-equations', label: 'More linear equations with examples' },
+      { href: '/quiz/linear-equations', label: 'Free linear equations quiz' },
+    ],
+  },
+  '3-plus-3-times-3': {
+    title: 'What is 3 + 3 × 3?',
+    h1: 'What is 3 + 3 × 3? (Step by Step)',
+    ctaLabel: 'problem',
+    seoTitle: 'What is 3 + 3 × 3? Order of Operations Explained (12)',
+    description: 'Work out 3 + 3 × 3 using the order of operations, with each step explained and the common mistake that gives 18.',
+    intro: 'The order of operations says multiply and divide before you add and subtract. So the 3 × 3 is done first, and the adding comes after.',
+    examples: [
+      { question: 'What is 3 + 3 × 3?', answer: '12',
+        steps: [
+          'Start with the expression: 3 + 3 × 3.',
+          'Multiply first: 3 × 3 = 9, so the expression becomes 3 + 9.',
+          'Then add: 3 + 9 = 12.',
+          'Common mistake: adding first (3 + 3 = 6, then 6 × 3 = 18) gives 18, which is wrong. Multiplication comes before addition, so the answer is 12. ✓',
+        ] },
+    ],
+    faq: [
+      { q: 'Why is the answer not 18?', a: 'Getting 18 means you added 3 + 3 first. The order of operations says to multiply before adding, so 3 × 3 = 9 comes first, then 3 + 9 = 12.' },
+      { q: 'When would the answer be 18?', a: 'Only if brackets told you to add first: (3 + 3) × 3 = 6 × 3 = 18. Without brackets, multiply first.' },
+    ],
+    related: [
+      { href: '/solve/order-of-operations', label: 'More order of operations examples' },
+      { href: '/solve/2-x-plus-3-equals-10', label: 'Solve 2(x + 3) = 10' },
+      { href: '/solve/linear-equations', label: 'Linear equations with examples' },
     ],
   },
   'x-minus-3-over-5-equals-2': {
